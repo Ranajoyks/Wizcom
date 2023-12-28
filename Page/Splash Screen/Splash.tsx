@@ -16,7 +16,7 @@ export default class Splash extends Component<any, any>{
         super(props);
         setTimeout(() => {
           this.props.navigation.navigate({
-            name: 'Loginpage',
+            name: 'Selectcompanypage',
           
           });
         

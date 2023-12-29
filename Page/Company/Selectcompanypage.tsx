@@ -10,22 +10,51 @@ import Icon from
 'react-native-vector-icons/FontAwesome'; // Replace with your icon library
 import AppIconImage from '../../assets/AppIconImage';
 import DropDownPicker from 'react-native-dropdown-picker'; 
+import BaseComponent from '../../Core/BaseComponent';
+import BaseState from '../../Core/BaseState';
+import CustomPicker from '../../Control/CustomPicker';
+import { Picker } from 'native-base';
+
+export class CustomerProfileViewModel  {
+  CityId: string = '';
+  CityList: any[] = [
+    { label: 'Company 1', value: '1' },
+    { label: 'Company 2', value: '2' },
+    // Add more companies
+  ];
+}
 
 
+export default class Selectcompanypage extends BaseComponent<
+any,
+CustomerProfileViewModel
+> {
+constructor(props: any) {
+  super(props);
+  this.state = new BaseState(new CustomerProfileViewModel());
 
+}
+//  extends Component {
+//   constructor(props:any) {
+//     super(props);
+//     this.state = {
+//       selectedCompany: '',
+//     };
+//   }
 
-export default class Selectcompanypage extends Component {
-  constructor(props:any) {
-    super(props);
-    this.state = {
-      selectedCompany: '',
-    };
-  }
-
-  handleSelectCompany = (company: string) => {
-    this.setState({ selectedCompany: company });
-  };
+  // handleSelectCompany = (company: string) => {
+  //   this.setState({ selectedCompany: company });
+  // };
   render() {
+    var model = this.state.Model;
+    // console.log("Hii",model.address)
+    // model.AdressLine1=model.address?.description;
+    // console.log("Hii",model.AdressLine1)
+    // var city=model.address?.terms;
+  
+    var cityList = model.CityList.map((i, k) => {
+      return <Picker.Item label={i.label} key={k} value={i.value} />;
+    });
     return (
       <View style={styles.container}>
       <View style={styles.header}>
@@ -72,6 +101,16 @@ export default class Selectcompanypage extends Component {
   selectedValue={this.state.selectedCompany}
   style={styles.dropdown}
 />
+{/* <Button style={{ width: '90%', backgroundColor: BaseColor.ColorWhite, alignSelf: 'center', marginTop: '2%', borderRadius: 5, height: 40, }}> */}
+                  <CustomPicker
+                    Name="CityId"
+                    LabelText=""
+                    selectedValue={model.CityId}
+                    onValueChange={this.SetModelValueX}
+                    Data={cityList}
+                    IsNullable={true}
+                  />
+                {/* </Button> */}
       </View>
     </View>
    

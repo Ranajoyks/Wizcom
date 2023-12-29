@@ -1,23 +1,19 @@
 import React from 'react';
-import { Icon, Item, Label, Picker, View } from 'native-base';
+import {Icon, Item, Label, Picker, View} from 'native-base';
 import FontAwesomeIcon from 'react-native-vector-icons/FontAwesome';
-import { PickerProps } from 'react-native';
-import { ValueType } from './Index';
-import Icon2 from
- 
-'react-native-vector-icons/AntDesign';
-
-
+import {PickerProps} from 'react-native';
+import {ValueType} from './Index';
+import Icon2 from 'react-native-vector-icons/AntDesign';
 
 interface CustomPickerProps extends PickerProps {
-  Name: string,
-  LabelText: string,
-  onValueChange?: (value: ValueType) => void,
-  selectedValue?: any,
-  IsRequired?: boolean,
+  Name: string;
+  LabelText: string;
+  onValueChange?: (value: ValueType) => void;
+  selectedValue?: any;
+  IsRequired?: boolean;
   Data: any[];
-  IsNullable?: boolean
-};
+  IsNullable?: boolean;
+}
 
 export default function CustomPicker(props: CustomPickerProps) {
   var {
@@ -27,18 +23,19 @@ export default function CustomPicker(props: CustomPickerProps) {
     selectedValue,
     IsRequired,
     IsNullable,
-    Data } = props;
+    Data,
+  } = props;
 
   if (!selectedValue) {
     selectedValue = '';
   }
 
   if (!IsNullable) {
-    IsNullable = false
+    IsNullable = false;
   }
 
   if (IsNullable) {
-    Data.push(<Picker.Item label="Select  your  place" key="" value="" />)
+    Data.push(<Picker.Item label={LabelText} key="" value="" />);
   }
 
   React.useEffect(() => {
@@ -50,7 +47,9 @@ export default function CustomPicker(props: CustomPickerProps) {
     LabelText =
       (IsRequired ? '*' : '') +
       ' Choose ' +
-      Name.match(/[A-Z][a-z]+|[0-9]+/g).join(' ').replace(' Id', '');
+      Name.match(/[A-Z][a-z]+|[0-9]+/g)
+        .join(' ')
+        .replace(' Id', '');
   }
   const OnChangeInternal = (text: any) => {
     var event = {
@@ -62,16 +61,19 @@ export default function CustomPicker(props: CustomPickerProps) {
     onValueChange && onValueChange(event);
   };
 
-
   return (
-    <View style={{marginTop:'5%',alignSelf:'center'}}>
+    <View style={{marginTop: '5%', alignSelf: 'center'}}>
       {/* <Label style={{ marginTop: 5, color: "grey", fontWeight: "bold" ,marginLeft:15,fontSize:15 }}>{LabelText}</Label> */}
       <Item
-        style={{ marginTop: 0, marginBottom: 10,marginLeft:10 }}
-
+        style={{
+          marginTop: 0,
+          marginBottom: 0,
+          marginLeft: 0,
+          borderRadius: 100,
+          borderColor: '#F1F1F1',
+        }}
         error={IsRequired && isEmpty}
         success={IsRequired && !isEmpty}>
-
         <Picker
           mode="dialog"
           iosIcon={<Icon name="chevron-down" />}
@@ -79,26 +81,23 @@ export default function CustomPicker(props: CustomPickerProps) {
           style={{
             backgroundColor: '#F1F1F1', // Match body background
             borderWidth: 1,
-            width:'100%',
+            width: '100%',
             borderColor: '#F1F1F1', // Lighter blue border
-            borderRadius: 10,
-            alignSelf:'center'
-           // padding: 10,
+            borderRadius: 100,
+            alignSelf: 'center',
+            // padding: 10,
           }}
-          onValueChange={(itemValue) => OnChangeInternal(itemValue)}>
+          onValueChange={itemValue => OnChangeInternal(itemValue)}>
           {Data}
         </Picker>
         {IsRequired && (
           <FontAwesomeIcon
-            style={{ fontSize: 20, marginEnd: 0 }}
+            style={{fontSize: 20, marginEnd: 0}}
             color={isEmpty ? 'red' : 'green'}
             name={isEmpty ? 'close' : 'check'}
           />
         )}
       </Item>
     </View>
-
   );
 }
-
-

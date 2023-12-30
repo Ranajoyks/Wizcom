@@ -22,6 +22,9 @@ import Loginpage from '../Page/Login/Loginpage';
 import Selectcompanypage from '../Page/Company/Selectcompanypage';
 import settingspage from '../Page/Settings/Settingspage';
 import Brunchpage from '../Page/Brunch/Brunchpage';
+import Singlechatpage from '../Page/Chat/Singlechatpage';
+import Allmessage from '../Page/Chat/Allmessage';
+import Chatdetails from '../Page/Chat/Chatdetails';
 
 
 
@@ -48,6 +51,11 @@ function AppStack() {
       component={Loginpage}
       options={{headerShown: false, gestureEnabled: false}}
     />
+     <Stack.Screen
+      name="Chatdetails"
+      component={Chatdetails}
+      options={{headerShown: false, gestureEnabled: false}}
+    />
       <Stack.Screen
       name="Selectcompanypage"
       component={Selectcompanypage}
@@ -64,7 +72,17 @@ function AppStack() {
       component={Brunchpage}
       options={{headerShown: false, gestureEnabled: false}}
     />
-
+     <Stack.Screen
+      name="Singlechatpage"
+      component={Singlechatpage}
+      options={{headerShown: false, gestureEnabled: false}}
+    />
+<Stack.Screen
+      name="Allmessage"
+      component={Allmessage}
+      options={{headerShown: false, gestureEnabled: false}}
+    />
+   
   </Stack.Navigator>
 
      

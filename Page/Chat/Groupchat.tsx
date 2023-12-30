@@ -17,15 +17,12 @@ import BaseState from '../../Core/BaseState';
 import {TouchableOpacity} from 'react-native-gesture-handler';
 
 // const navigation = useNavigation();
-export class allchatpageViewModel {}
+export class GroupchatViewModel {}
 
-export default class Allmessage extends BaseComponent<
-  any,
-  allchatpageViewModel
-> {
+export default class Groupchat extends BaseComponent<any, GroupchatViewModel> {
   constructor(props: any) {
     super(props);
-    this.state = new BaseState(new allchatpageViewModel());
+    this.state = new BaseState(new GroupchatViewModel());
   }
   NextPage = () => {
     console.log('Button Pressed!');
@@ -39,7 +36,6 @@ export default class Allmessage extends BaseComponent<
     // const { navigation } = this.props;
     return (
       <Container>
-        {/* <Header /> */}
         <Content>
           <List>
             <TouchableOpacity onPress={this.NextPage}>
@@ -60,7 +56,7 @@ export default class Allmessage extends BaseComponent<
                       fontFamily: 'Poppins-Regular',
                       marginBottom: 5,
                     }}>
-                    Kumar Pratik
+                   XYZ Group
                   </Text>
                   <Text
                     style={{
@@ -69,74 +65,12 @@ export default class Allmessage extends BaseComponent<
                       fontFamily: 'Poppins-Regular',
                       fontSize: 12,
                     }}>
-                    Hello how are you
+                    Hey Everyone
                   </Text>
                 </Body>
                 <Right></Right>
               </ListItem>
             </TouchableOpacity>
-            <ListItem avatar>
-              <Left>
-                <Thumbnail
-                  source={{
-                    uri: 'https://th.bing.com/th/id/OIP.6a7hLDHlrsA0-vzMrABZ2AHaIT?w=164&h=184&c=7&r=0&o=5&pid=1.7',
-                  }}
-                  style={{height: 40, width: 40}}
-                />
-              </Left>
-              <Body>
-                <Text
-                  style={{
-                    color: 'black',
-                    fontWeight: '600',
-                    fontFamily: 'Poppins-Regular',
-                    marginBottom: 5,
-                  }}>
-                  Joun Doe
-                </Text>
-                <Text
-                  style={{
-                    color: '#0383FA',
-                    fontWeight: '200',
-                    fontFamily: 'Poppins-Regular',
-                    fontSize: 12,
-                  }}>
-                  Thank You
-                </Text>
-              </Body>
-              <Right></Right>
-            </ListItem>
-            <ListItem avatar>
-              <Left>
-                <Thumbnail
-                  source={{
-                    uri: 'https://filmfare.wwmindia.com/content/2020/nov/hrithik-roshan-411605007858.jpg',
-                  }}
-                  style={{height: 40, width: 40}}
-                />
-              </Left>
-              <Body>
-                <Text
-                  style={{
-                    color: 'black',
-                    fontWeight: '600',
-                    fontFamily: 'Poppins-Regular',
-                    marginBottom: 5,
-                  }}>
-                  XYZ Group
-                </Text>
-                <Text
-                  style={{
-                    color: '#0383FA',
-                    fontWeight: '200',
-                    fontFamily: 'Poppins-Regular',
-                    fontSize: 12,
-                  }}>
-                  Hey Everyone
-                </Text>
-              </Body>
-              <Right></Right>
-            </ListItem>
             <ListItem avatar>
               <Left>
                 <Thumbnail

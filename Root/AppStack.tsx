@@ -26,6 +26,7 @@ import Singlechatpage from '../Page/Chat/Singlechatpage';
 import Allmessage from '../Page/Chat/Allmessage';
 import Chatdetails from '../Page/Chat/Chatdetails';
 import Branchpage from '../Page/Branch/Branchpage';
+import Groupchat from '../Page/Chat/Groupchat';
 
 
 
@@ -81,6 +82,11 @@ function AppStack() {
 <Stack.Screen
       name="Allmessage"
       component={Allmessage}
+      options={{headerShown: false, gestureEnabled: false}}
+    />
+<Stack.Screen
+      name="Groupchat"
+      component={Groupchat}
       options={{headerShown: false, gestureEnabled: false}}
     />
    

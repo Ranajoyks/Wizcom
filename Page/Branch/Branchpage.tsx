@@ -23,9 +23,9 @@ export default class Branchpage extends BaseComponent<any, BranchViewModel> {
   }
   SetCompany = (event: any) => {
     this.SetModelValue(event.name, event.value);
-    // this.props.navigation.navigate({
-    //   name: 'chat',
-    // });
+    this.props.navigation.navigate({
+      name: 'Singlechatpage',
+    });
     // this.UpdateViewModel()
   };
   render() {

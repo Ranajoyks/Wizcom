@@ -10,6 +10,7 @@
     "test": "jest"
   },
   "dependencies": {
+    "@react-native-community/async-storage": "^1.12.1",
     "@react-native-community/cli": "^13.2.0",
     "@react-native-picker/picker": "^2.6.1",
     "@react-navigation/drawer": "^5.12.5",

@@ -1,32 +1,38 @@
 import React, {Component} from 'react';
 
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  Image,
-  TextInput,
-} from 'react-native';
+import {View, Text, StyleSheet, TouchableOpacity, Image} from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome'; // Replace with your icon library
 import AppIconImage from '../../assets/AppIconImage';
 import DropDownPicker from 'react-native-dropdown-picker';
-import {Button} from 'native-base';
+import BaseComponent from '../../Core/BaseComponent';
+import BaseState from '../../Core/BaseState';
+import CustomPicker from '../../Control/CustomPicker';
+import {Picker} from 'native-base';
 
-export default class Settingspage extends Component {
+export class BranchViewModel {
+  BranchId: string = '';
+  BranchList: any[] = [];
+}
+export default class Branchpage extends BaseComponent<any, BranchViewModel> {
   constructor(props: any) {
     super(props);
-    this.state = {
-      url: '',
-    };
+    this.state = new BaseState(new BranchViewModel());
+    this.state.Model.BranchList = props.route.params.BranchList;
+    console.log("Props: ",props.route.params.BranchList);
+    
   }
-
-  handleSetUrl = () => {
-    // Handle setting the URL here, e.g., store it in a state or send it to a server
+  SetCompany = (event: any) => {
+    this.SetModelValue(event.name, event.value);
+    // this.props.navigation.navigate({
+    //   name: 'chat',
+    // });
+    // this.UpdateViewModel()
   };
   render() {
-    const {url} = this.state;
-    const prefix = 'https://';
+    var model = this.state.Model;
+    var branchList = model.BranchList.map((i, k) => {
+      return <Picker.Item label={i?.sName} key={k} value={i.lId} />;
+    });
     return (
       <View style={styles.container}>
         <View style={styles.header}>
@@ -38,54 +44,34 @@ export default class Settingspage extends Component {
               source={require('../../assets/logo.png')}
               style={{height: 30, width: 30, marginLeft: 10}}
             />
-            {/* <AppIconImage style={
-            {height:30,width:30}
-          }/> */}
-            {/* <Icon name="bars" size={24} style={styles.icon} /> */}
           </TouchableOpacity>
-          <Text style={styles.title}>Settings</Text>
+          <Text style={styles.title}>Branch</Text>
           <TouchableOpacity
             onPress={() => {
+              this.props.navigation.navigate({
+                name: 'settingspage',
+              });
               /* Right icon action */
             }}>
             <Image
               source={require('../../assets/settings.png')}
               style={{height: 30, width: 30, marginRight: 10}}
             />
-            {/* <Icon name="bell" size={24} style={styles.icon} /> */}
           </TouchableOpacity>
         </View>
         <View style={styles.body}>
-          <Text style={styles.text}>Please enter url of server</Text>
-          <Text style={styles.text2}>ENTER URL</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="ENTER URL"
-            value={url.startsWith(prefix) ? url : prefix + url} // Concatenate prefix with the value
-            onChangeText={text => {
-              if (!text.startsWith(prefix)) {
-                // If the input does not start with the prefix, set the state directly
-                this.setState({url: text});
-              } else if (text.startsWith(prefix) && !url.startsWith(prefix)) {
-                // If backspacing and removing the prefix, update the state without the prefix
-                this.setState({url: text.substring(prefix.length)});
-              } else {
-                // In other cases, set the state directly
-                this.setState({url: text});
-              }
-            }}
+          <Text style={styles.text}>Please select your branch</Text>
+          {/* <Text style={styles.text2}>Select Company</Text> */}
+          <CustomPicker
+            Name="CityId"
+            LabelText="Select Branch"
+            selectedValue={model.BranchId}
+            onValueChange={this.SetCompany}
+            Data={branchList}
+            IsNullable={true}
+
           />
-          <Button onPress={this.handleSetUrl} style={styles.buttontest}>
-            <Text
-              style={{
-                color: 'white',
-                fontWeight: '800',
-                fontFamily: 'Poppins-Regular',
-              }}>
-              Set URL
-            </Text>
-          </Button>
-          {/* <Button textStyl="Set URL"  onPress={this.handleSetUrl}   /> */}
+          {/* </Button> */}
         </View>
       </View>
     );
@@ -121,6 +107,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontFamily: 'Poppins-Regular',
     alignSelf: 'center',
+    marginBottom:20
   },
   text2: {
     fontSize: 16,
@@ -143,7 +130,7 @@ const styles = StyleSheet.create({
   },
   buttontest: {
     alignSelf: 'center',
-    marginTop: '100%',
+    marginTop: '90%',
     height: 50,
     textAlign: 'center',
     justifyContent: 'center',

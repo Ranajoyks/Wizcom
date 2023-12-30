@@ -21,10 +21,11 @@ import Icon from 'react-native-vector-icons/EvilIcons';
 import Loginpage from '../Page/Login/Loginpage';
 import Selectcompanypage from '../Page/Company/Selectcompanypage';
 import settingspage from '../Page/Settings/Settingspage';
-import Brunchpage from '../Page/Brunch/Brunchpage';
+
 import Singlechatpage from '../Page/Chat/Singlechatpage';
 import Allmessage from '../Page/Chat/Allmessage';
 import Chatdetails from '../Page/Chat/Chatdetails';
+import Branchpage from '../Page/Branch/Branchpage';
 
 
 
@@ -68,8 +69,8 @@ function AppStack() {
     />
    
    <Stack.Screen
-      name="Brunchpage"
-      component={Brunchpage}
+      name="Branchpage"
+      component={Branchpage}
       options={{headerShown: false, gestureEnabled: false}}
     />
      <Stack.Screen

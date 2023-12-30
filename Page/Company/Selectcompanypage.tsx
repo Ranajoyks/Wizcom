@@ -1,121 +1,150 @@
-import React, { Component } from 'react';
+import React, {Component} from 'react';
 
- 
-
-import { View, Text, StyleSheet, TouchableOpacity, Image } from
- 
-'react-native';
-import Icon from
- 
-'react-native-vector-icons/FontAwesome'; // Replace with your icon library
+import {View, Text, StyleSheet, TouchableOpacity, Image} from 'react-native';
+import Icon from 'react-native-vector-icons/FontAwesome'; // Replace with your icon library
 import AppIconImage from '../../assets/AppIconImage';
-import DropDownPicker from 'react-native-dropdown-picker'; 
+import DropDownPicker from 'react-native-dropdown-picker';
 import BaseComponent from '../../Core/BaseComponent';
 import BaseState from '../../Core/BaseState';
 import CustomPicker from '../../Control/CustomPicker';
-import { Picker } from 'native-base';
+import {Picker} from 'native-base';
+import axios from 'axios';
+import SessionHelper from '../../Core/SessionHelper';
 
-export class CustomerProfileViewModel  {
+export class CompanyViewModel {
   CityId: string = '';
-  CityList: any[] = [
-    { label: 'Company 1', value: '1' },
-    { label: 'Company 2', value: '2' },
-    // Add more companies
-  ];
+  CityList: any[] = [];
 }
-
 
 export default class Selectcompanypage extends BaseComponent<
-any,
-CustomerProfileViewModel
+  any,
+  CompanyViewModel
 > {
-constructor(props: any) {
-  super(props);
-  this.state = new BaseState(new CustomerProfileViewModel());
+  constructor(props: any) {
+    super(props);
+    this.state = new BaseState(new CompanyViewModel());
+  }
+  SetCompany = (event: any) => {
+    this.SetModelValue(event.name, event.value);
+    this.props.navigation.navigate({
+      name: 'Loginpage',
+    });
+  };
+  headers = {
+    'Content-Type': 'application/json',
+  };
+  componentDidMount(): void {
+    this.Initializes();
+  }
 
-}
-//  extends Component {
-//   constructor(props:any) {
-//     super(props);
-//     this.state = {
-//       selectedCompany: '',
-//     };
-//   }
-
-  // handleSelectCompany = (company: string) => {
-  //   this.setState({ selectedCompany: company });
-  // };
+  Initializes = () => {
+    axios
+      .post(
+        `http://eiplutm.eresourceerp.com/AzaaleaR/API/Sys/Sys.aspx/JInitialize`,
+        {headers: this.headers},
+      )
+      .then(res => {
+        console.log('Response: ', res.data.d.data.ado);
+        var CompanyArray = res.data.d.data.ado;
+        if (res.data.d.bStatus) {
+          var model = this.state.Model;
+          model.CityList = res.data.d.data.ado;
+          this.UpdateViewModel();
+          // const SessionID = localStorage.setItem(
+          //   "SessionID",
+          //   res.data.d.cError
+          // );
+          // navigate("/login");
+        }
+        console.log(CompanyArray.length);
+        if (CompanyArray.length === 1) {
+          // setLoading(false);
+          const postData = {
+            sCode: CompanyArray[0].CODE,
+            dtOffSet: 330,
+            cPlatForm: 'M',
+          };
+          axios
+            .post(
+              `http://eiplutm.eresourceerp.com/AzaaleaR/API/Sys/Sys.aspx/JConnect`,
+              postData,
+              {
+                headers: this.headers,
+              },
+            )
+            .then(res => {
+              console.log(res.data.d.bStatus);
+              console.log('postData: ', postData);
+              if (res.data.d.bStatus) {
+                this.props.navigation.navigate({
+                  name: 'Loginpage',
+                });
+                console.log(res.data.d.cError);
+                SessionHelper.SetSession(res.data.d.cError);
+              }
+            })
+            .catch(err => {
+              // console.log(err);
+            });
+        }
+        // if (res.data.d.bStatus) {
+        //   setCompany(res.data.d.data.ado);
+        //   setLoading(false);
+        // }
+      })
+      .catch(err => {
+        console.log('Err: ', err);
+      });
+  };
   render() {
     var model = this.state.Model;
-    // console.log("Hii",model.address)
-    // model.AdressLine1=model.address?.description;
-    // console.log("Hii",model.AdressLine1)
-    // var city=model.address?.terms;
-  
-    var cityList = model.CityList.map((i, k) => {
-      return <Picker.Item label={i.label} key={k} value={i.value} />;
-    });
+    var cityList: any[] = [];
+    console.log('test', model.CityList);
+    if (model.CityList) {
+      cityList = model.CityList?.map((i, k) => {
+        return <Picker.Item label={i?.NAME} key={k} value={i?.CODE} />;
+      });
+    }
     return (
       <View style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => { /* Left icon action */ }}>
-        <Image source={require('../../assets/logo.png')}
-  style={
-    {height:30,width:30,marginLeft:10}
-  }
-   />
-          {/* <AppIconImage style={
-            {height:30,width:30}
-          }/> */}
-          {/* <Icon name="bars" size={24} style={styles.icon} /> */}
-        </TouchableOpacity>
-        <Text style={styles.title}>Login</Text>
-        <TouchableOpacity onPress={() => { 
-       
-            this.props.navigation.navigate({
-              name: 'settingspage',
-            
-            });
-          /* Right icon action */ }}>
-        <Image source={require('../../assets/settings.png')}
-  style={
-    {height:30,width:30,marginRight:10}
-  }
-   />
-          {/* <Icon name="bell" size={24} style={styles.icon} /> */}
-        </TouchableOpacity>
+        <View style={styles.header}>
+          <TouchableOpacity
+            onPress={() => {
+              /* Left icon action */
+            }}>
+            <Image
+              source={require('../../assets/logo.png')}
+              style={{height: 30, width: 30, marginLeft: 10}}
+            />
+          </TouchableOpacity>
+          <Text style={styles.title}>Login</Text>
+          <TouchableOpacity
+            onPress={() => {
+              this.props.navigation.navigate({
+                name: 'settingspage',
+              });
+              /* Right icon action */
+            }}>
+            <Image
+              source={require('../../assets/settings.png')}
+              style={{height: 30, width: 30, marginRight: 10}}
+            />
+          </TouchableOpacity>
+        </View>
+        <View style={styles.body}>
+          <Text style={styles.text}>Please select company</Text>
+          <Text style={styles.text2}>Select Company</Text>
+          <CustomPicker
+            Name="CityId"
+            LabelText="Select Company"
+            selectedValue={model.CityId}
+            onValueChange={this.SetCompany}
+            Data={cityList}
+            IsNullable={true}
+          />
+          {/* </Button> */}
+        </View>
       </View>
-      <View style={styles.body}>
-        <Text style={styles.text}>Please select company</Text>
-        <Text style={styles.text2}>Select Company</Text>
-        <DropDownPicker
-  items={[
-    { label: 'Company 1', value: '1' },
-    { label: 'Company 2', value: '2' },
-    // Add more companies
-  ]}
-  onChangeItem={(item: { value: any; }) => {
-    this.setState({ selectedCompany: item.value });
-  }}
-  placeholder="Select Company"
-  selectedValue={this.state.selectedCompany}
-  style={styles.dropdown}
-/>
-{/* <Button style={{ width: '90%', backgroundColor: BaseColor.ColorWhite, alignSelf: 'center', marginTop: '2%', borderRadius: 5, height: 40, }}> */}
-                  <CustomPicker
-                    Name="CityId"
-                    LabelText=""
-                    selectedValue={model.CityId}
-                    onValueChange={this.SetModelValueX}
-                    Data={cityList}
-                    IsNullable={true}
-                  />
-                {/* </Button> */}
-      </View>
-    </View>
-   
-    
-    
     );
   }
 }
@@ -139,24 +168,24 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 30,
     fontWeight: '500',
-    fontFamily:'Poppins-Regular'
-   // color: '#2196f3', // Darker blue title
+    fontFamily: 'Poppins-Regular',
+    // color: '#2196f3', // Darker blue title
   },
   body: {
     padding: 20,
   },
   text: {
     fontSize: 16,
-    fontFamily:'Poppins-Regular',
-    alignSelf:'center'
+    fontFamily: 'Poppins-Regular',
+    alignSelf: 'center',
   },
   text2: {
     fontSize: 16,
-    fontFamily:'Poppins-Regular',
-    alignSelf:'center',
-    marginTop:30,
-    marginBottom:15,
-    letterSpacing:1.2
+    fontFamily: 'Poppins-Regular',
+    alignSelf: 'center',
+    marginTop: 30,
+    marginBottom: 15,
+    letterSpacing: 1.2,
   },
   dropdown: {
     backgroundColor: '#F1F1F1', // Match body background

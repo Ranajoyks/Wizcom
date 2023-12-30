@@ -122,6 +122,7 @@ export default class Loginpage extends BaseComponent<any, LoginViewModel> {
           <Text style={styles.text3}>PASSWORD</Text>
           <TextInput
             style={styles.input}
+            secureTextEntry={true}
             placeholder="Password" // Concatenate prefix with the value
             onChangeText={text => {
               Model.Password = text;

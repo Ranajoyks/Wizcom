@@ -20,9 +20,10 @@ export default class Splash extends Component<any, any> {
   constructor(props: any) {
     super(props);
     setTimeout(() => {
-      this.props.navigation.navigate({
-        name: 'Selectcompanypage',
-      });
+      this.props.navigation.reset({
+        index: 0,
+        routes: [{ name: 'Loginpage' }],
+    });
     }, 2000);
   }
   

@@ -22,7 +22,7 @@ export default class Splash extends Component<any, any> {
     setTimeout(() => {
       this.props.navigation.reset({
         index: 0,
-        routes: [{ name: 'Loginpage' }],
+        routes: [{ name: 'Selectcompanypage' }],
     });
     }, 2000);
   }

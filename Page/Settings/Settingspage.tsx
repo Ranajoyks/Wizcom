@@ -75,7 +75,10 @@ export default class Settingspage extends Component {
               }
             }}
           />
-          <Button onPress={this.handleSetUrl} style={styles.buttontest}>
+          
+          {/* <Button textStyl="Set URL"  onPress={this.handleSetUrl}   /> */}
+        </View>
+        <Button onPress={this.handleSetUrl} style={styles.buttontest}>
             <Text
               style={{
                 color: 'white',
@@ -85,8 +88,6 @@ export default class Settingspage extends Component {
               Set URL
             </Text>
           </Button>
-          {/* <Button textStyl="Set URL"  onPress={this.handleSetUrl}   /> */}
-        </View>
       </View>
     );
   }
@@ -143,15 +144,17 @@ const styles = StyleSheet.create({
   },
   buttontest: {
     alignSelf: 'center',
-    marginTop: '100%',
+    // marginTop: '80%',
+    position: 'absolute',
+    bottom: 20,
+    // marginBottom:0,
     height: 50,
     textAlign: 'center',
     justifyContent: 'center',
     backgroundColor: '#0383FA',
     color: 'white',
     borderRadius: 7,
-
-    // padding: 10,
-    width: '95%',
+    width: '90%',
+    // right: 10,
   },
 });

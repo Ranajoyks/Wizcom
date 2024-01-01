@@ -85,12 +85,20 @@ export default class Singlechatpage extends BaseComponent<
       <View style={styles.container}>
         <View style={styles.header}>
           <View>
-            <Text style={styles.title}>EResource Messenger</Text>
+            <Text
+              style={{
+                fontSize: 18,
+                fontWeight: '800',
+                fontFamily: 'Poppins-Regular',
+                color: 'black',
+              }}>
+              EResource Messenger
+            </Text>
             <View style={{flexDirection: 'row', marginTop: 5}}>
               <Text
                 style={{
                   fontSize: 16,
-                  fontWeight: '200',
+                  fontWeight: '100',
                   fontFamily: 'Poppins-Regular',
                   color: '#0383FA',
                   marginRight: 8,
@@ -123,12 +131,10 @@ export default class Singlechatpage extends BaseComponent<
             onPress={() => {
               /* Left icon action */
             }}>
-            {/* <Image source={require('../../assets/logo.png')}
-  style={
-    {height:30,width:30,marginLeft:10}
-  }
-   /> */}
-            <Icon name="rss" size={30} color="##F1E9E9" />
+            <Image
+              source={require('../../assets/search.png')}
+              style={{height: 30, width: 30, marginRight: 10}}
+            />
           </TouchableOpacity>
           <TouchableOpacity
             onPress={() => {

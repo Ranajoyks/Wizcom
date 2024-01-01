@@ -17,16 +17,16 @@ export default class SessionHelper {
         return JSON.parse(item) as string;
     } 
 
-    // public static SetCitySession(City: any) {
-    //     AsyncStorage.setItem('City', JSON.stringify(City))
-    // }
-    // public static async GetCitySession() {
-    //     var item = await AsyncStorage.getItem('City');
-    //     if (!item) {
-    //         return item as unknown as any;
-    //     }
-    //     return JSON.parse(item) as any;
-    // }
+    public static SetURLSession(URL: any) {
+        AsyncStorage.setItem('URL', JSON.stringify(URL))
+    }
+    public static async GetURLSession() {
+        var item = await AsyncStorage.getItem('URL');
+        if (!item) {
+            return item as unknown as any;
+        }
+        return JSON.parse(item) as any;
+    }
 
 
      

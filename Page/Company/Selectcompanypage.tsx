@@ -73,7 +73,7 @@ export default class Selectcompanypage extends BaseComponent<
               },
             )
             .then(res => {
-              console.log(res.data.d.bStatus);
+              console.log("status",res.data.d.bStatus);
               console.log('postData: ', postData);
               if (res.data.d.bStatus) {
                 this.props.navigation.navigate({

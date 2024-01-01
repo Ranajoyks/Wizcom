@@ -23,6 +23,7 @@ export class LoginViewModel {
   UserName: string = '';
   Password: string = '';
   BranchList: [] = [];
+  showMessage: boolean = false;
 }
 export default class Loginpage extends BaseComponent<any, LoginViewModel> {
   constructor(props: any) {
@@ -63,7 +64,12 @@ export default class Loginpage extends BaseComponent<any, LoginViewModel> {
       )
       .then(response => {
         console.log('response3`', response.data.d.data.ado);
+        if (!response.data.d.bStatus) {
+          Model.showMessage = true
+          this.UpdateViewModel()
+        }
         if (response.data.d.bStatus) {
+          Model.showMessage = false
           // Model.BranchList = response.data.d.data.ado
           this.UpdateViewModel();
           this.props.navigation.navigate('Branchpage', {
@@ -72,6 +78,7 @@ export default class Loginpage extends BaseComponent<any, LoginViewModel> {
         }
       })
       .catch(error => {
+        Model.showMessage = true
         if (error.response) {
           console.log('Response data:', error.response.data);
           console.log('Response status:', error.response.status);
@@ -79,8 +86,10 @@ export default class Loginpage extends BaseComponent<any, LoginViewModel> {
         } else if (error.request) {
           console.log('No response received:', error.request);
         } else {
+          // Model.showMessage = true
           console.log('Error during request setup:', error.message);
         }
+        this.UpdateViewModel()
       });
   };
 
@@ -129,17 +138,22 @@ export default class Loginpage extends BaseComponent<any, LoginViewModel> {
               this.UpdateViewModel;
             }}
           />
-          <Button onPress={this.Login} style={styles.buttontest}>
-            <Text
-              style={{
-                color: 'white',
-                fontWeight: '800',
-                fontFamily: 'Poppins-Regular',
-              }}>
-              Login
+          {Model.showMessage ? (
+            <Text style={styles.text4}>
+              Invalid User Name or {'\n'} Password
             </Text>
-          </Button>
+          ) : null}
         </View>
+        <Button onPress={this.Login} style={styles.buttontest}>
+          <Text
+            style={{
+              color: 'white',
+              fontWeight: '800',
+              fontFamily: 'Poppins-Regular',
+            }}>
+            Login
+          </Text>
+        </Button>
       </View>
     );
   }
@@ -191,6 +205,16 @@ const styles = StyleSheet.create({
     marginBottom: 5,
     letterSpacing: 1.2,
   },
+  text4: {
+    fontSize: 16,
+    fontFamily: 'Poppins-Regular',
+    // alignSelf: 'center',
+    marginTop: 10,
+    marginBottom: 5,
+    letterSpacing: 1.2,
+    color: '#fa8a15',
+    textAlign: 'center',
+  },
   input: {
     alignSelf: 'center',
     width: '95%',
@@ -206,13 +230,17 @@ const styles = StyleSheet.create({
   },
   buttontest: {
     alignSelf: 'center',
-    marginTop: '80%',
+    // marginTop: '80%',
+    position: 'absolute',
+    bottom: 20,
+    // marginBottom:0,
     height: 50,
     textAlign: 'center',
     justifyContent: 'center',
     backgroundColor: '#0383FA',
     color: 'white',
     borderRadius: 7,
-    width: '95%',
+    width: '90%',
+    // right: 10,
   },
 });

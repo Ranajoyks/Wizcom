@@ -18,6 +18,8 @@ import {Picker} from 'native-base';
 import {Button} from 'native-base';
 import SessionHelper from '../../Core/SessionHelper';
 import axios from 'axios';
+import * as signalR from '@microsoft/signalr';
+
 
 export class LoginViewModel {
   UserName: string = '';
@@ -30,10 +32,31 @@ export default class Loginpage extends BaseComponent<any, LoginViewModel> {
     super(props);
     this.state = new BaseState(new LoginViewModel());
   }
-  async componentDidMount(): Promise<void> {
-    var value = await SessionHelper.GetSession();
-    console.log('value: ', value);
-  }
+  // async componentDidMount(): Promise<void> {
+  //   var value = await SessionHelper.GetSession();
+  //   console.log('value: ', value);
+  // }
+  componentDidMount() {
+    // Replace 'https://your-signalr-server-url' with the actual URL of your SignalR hub.
+    const connection = new signalR.HubConnectionBuilder()
+      .withUrl('http://47.128.64.70/getuserlist')
+      .configureLogging(signalR.LogLevel.Information)
+      .build();
+
+    connection.start()
+      .then(() => {
+        console.log('SignalR connected');
+        // this.setState({ connection });
+
+        // Set up a listener for the "ReceiveMessage" method from the server.
+        // connection.on('ReceiveMessage', (message) => {
+        //   this.setState(prevState => ({
+        //     messages: [...prevState.messages, message],
+        //   }));
+        // });
+      })
+      .catch((err) => console.error('Error connecting to SignalR:', err));
+  } 
   onChangeText() {}
   handleSetUrl = () => {
     this.props.navigation.navigate({

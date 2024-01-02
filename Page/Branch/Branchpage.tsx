@@ -8,7 +8,6 @@ import BaseComponent from '../../Core/BaseComponent';
 import BaseState from '../../Core/BaseState';
 import CustomPicker from '../../Control/CustomPicker';
 import {Picker} from 'native-base';
-
 export class BranchViewModel {
   BranchId: string = '';
   BranchList: any[] = [];
@@ -21,6 +20,9 @@ export default class Branchpage extends BaseComponent<any, BranchViewModel> {
     console.log("Props: ",props.route.params.BranchList);
     
   }
+
+
+
   SetCompany = (event: any) => {
     this.SetModelValue(event.name, event.value);
     this.props.navigation.navigate({

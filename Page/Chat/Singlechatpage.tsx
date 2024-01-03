@@ -34,7 +34,7 @@ export class SinglechatpageViewModel {
   routes: any[] = [
     {key: 'first', title: 'All Messages'},
     {key: 'second', title: 'Chat'},
-    {key: 'third', title: 'Groups'},
+    {key: 'third', title: 'Notification'},
   ];
 }
 
@@ -167,7 +167,6 @@ export default class Singlechatpage extends BaseComponent<
 
           // tabBar={props => <View style={{ backgroundColor: 'white' }} {...props} /> as any}
         />
-        <Text>Hello</Text>
         {/* </NavigationContainer> */}
         {/* <FlatList
         data={model.CityList}

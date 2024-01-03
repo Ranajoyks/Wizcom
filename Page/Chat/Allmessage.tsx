@@ -2,6 +2,7 @@ import React, {Component} from 'react';
 import {Text, View} from 'react-native';
 
 import {
+  Badge,
   Body,
   Container,
   Content,
@@ -15,9 +16,13 @@ import {
 import BaseComponent from '../../Core/BaseComponent';
 import BaseState from '../../Core/BaseState';
 import {TouchableOpacity} from 'react-native-gesture-handler';
+import axios from 'axios';
+import alluser from '../../Entity/alluser';
 
 // const navigation = useNavigation();
-export class allchatpageViewModel {}
+export class allchatpageViewModel {
+  alluser:alluser[]=[];
+}
 
 export default class Allmessage extends BaseComponent<
   any,
@@ -27,6 +32,26 @@ export default class Allmessage extends BaseComponent<
     super(props);
     this.state = new BaseState(new allchatpageViewModel());
   }
+  componentDidMount(){
+ this.Fetchmessage();
+ 
+  }
+  Fetchmessage = () => {
+    var model = this.state.Model;
+    axios.get('https://wemessanger.azurewebsites.net/api/user')
+      .then(response => {
+        console.log('data',response.data);
+        model.alluser=response.data;
+        this.UpdateViewModel();
+        // Handle successful response
+     //   setData(response.data);
+      })
+      .catch(error => {
+        // Handle error
+        console.error('Error fetching data:', error);
+      });
+
+  }
   NextPage = () => {
     console.log('Button Pressed!');
     this.props.navigation.navigate({
@@ -35,6 +60,7 @@ export default class Allmessage extends BaseComponent<
     // navigation.navigate('Chatdetails');
   };
   render() {
+    var model = this.state.Model;
     console.log('prop', this.props);
     // const { navigation } = this.props;
     return (
@@ -42,15 +68,20 @@ export default class Allmessage extends BaseComponent<
         {/* <Header /> */}
         <Content>
           <List>
-            <TouchableOpacity onPress={this.NextPage}>
+            
+              {model.alluser.map((i:alluser)=>
+              <TouchableOpacity onPress={this.NextPage}>
               <ListItem avatar>
                 <Left>
-                  <Thumbnail
+                  {/* <Thumbnail
                     source={{
                       uri: 'https://filmfare.wwmindia.com/content/2020/nov/hrithik-roshan-411605007858.jpg',
                     }}
                     style={{height: 40, width: 40}}
-                  />
+                  /> */}
+                  <Badge style={{ backgroundColor: '#E9E9E9',  width: 50, height: 50, borderRadius: 25, justifyContent: 'center', alignItems: 'center'  }}>
+      <Text style={{ color: 'black',fontSize:22,fontWeight:'400' }}>{i.userFullName.charAt(0)}</Text>
+    </Badge>
                 </Left>
                 <Body>
                   <Text
@@ -60,7 +91,7 @@ export default class Allmessage extends BaseComponent<
                       fontFamily: 'Poppins-Regular',
                       marginBottom: 5,
                     }}>
-                    Kumar Pratik
+                    {i.userFullName}
                   </Text>
                   <Text
                     style={{
@@ -69,13 +100,15 @@ export default class Allmessage extends BaseComponent<
                       fontFamily: 'Poppins-Regular',
                       fontSize: 12,
                     }}>
-                    Hello how are you
+                   {i.message?i.message:"No message"}
                   </Text>
                 </Body>
                 <Right></Right>
               </ListItem>
-            </TouchableOpacity>
-            <ListItem avatar>
+              </TouchableOpacity>
+              )}
+        
+            {/* <ListItem avatar>
               <Left>
                 <Thumbnail
                   source={{
@@ -167,7 +200,7 @@ export default class Allmessage extends BaseComponent<
                 </Text>
               </Body>
               <Right></Right>
-            </ListItem>
+            </ListItem> */}
           </List>
         </Content>
       </Container>

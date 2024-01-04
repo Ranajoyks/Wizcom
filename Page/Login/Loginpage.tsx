@@ -20,7 +20,6 @@ import SessionHelper from '../../Core/SessionHelper';
 import axios from 'axios';
 import * as signalR from '@microsoft/signalr';
 
-
 export class LoginViewModel {
   UserName: string = '';
   Password: string = '';
@@ -43,7 +42,8 @@ export default class Loginpage extends BaseComponent<any, LoginViewModel> {
       .configureLogging(signalR.LogLevel.Information)
       .build();
 
-    connection.start()
+    connection
+      .start()
       .then(() => {
         console.log('SignalR connected');
         // this.setState({ connection });
@@ -55,8 +55,8 @@ export default class Loginpage extends BaseComponent<any, LoginViewModel> {
         //   }));
         // });
       })
-      .catch((err) => console.error('Error connecting to SignalR:', err));
-  } 
+      .catch(err => console.error('Error connecting to SignalR:', err));
+  }
   onChangeText() {}
   handleSetUrl = () => {
     this.props.navigation.navigate({
@@ -66,7 +66,7 @@ export default class Loginpage extends BaseComponent<any, LoginViewModel> {
   Login = async () => {
     var Model = this.state.Model;
     var value = await SessionHelper.GetSession();
-
+    SessionHelper.SetUserNameSession(Model.UserName);
     const headers = {
       'Content-Type': 'application/json',
       Cookie: `ASP.NET_SessionId=${value}`,
@@ -88,11 +88,11 @@ export default class Loginpage extends BaseComponent<any, LoginViewModel> {
       .then(response => {
         // console.log('response3`', response.data.d.data.ado);
         if (!response.data.d.bStatus) {
-          Model.showMessage = true
-          this.UpdateViewModel()
+          Model.showMessage = true;
+          this.UpdateViewModel();
         }
         if (response.data.d.bStatus) {
-          Model.showMessage = false
+          Model.showMessage = false;
           // Model.BranchList = response.data.d.data.ado
           this.UpdateViewModel();
           this.props.navigation.navigate('Branchpage', {
@@ -101,7 +101,7 @@ export default class Loginpage extends BaseComponent<any, LoginViewModel> {
         }
       })
       .catch(error => {
-        Model.showMessage = true
+        Model.showMessage = true;
         if (error.response) {
           console.log('Response data:', error.response.data);
           console.log('Response status:', error.response.status);
@@ -112,7 +112,7 @@ export default class Loginpage extends BaseComponent<any, LoginViewModel> {
           // Model.showMessage = true
           console.log('Error during request setup:', error.message);
         }
-        this.UpdateViewModel()
+        this.UpdateViewModel();
       });
   };
 

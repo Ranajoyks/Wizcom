@@ -18,10 +18,13 @@ import BaseState from '../../Core/BaseState';
 import {TouchableOpacity} from 'react-native-gesture-handler';
 import axios from 'axios';
 import alluser from '../../Entity/alluser';
+import SessionHelper from '../../Core/SessionHelper';
 
 // const navigation = useNavigation();
 export class allchatpageViewModel {
   alluser: alluser[] = [];
+  UserName: string = '';
+  SenderId?: number;
 }
 
 export default class Allmessage extends BaseComponent<
@@ -31,17 +34,25 @@ export default class Allmessage extends BaseComponent<
   constructor(props: any) {
     super(props);
     this.state = new BaseState(new allchatpageViewModel());
+    // this.state.Model.SenderId = props.route.params.SenderId
   }
   componentDidMount() {
     this.Fetchmessage();
   }
-  Fetchmessage = () => {
+  Fetchmessage = async () => {
+    var UserName = await SessionHelper.GetUserNameSession();
+    // console.log('UserName: ', UserName);
     var model = this.state.Model;
+    // model.UserName = UserName
     axios
       .get('https://wemessanger.azurewebsites.net/api/user')
       .then(response => {
-        console.log('data', response.data);
+        // console.log('data', response.data);
         model.alluser = response.data;
+        var Find = response.data.find((i: any) => i.userName == UserName);
+        // console.log('FindUser:', Find);
+        // SessionHelper.SetSenderIdSession(JSON.stringify(Find.lId));
+        model.SenderId = Find.lId;
         this.UpdateViewModel();
         // Handle successful response
         //   setData(response.data);
@@ -51,10 +62,15 @@ export default class Allmessage extends BaseComponent<
         console.error('Error fetching data:', error);
       });
   };
-  NextPage = () => {
+  NextPage = (user: alluser) => {
+    var Model = this.state.Model;
     this.props.navigation.navigate({
       name: 'Chatdetails',
+      params: user,
+      path:Model.SenderId
     });
+    // SessionHelper.SetSelectedUserSession(user)
+
     // navigation.navigate('Chatdetails');
   };
   render() {
@@ -67,7 +83,7 @@ export default class Allmessage extends BaseComponent<
         <Content>
           <List>
             {model.alluser.map((i: alluser) => (
-              <TouchableOpacity onPress={this.NextPage}>
+              <TouchableOpacity onPress={() => this.NextPage(i)}>
                 <ListItem avatar>
                   <Left>
                     {/* <Thumbnail

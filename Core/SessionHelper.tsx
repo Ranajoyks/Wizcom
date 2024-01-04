@@ -27,6 +27,26 @@ export default class SessionHelper {
         }
         return JSON.parse(item) as any;
     }
+    public static SetUserNameSession(UserName: any) {
+        AsyncStorage.setItem('UserName', JSON.stringify(UserName))
+    }
+    public static async GetUserNameSession() {
+        var item = await AsyncStorage.getItem('UserName');
+        if (!item) {
+            return item as unknown as any;
+        }
+        return JSON.parse(item) as any;
+    }
+    public static SetSenderIdSession(SenderId: any) {
+        AsyncStorage.setItem('SenderId', JSON.stringify(SenderId))
+    }
+    public static async GetSenderIdSession() {
+        var item = await AsyncStorage.getItem('SenderId');
+        if (!item) {
+            return item as unknown as any;
+        }
+        return JSON.parse(item) as any;
+    }
 
 
      

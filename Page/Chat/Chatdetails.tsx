@@ -19,13 +19,17 @@ import {Button} from 'native-base';
 import BaseComponent from '../../Core/BaseComponent';
 import BaseState from '../../Core/BaseState';
 import * as signalR from '@microsoft/signalr';
+import SessionHelper from '../../Core/SessionHelper';
+import axios from 'axios';
+import {Chat} from '../../Entity/Chat';
 // import {HubConnectionBuilder} from '';
 export class ChatdetailsViewModel {
-  Message: string = 'hi';
-  senderId: number = 54;
-  receiverId: number = 1;
-  companyId: number = 1;
+  Message: string = '';
+  senderId?: number;
+  receiverId: string = '';
+  companyId?: number = 18;
   Connection: any;
+  Chats: Chat[] = [];
 }
 
 export default class Chatdetails extends BaseComponent<
@@ -37,57 +41,78 @@ export default class Chatdetails extends BaseComponent<
     this.state = new BaseState(new ChatdetailsViewModel());
   }
   componentDidMount(): void {
-    // this.MakeConnection();
+    // console.log('Props:', this.props);
+    // var SenderId = SessionHelper.GetSenderIdSession()
+    // console.log("SenderID: ",SenderId );
+
+    this.MakeConnection();
   }
   MakeConnection = () => {
+    const user = this.props.route.params;
+    const SernderID = this.props.route.path;
     var model = this.state.Model;
-    var connection = new signalR.HubConnectionBuilder()
+    model.receiverId = user.lId.toString();
+    model.senderId = SernderID;
+    this.UpdateViewModel();
+    model.Connection = new signalR.HubConnectionBuilder()
       .withUrl('https://wemessanger.azurewebsites.net/chatHub')
       .build();
-    // model.Connection = connection;
-    connection
-      .start()
+    model.Connection.start()
       .then(() => {
-        console.log('SignalR connection started');
-        // this.SendMessgae()
+        console.log('SignalR connected');
       })
       .catch((err: any) => {
         console.error('SignalR connection error:', err);
       });
-  };
-  SendMessgae = async () => {
-    var model = this.state.Model;
-    var connection = new signalR.HubConnectionBuilder()
-      .withUrl('https://wemessanger.azurewebsites.net/chatHub')
-      .build();
-      await connection.start().then(() => {
-        console.log('SignalR connection started');
-        // this.SendMessgae()
+    axios
+      .get(
+        `https://wemessanger.azurewebsites.net/api/User/readmessage?companyId=18&senderId=${model.senderId}&receiverId=${model.receiverId}`,
+      )
+      .then(res => {
+        // console.log('resdata: ', res.data);
+        model.Chats = res.data;
+        this.UpdateViewModel();
+      })
+      .catch((err: any) => {
+        console.log(err);
       });
-    connection.on('ReceiveMessage', (user, message) => {
-      console.log('message: ',user, message);
+  };
+  ButtonClick = async () => {
+    var model = this.state.Model;
+    // model.Message = text;
+    // console.log('text: ', text);
+
+    console.log(
+      'Modelvalue:',
+      model.companyId,
+      model.senderId,
+      model.receiverId,
+      model.Message,
+    );
+    model.Connection.on('ReceiveMessage', (user: any, message: any) => {
+      console.log('message: ', user, message);
     });
 
-    await connection
-      .invoke(
-        'SendMessage',
-        model.companyId,
-        model.receiverId,
-        model.senderId,
-        model.Message,
-      )
+    await model.Connection.invoke(
+      'SendMessage',
+      model.companyId,
+      model.senderId,
+      model.receiverId,
+      model.Message,
+    )
       .then(() => {
         console.log('Msg sent');
       })
-      .catch(error => {
+      .catch((error: any) => {
         console.error('Error invoking SendMessage:', error);
       });
-   
   };
   render() {
     // const { url } = this.state;
     const prefix = 'https://';
     var Model = this.state.Model;
+    console.log('Chats:', Model.Chats);
+
     return (
       <View style={styles.container}>
         <View style={styles.header}>
@@ -133,46 +158,46 @@ export default class Chatdetails extends BaseComponent<
             <View>
               <Text style={styles.today}>Today</Text>
             </View>
-            <View style={styles.messagefrom}>
-              <View style={styles.messagefrommessage}>
-                <View style={styles.messagefromicon}>
-                  <Text
-                    style={{
-                      color: '#000',
-                      flex: 1,
-                      fontSize: 15,
-                      textAlign: 'center',
-                    }}>
-                    BS
-                  </Text>
+            {Model.Chats.map((i: Chat) =>
+              i.lSenderId === Model.senderId ? (
+                <View style={styles.messageto}>
+                  <View style={styles.messagetomessage}>
+                    <View style={styles.messagetotext}>
+                      <Text style={styles.messagetotextcontent}>{i?.sMsg}</Text>
+                    </View>
+                  </View>
+                  <View style={styles.messagetotime}>
+                    <Text style={styles.messagetotimetext}>10.45 AM</Text>
+                  </View>
                 </View>
-                <View style={styles.messagefromtext}>
-                  <Text style={styles.messagefromtextcontent}>
-                    Hi there, are you available around 4PM today for meeting
-                    with a new client?
-                  </Text>
+              ) : (
+                <View style={styles.messagefrom}>
+                  <View style={styles.messagefrommessage}>
+                    <View style={styles.messagefromicon}>
+                      <Text
+                        style={{
+                          color: '#000',
+                          flex: 1,
+                          fontSize: 15,
+                          textAlign: 'center',
+                        }}>
+                        A
+                      </Text>
+                    </View>
+                    <View style={styles.messagefromtext}>
+                      <Text style={styles.messagefromtextcontent}>
+                        {i?.sMsg}
+                      </Text>
+                    </View>
+                  </View>
+                  <View style={styles.messagefromtime}>
+                    <Text style={styles.messagefromtimetext}>10.45 AM</Text>
+                  </View>
                 </View>
-              </View>
-              <View style={styles.messagefromtime}>
-                <Text style={styles.messagefromtimetext}>10.45 AM</Text>
-              </View>
-            </View>
+              ),
+            )}
 
-            <View style={styles.messageto}>
-              <View style={styles.messagetomessage}>
-                <View style={styles.messagetotext}>
-                  <Text style={styles.messagetotextcontent}>
-                    Hi there, are you available around 4PM today for meeting
-                    with a new client?
-                  </Text>
-                </View>
-              </View>
-              <View style={styles.messagetotime}>
-                <Text style={styles.messagetotimetext}>10.45 AM</Text>
-              </View>
-            </View>
-
-            <View style={styles.messagefrom}>
+            {/* <View style={styles.messagefrom}>
               <View style={styles.messagefrommessage}>
                 <View style={styles.messagefromicon}>
                   <Text
@@ -192,9 +217,9 @@ export default class Chatdetails extends BaseComponent<
               <View style={styles.messagefromtime}>
                 <Text style={styles.messagefromtimetext}>10.45 AM</Text>
               </View>
-            </View>
+            </View> */}
 
-            <View style={styles.messageto}>
+            {/* <View style={styles.messageto}>
               <View style={styles.messagetomessage}>
                 <View style={styles.messagetotext}>
                   <Text style={styles.messagetotextcontent}>Hi there!</Text>
@@ -254,7 +279,7 @@ export default class Chatdetails extends BaseComponent<
               <View style={styles.messagefromtime}>
                 <Text style={styles.messagefromtimetext}>10.45 AM</Text>
               </View>
-            </View>
+            </View> */}
           </ScrollView>
           <View style={{padding: 10}}>
             <View
@@ -275,7 +300,7 @@ export default class Chatdetails extends BaseComponent<
                 }
                 placeholder="Write your message here"></TextInput>
               <TouchableOpacity
-                onPress={this.SendMessgae}
+                onPress={this.ButtonClick}
                 style={{flexShrink: 1, width: 25, justifyContent: 'center'}}>
                 <Image
                   source={require('../../assets/send.png')}

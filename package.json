@@ -10,7 +10,8 @@
     "test": "jest"
   },
   "dependencies": {
-    "@microsoft/signalr": "^8.0.0",
+    "@aspnet/signalr": "^1.0.27",
+    "@microsoft/signalr": "^5.0.13",
     "@react-native-community/async-storage": "^1.12.1",
     "@react-native-community/cli": "^13.2.0",
     "@react-native-picker/picker": "^2.6.1",

@@ -44,7 +44,7 @@ export default class Selectcompanypage extends BaseComponent<
         {headers: this.headers},
       )
       .then(res => {
-        console.log('Response: ', res.data.d.data.ado);
+        // console.log('Response: ', res.data.d.data.ado);
         var CompanyArray = res.data.d.data.ado;
         if (res.data.d.bStatus) {
           var model = this.state.Model;
@@ -56,7 +56,6 @@ export default class Selectcompanypage extends BaseComponent<
           // );
           // navigate("/login");
         }
-        console.log(CompanyArray.length);
         if (CompanyArray.length === 1) {
           // setLoading(false);
           const postData = {
@@ -73,13 +72,13 @@ export default class Selectcompanypage extends BaseComponent<
               },
             )
             .then(res => {
-              console.log("status",res.data.d.bStatus);
-              console.log('postData: ', postData);
+              // console.log("status",res.data.d.bStatus);
+              // console.log('postData: ', postData);
               if (res.data.d.bStatus) {
                 this.props.navigation.navigate({
                   name: 'Loginpage',
                 });
-                console.log(res.data.d.cError);
+                // console.log(res.data.d.cError);
                 SessionHelper.SetSession(res.data.d.cError);
               }
             })
@@ -99,7 +98,7 @@ export default class Selectcompanypage extends BaseComponent<
   render() {
     var model = this.state.Model;
     var cityList: any[] = [];
-    console.log('test', model.CityList);
+    // console.log('test', model.CityList);
     if (model.CityList) {
       cityList = model.CityList?.map((i, k) => {
         return <Picker.Item label={i?.NAME} key={k} value={i?.CODE} />;

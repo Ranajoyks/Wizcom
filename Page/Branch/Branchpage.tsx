@@ -17,7 +17,7 @@ export default class Branchpage extends BaseComponent<any, BranchViewModel> {
     super(props);
     this.state = new BaseState(new BranchViewModel());
     this.state.Model.BranchList = props.route.params.BranchList;
-    console.log("Props: ",props.route.params.BranchList);
+    // console.log("Props: ",props.route.params.BranchList);
     
   }
 

@@ -48,15 +48,15 @@ export default class Singlechatpage extends BaseComponent<
   }
   renderScene = SceneMap({
     first: () => {
-      console.log('Navigation Prop in Allmessage:', this.props.navigation);
+      // console.log('Navigation Prop in Allmessage:', this.props.navigation);
       return <Allmessage navigation={this.props.navigation} />;
     },
     second: () => {
-      console.log('Navigation Prop in Loginpage:', this.props.navigation);
+      // console.log('Navigation Prop in Loginpage:', this.props.navigation);
       return <Allmessage navigation={this.props.navigation} />;
     },
     third: () => {
-      console.log('Navigation Prop in Loginpage:', this.props.navigation);
+      // console.log('Navigation Prop in Loginpage:', this.props.navigation);
       return <Groupchat navigation={this.props.navigation} />;
     },
   });

@@ -25,14 +25,14 @@ export default class Groupchat extends BaseComponent<any, GroupchatViewModel> {
     this.state = new BaseState(new GroupchatViewModel());
   }
   NextPage = () => {
-    console.log('Button Pressed!');
+    // console.log('Button Pressed!');
     this.props.navigation.navigate({
       name: 'Groupchatdetails',
     });
     // navigation.navigate('Chatdetails');
   };
   render() {
-    console.log('prop', this.props);
+    // console.log('prop', this.props);
     // const { navigation } = this.props;
     return (
       <Container>

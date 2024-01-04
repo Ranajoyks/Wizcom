@@ -39,7 +39,7 @@ export default class Loginpage extends BaseComponent<any, LoginViewModel> {
   componentDidMount() {
     // Replace 'https://your-signalr-server-url' with the actual URL of your SignalR hub.
     const connection = new signalR.HubConnectionBuilder()
-      .withUrl('http://47.128.64.70/getuserlist')
+      .withUrl('https://wemessanger.azurewebsites.net/api/user')
       .configureLogging(signalR.LogLevel.Information)
       .build();
 
@@ -71,14 +71,14 @@ export default class Loginpage extends BaseComponent<any, LoginViewModel> {
       'Content-Type': 'application/json',
       Cookie: `ASP.NET_SessionId=${value}`,
     };
-    console.log('headersList', headers);
+    // console.log('headersList', headers);
     const LoginCredential = {
       objUsr: {
         sName: Model.UserName,
         sCode: Model.Password,
       },
     };
-    console.log(LoginCredential);
+    // console.log(LoginCredential);
     axios
       .post(
         `http://eiplutm.eresourceerp.com/AzaaleaR/API/Sys/Sys.aspx/JValidate`,
@@ -86,7 +86,7 @@ export default class Loginpage extends BaseComponent<any, LoginViewModel> {
         {headers: headers},
       )
       .then(response => {
-        console.log('response3`', response.data.d.data.ado);
+        // console.log('response3`', response.data.d.data.ado);
         if (!response.data.d.bStatus) {
           Model.showMessage = true
           this.UpdateViewModel()

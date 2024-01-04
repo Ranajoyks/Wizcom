@@ -1,4 +1,5 @@
 import React, {Component} from 'react';
+<script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/5.0.13/signalr.min.js"></script>;
 
 import {
   View,
@@ -17,8 +18,15 @@ import DropDownPicker from 'react-native-dropdown-picker';
 import {Button} from 'native-base';
 import BaseComponent from '../../Core/BaseComponent';
 import BaseState from '../../Core/BaseState';
-
-export class ChatdetailsViewModel {}
+import * as signalR from '@microsoft/signalr';
+// import {HubConnectionBuilder} from '';
+export class ChatdetailsViewModel {
+  Message: string = 'hi';
+  senderId: number = 54;
+  receiverId: number = 1;
+  companyId: number = 1;
+  Connection: any;
+}
 
 export default class Chatdetails extends BaseComponent<
   any,
@@ -28,25 +36,69 @@ export default class Chatdetails extends BaseComponent<
     super(props);
     this.state = new BaseState(new ChatdetailsViewModel());
   }
+  componentDidMount(): void {
+    // this.MakeConnection();
+  }
+  MakeConnection = () => {
+    var model = this.state.Model;
+    var connection = new signalR.HubConnectionBuilder()
+      .withUrl('https://wemessanger.azurewebsites.net/chatHub')
+      .build();
+    // model.Connection = connection;
+    connection
+      .start()
+      .then(() => {
+        console.log('SignalR connection started');
+        // this.SendMessgae()
+      })
+      .catch((err: any) => {
+        console.error('SignalR connection error:', err);
+      });
+  };
+  SendMessgae = async () => {
+    var model = this.state.Model;
+    var connection = new signalR.HubConnectionBuilder()
+      .withUrl('https://wemessanger.azurewebsites.net/chatHub')
+      .build();
+      await connection.start().then(() => {
+        console.log('SignalR connection started');
+        // this.SendMessgae()
+      });
+    connection.on('ReceiveMessage', (user, message) => {
+      console.log('message: ',user, message);
+    });
 
-  handleSetUrl = () => {
-    // Handle setting the URL here, e.g., store it in a state or send it to a server
+    await connection
+      .invoke(
+        'SendMessage',
+        model.companyId,
+        model.receiverId,
+        model.senderId,
+        model.Message,
+      )
+      .then(() => {
+        console.log('Msg sent');
+      })
+      .catch(error => {
+        console.error('Error invoking SendMessage:', error);
+      });
+   
   };
   render() {
     // const { url } = this.state;
     const prefix = 'https://';
+    var Model = this.state.Model;
     return (
       <View style={styles.container}>
         <View style={styles.header}>
           <TouchableOpacity
             onPress={() => {
-              this.props.navigation.navigate("Singlechatpage")
+              this.props.navigation.navigate('Singlechatpage');
             }}>
-            <Image source={require('../../assets/backimg.png')}
-          style={
-            {height:30,width:30,marginLeft:10}
-          }
-        />
+            <Image
+              source={require('../../assets/backimg.png')}
+              style={{height: 30, width: 30, marginLeft: 10}}
+            />
           </TouchableOpacity>
           <View style={{flex: 1}}>
             <Text style={styles.title}>Adeline Palmerson</Text>
@@ -214,14 +266,16 @@ export default class Chatdetails extends BaseComponent<
                 flexDirection: 'row',
               }}>
               <TextInput
+                onChangeText={text => {
+                  Model.Message = text;
+                  this.UpdateViewModel();
+                }}
                 style={
                   (styles.input, {width: Dimensions.get('window').width - 70})
                 }
                 placeholder="Write your message here"></TextInput>
               <TouchableOpacity
-                onPress={() => {
-                  /* Left icon action */
-                }}
+                onPress={this.SendMessgae}
                 style={{flexShrink: 1, width: 25, justifyContent: 'center'}}>
                 <Image
                   source={require('../../assets/send.png')}

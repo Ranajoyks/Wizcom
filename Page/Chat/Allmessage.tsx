@@ -21,7 +21,7 @@ import alluser from '../../Entity/alluser';
 
 // const navigation = useNavigation();
 export class allchatpageViewModel {
-  alluser:alluser[]=[];
+  alluser: alluser[] = [];
 }
 
 export default class Allmessage extends BaseComponent<
@@ -32,28 +32,26 @@ export default class Allmessage extends BaseComponent<
     super(props);
     this.state = new BaseState(new allchatpageViewModel());
   }
-  componentDidMount(){
- this.Fetchmessage();
- 
+  componentDidMount() {
+    this.Fetchmessage();
   }
   Fetchmessage = () => {
     var model = this.state.Model;
-    axios.get('https://wemessanger.azurewebsites.net/api/user')
+    axios
+      .get('https://wemessanger.azurewebsites.net/api/user')
       .then(response => {
-        console.log('data',response.data);
-        model.alluser=response.data;
+        console.log('data', response.data);
+        model.alluser = response.data;
         this.UpdateViewModel();
         // Handle successful response
-     //   setData(response.data);
+        //   setData(response.data);
       })
       .catch(error => {
         // Handle error
         console.error('Error fetching data:', error);
       });
-
-  }
+  };
   NextPage = () => {
-    console.log('Button Pressed!');
     this.props.navigation.navigate({
       name: 'Chatdetails',
     });
@@ -61,53 +59,67 @@ export default class Allmessage extends BaseComponent<
   };
   render() {
     var model = this.state.Model;
-    console.log('prop', this.props);
+    // console.log('prop', this.props);
     // const { navigation } = this.props;
     return (
       <Container>
         {/* <Header /> */}
         <Content>
           <List>
-            
-              {model.alluser.map((i:alluser)=>
+            {model.alluser.map((i: alluser) => (
               <TouchableOpacity onPress={this.NextPage}>
-              <ListItem avatar>
-                <Left>
-                  {/* <Thumbnail
+                <ListItem avatar>
+                  <Left>
+                    {/* <Thumbnail
                     source={{
                       uri: 'https://filmfare.wwmindia.com/content/2020/nov/hrithik-roshan-411605007858.jpg',
                     }}
                     style={{height: 40, width: 40}}
                   /> */}
-                  <Badge style={{ backgroundColor: '#E9E9E9',  width: 50, height: 50, borderRadius: 25, justifyContent: 'center', alignItems: 'center'  }}>
-      <Text style={{ color: 'black',fontSize:22,fontWeight:'400' }}>{i.userFullName.charAt(0)}</Text>
-    </Badge>
-                </Left>
-                <Body>
-                  <Text
-                    style={{
-                      color: 'black',
-                      fontWeight: '600',
-                      fontFamily: 'Poppins-Regular',
-                      marginBottom: 5,
-                    }}>
-                    {i.userFullName}
-                  </Text>
-                  <Text
-                    style={{
-                      color: '#0383FA',
-                      fontWeight: '200',
-                      fontFamily: 'Poppins-Regular',
-                      fontSize: 12,
-                    }}>
-                   {i.message?i.message:"No message"}
-                  </Text>
-                </Body>
-                <Right></Right>
-              </ListItem>
+                    <Badge
+                      style={{
+                        backgroundColor: '#E9E9E9',
+                        width: 50,
+                        height: 50,
+                        borderRadius: 25,
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                      }}>
+                      <Text
+                        style={{
+                          color: 'black',
+                          fontSize: 22,
+                          fontWeight: '400',
+                        }}>
+                        {i.userFullName.charAt(0)}
+                      </Text>
+                    </Badge>
+                  </Left>
+                  <Body>
+                    <Text
+                      style={{
+                        color: 'black',
+                        fontWeight: '600',
+                        fontFamily: 'Poppins-Regular',
+                        marginBottom: 5,
+                      }}>
+                      {i.userFullName}
+                    </Text>
+                    <Text
+                      style={{
+                        color: '#0383FA',
+                        fontWeight: '200',
+                        fontFamily: 'Poppins-Regular',
+                        fontSize: 12,
+                      }}>
+                      {i.message ? i.message : 'No message'}
+                    </Text>
+                  </Body>
+                  <Right></Right>
+                </ListItem>
               </TouchableOpacity>
-              )}
-        
+            ))}
+
             {/* <ListItem avatar>
               <Left>
                 <Thumbnail

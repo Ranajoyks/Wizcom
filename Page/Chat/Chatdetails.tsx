@@ -22,16 +22,35 @@ import * as signalR from '@microsoft/signalr';
 import SessionHelper from '../../Core/SessionHelper';
 import axios from 'axios';
 import {Chat} from '../../Entity/Chat';
+import EntityHelperService from '../Service/EntityHelperService';
 // import {HubConnectionBuilder} from '';
 export class ChatdetailsViewModel {
   Message: string = '';
-  senderId?: number;
+  senderId: number = 0;
   receiverId: string = '';
   companyId?: number = 18;
   Connection: any;
   Chats: Chat[] = [];
+  User: any;
 }
-
+export class Chatss {
+  bEmlStatus: number = 0;
+  bStatus: boolean = false;
+  cMsgFlg: string = '';
+  dtMsg: string = '';
+  lAttchId: number = 0;
+  lCompId: number = 0;
+  lFromStatusId: number = 0;
+  lId: number = 0;
+  lRecCompId: number = 0;
+  lReceiverId: number = 0;
+  lSenderId: number = 0;
+  lSrId: number = 0;
+  lToStatusId: number = 0;
+  lTypId: number = 0;
+  sConnId: string = '';
+  sMsg: string = '';
+}
 export default class Chatdetails extends BaseComponent<
   any,
   ChatdetailsViewModel
@@ -39,49 +58,104 @@ export default class Chatdetails extends BaseComponent<
   constructor(props: any) {
     super(props);
     this.state = new BaseState(new ChatdetailsViewModel());
+    this.state.Model.User = props.route.params.User;
+    this.state.Model.senderId = props.route.params.SenderID;
   }
   componentDidMount(): void {
-    // console.log('Props:', this.props);
-    // var SenderId = SessionHelper.GetSenderIdSession()
-    // console.log("SenderID: ",SenderId );
-
+    var Model = this.state.Model;
+    Model.receiverId = Model.User.lId.toString();
     this.MakeConnection();
+    this.GetAllMsg();
+    this.ReceiveMsg();
   }
-  MakeConnection = () => {
-    const user = this.props.route.params;
-    const SernderID = this.props.route.path;
-    var model = this.state.Model;
-    model.receiverId = user.lId.toString();
-    model.senderId = SernderID;
+  MakeConnection = async () => {
+    var Model = this.state.Model;
+    console.log('User: ', Model.User);
+
+    var BranchID = await SessionHelper.GetBranchIdSession();
+    Model.companyId = BranchID;
     this.UpdateViewModel();
-    model.Connection = new signalR.HubConnectionBuilder()
+    Model.Connection = new signalR.HubConnectionBuilder()
       .withUrl('https://wemessanger.azurewebsites.net/chatHub')
       .build();
-    model.Connection.start()
+    Model.Connection.start()
       .then(() => {
         console.log('SignalR connected');
+        Model.Connection.invoke('JoinChat', Model.senderId);
       })
       .catch((err: any) => {
+        Model.Connection.start();
+
         console.error('SignalR connection error:', err);
       });
+    Model.Connection.on(
+      'ReceiveMessage',
+      async (sender: any, receiver: any, message: any) => {
+        const encodedUser = sender;
+        const encodedReUser = receiver;
+        const encodedMsg = message;
+        var ReceiveMSg = new Chatss();
+
+        if (message) {
+          // var date = new Date()
+          ReceiveMSg.sMsg = message;
+          ReceiveMSg.lReceiverId = receiver;
+          ReceiveMSg.lSenderId = sender;
+          ReceiveMSg.dtMsg = new Date().toISOString()
+          await Model.Chats.push(ReceiveMSg);
+          console.log('REceiveMSG: ', ReceiveMSg.sMsg);
+
+          this.UpdateViewModel();
+        }
+      },
+    );
+  };
+  GetAllMsg = async () => {
+    var Model = this.state.Model;
     axios
       .get(
-        `https://wemessanger.azurewebsites.net/api/User/readmessage?companyId=18&senderId=${model.senderId}&receiverId=${model.receiverId}`,
+        `https://wemessanger.azurewebsites.net/api/User/readmessage?companyId=${Model.companyId}&senderId=${Model.senderId}&receiverId=${Model.receiverId}`,
       )
       .then(res => {
-        // console.log('resdata: ', res.data);
-        model.Chats = res.data;
+        Model.Chats = res.data;
         this.UpdateViewModel();
       })
       .catch((err: any) => {
         console.log(err);
       });
   };
+  ReceiveMsg = async () => {
+    var model = this.state.Model;
+    var ReceiveMSg = new Chatss();
+
+    await model.Connection.on(
+      'ReceiveMessage',
+      async (sender: any, receiver: any, message: any) => {
+        const encodedUser = sender;
+        const encodedReUser = receiver;
+        const encodedMsg = message;
+
+        console.log('rrrr: ', encodedUser);
+        console.log(encodedReUser);
+        console.log(encodedMsg);
+        // console.log('message: ', sender, receiver, message);
+
+        // if (message) {
+        //   ReceiveMSg.sMsg = message;
+        //   ReceiveMSg.lReceiverId = receiver;
+        //   ReceiveMSg.lSenderId = sender;
+        //   await model.Chats.push(ReceiveMSg);
+        //   console.log('REceiveMSG: ', ReceiveMSg.sMsg);
+
+        //   this.UpdateViewModel();
+        // }
+      },
+    ).catch((error: any) => {
+      console.error('Error subscribing to ReceiveMessage:', error);
+    });
+  };
   ButtonClick = async () => {
     var model = this.state.Model;
-    // model.Message = text;
-    // console.log('text: ', text);
-
     console.log(
       'Modelvalue:',
       model.companyId,
@@ -89,10 +163,6 @@ export default class Chatdetails extends BaseComponent<
       model.receiverId,
       model.Message,
     );
-    model.Connection.on('ReceiveMessage', (user: any, message: any) => {
-      console.log('message: ', user, message);
-    });
-
     await model.Connection.invoke(
       'SendMessage',
       model.companyId,
@@ -101,7 +171,19 @@ export default class Chatdetails extends BaseComponent<
       model.Message,
     )
       .then(() => {
-        console.log('Msg sent');
+        var date = new Date();
+        // const modifiedDate = new Date(date.getTime() - 19800000);
+        console.log('Msg sent:', model.Message);
+        var sendMsg = new Chatss();
+        sendMsg.sMsg = model.Message;
+        sendMsg.lSenderId = model.senderId;
+        sendMsg.dtMsg = date.toISOString();
+        console.log('Send MSg: ', sendMsg);
+
+        model.Chats.push(sendMsg);
+        model.Message = '';
+        this.UpdateViewModel();
+        // this.GetAllMsg()
       })
       .catch((error: any) => {
         console.error('Error invoking SendMessage:', error);
@@ -111,6 +193,7 @@ export default class Chatdetails extends BaseComponent<
     // const { url } = this.state;
     const prefix = 'https://';
     var Model = this.state.Model;
+
     console.log('Chats:', Model.Chats);
 
     return (
@@ -126,8 +209,8 @@ export default class Chatdetails extends BaseComponent<
             />
           </TouchableOpacity>
           <View style={{flex: 1}}>
-            <Text style={styles.title}>Adeline Palmerson</Text>
-            <Text style={(styles.subtitle, styles.online)}>Online</Text>
+            <Text style={styles.title}>{Model.User.userFullName}</Text>
+            {/* <Text style={(styles.subtitle, styles.online)}>Online</Text> */}
 
             {/* <Text style={(styles.subtitle, styles.offline)}>Offline</Text> */}
           </View>
@@ -167,7 +250,12 @@ export default class Chatdetails extends BaseComponent<
                     </View>
                   </View>
                   <View style={styles.messagetotime}>
-                    <Text style={styles.messagetotimetext}>10.45 AM</Text>
+                    <Text style={styles.messagetotimetext}>
+                      {/* {new Date(
+                        new Date(i.dtMsg).getTime() + 19800000,
+                      ).toLocaleTimeString()} */}
+                      {EntityHelperService.convertUTCDateToLocalDate(new Date(i?.dtMsg))}
+                    </Text>
                   </View>
                 </View>
               ) : (
@@ -191,7 +279,9 @@ export default class Chatdetails extends BaseComponent<
                     </View>
                   </View>
                   <View style={styles.messagefromtime}>
-                    <Text style={styles.messagefromtimetext}>10.45 AM</Text>
+                    <Text style={styles.messagefromtimetext}>
+                    {EntityHelperService.convertUTCDateToLocalDate(new Date(i?.dtMsg))}
+                    </Text>
                   </View>
                 </View>
               ),
@@ -291,6 +381,7 @@ export default class Chatdetails extends BaseComponent<
                 flexDirection: 'row',
               }}>
               <TextInput
+                value={Model.Message}
                 onChangeText={text => {
                   Model.Message = text;
                   this.UpdateViewModel();

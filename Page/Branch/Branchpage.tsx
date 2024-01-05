@@ -8,6 +8,7 @@ import BaseComponent from '../../Core/BaseComponent';
 import BaseState from '../../Core/BaseState';
 import CustomPicker from '../../Control/CustomPicker';
 import {Picker} from 'native-base';
+import SessionHelper from '../../Core/SessionHelper';
 export class BranchViewModel {
   BranchId: string = '';
   BranchList: any[] = [];
@@ -17,18 +18,16 @@ export default class Branchpage extends BaseComponent<any, BranchViewModel> {
     super(props);
     this.state = new BaseState(new BranchViewModel());
     this.state.Model.BranchList = props.route.params.BranchList;
-    // console.log("Props: ",props.route.params.BranchList);
-    
   }
 
-
-
   SetCompany = (event: any) => {
+    var Model = this.state.Model;
+
     this.SetModelValue(event.name, event.value);
     this.props.navigation.navigate({
       name: 'Singlechatpage',
     });
-    // this.UpdateViewModel()
+    SessionHelper.SetBranchIdSession(event.value)
   };
   render() {
     var model = this.state.Model;
@@ -71,7 +70,6 @@ export default class Branchpage extends BaseComponent<any, BranchViewModel> {
             onValueChange={this.SetCompany}
             Data={branchList}
             IsNullable={true}
-
           />
           {/* </Button> */}
         </View>
@@ -109,7 +107,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontFamily: 'Poppins-Regular',
     alignSelf: 'center',
-    marginBottom:20
+    marginBottom: 20,
   },
   text2: {
     fontSize: 16,

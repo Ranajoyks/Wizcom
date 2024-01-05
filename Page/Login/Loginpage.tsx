@@ -35,28 +35,7 @@ export default class Loginpage extends BaseComponent<any, LoginViewModel> {
   //   var value = await SessionHelper.GetSession();
   //   console.log('value: ', value);
   // }
-  componentDidMount() {
-    // Replace 'https://your-signalr-server-url' with the actual URL of your SignalR hub.
-    const connection = new signalR.HubConnectionBuilder()
-      .withUrl('https://wemessanger.azurewebsites.net/api/user')
-      .configureLogging(signalR.LogLevel.Information)
-      .build();
-
-    connection
-      .start()
-      .then(() => {
-        console.log('SignalR connected');
-        // this.setState({ connection });
-
-        // Set up a listener for the "ReceiveMessage" method from the server.
-        // connection.on('ReceiveMessage', (message) => {
-        //   this.setState(prevState => ({
-        //     messages: [...prevState.messages, message],
-        //   }));
-        // });
-      })
-      .catch(err => console.error('Error connecting to SignalR:', err));
-  }
+  componentDidMount() {}
   onChangeText() {}
   handleSetUrl = () => {
     this.props.navigation.navigate({

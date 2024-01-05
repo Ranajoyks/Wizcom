@@ -25,6 +25,7 @@ export class allchatpageViewModel {
   alluser: alluser[] = [];
   UserName: string = '';
   SenderId?: number;
+  Sender: any;
 }
 
 export default class Allmessage extends BaseComponent<
@@ -34,49 +35,38 @@ export default class Allmessage extends BaseComponent<
   constructor(props: any) {
     super(props);
     this.state = new BaseState(new allchatpageViewModel());
-    // this.state.Model.SenderId = props.route.params.SenderId
   }
   componentDidMount() {
     this.Fetchmessage();
   }
   Fetchmessage = async () => {
     var UserName = await SessionHelper.GetUserNameSession();
-    // console.log('UserName: ', UserName);
     var model = this.state.Model;
-    // model.UserName = UserName
     axios
       .get('https://wemessanger.azurewebsites.net/api/user')
       .then(response => {
         // console.log('data', response.data);
         model.alluser = response.data;
         var Find = response.data.find((i: any) => i.userName == UserName);
-        // console.log('FindUser:', Find);
-        // SessionHelper.SetSenderIdSession(JSON.stringify(Find.lId));
         model.SenderId = Find.lId;
         this.UpdateViewModel();
-        // Handle successful response
-        //   setData(response.data);
       })
       .catch(error => {
-        // Handle error
         console.error('Error fetching data:', error);
       });
   };
   NextPage = (user: alluser) => {
     var Model = this.state.Model;
-    this.props.navigation.navigate({
-      name: 'Chatdetails',
-      params: user,
-      path:Model.SenderId
-    });
-    // SessionHelper.SetSelectedUserSession(user)
-
-    // navigation.navigate('Chatdetails');
+    this.props.navigation.navigate(
+      'Chatdetails',
+      {
+        User: user,
+        SenderID: Model.SenderId,
+      },
+    );
   };
   render() {
     var model = this.state.Model;
-    // console.log('prop', this.props);
-    // const { navigation } = this.props;
     return (
       <Container>
         {/* <Header /> */}

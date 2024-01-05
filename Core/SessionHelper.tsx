@@ -47,6 +47,16 @@ export default class SessionHelper {
         }
         return JSON.parse(item) as any;
     }
+    public static SetBranchIdSession(BranchId: any) {
+        AsyncStorage.setItem('BranchId', JSON.stringify(BranchId))
+    }
+    public static async GetBranchIdSession() {
+        var item = await AsyncStorage.getItem('BranchId');
+        if (!item) {
+            return item as unknown as any;
+        }
+        return JSON.parse(item) as any;
+    }
 
 
      

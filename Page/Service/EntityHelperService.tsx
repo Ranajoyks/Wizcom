@@ -1,5 +1,6 @@
 import {format, parseISO} from 'date-fns';
 import Service from '../Entity/Service';
+import moment from 'moment';
 
 export default class EntityHelperService {
   public static IsOfferPercentageAvaialble(productItem: Service): boolean {
@@ -39,7 +40,7 @@ export default class EntityHelperService {
     }
     return format(parseISO(date.toString()), 'dd-MMM-yyyy hh:mm:ss a');
   }
-  public static convertUTCDateToLocalDate(date: any){
+  public static convertUTCDateToLocalDate(date: any) {
     var newDate = new Date(
       date.getTime() + date.getTimezoneOffset() * 60 * 1000,
     );
@@ -48,9 +49,8 @@ export default class EntityHelperService {
     var hours = date.getHours();
 
     newDate.setHours(hours - offset);
-// console.log(newDate);
-
-    return newDate.toString();
-   
-  };
+    // console.log(newDate);
+    const formattedDate = moment(newDate.toString()).format('HH:mm:ss');
+    return formattedDate;
+  }
 }

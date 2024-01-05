@@ -101,7 +101,7 @@ export default class Chatdetails extends BaseComponent<
           ReceiveMSg.sMsg = message;
           ReceiveMSg.lReceiverId = receiver;
           ReceiveMSg.lSenderId = sender;
-          ReceiveMSg.dtMsg = new Date().toISOString()
+          ReceiveMSg.dtMsg = new Date().toString()
           await Model.Chats.push(ReceiveMSg);
           console.log('REceiveMSG: ', ReceiveMSg.sMsg);
 
@@ -172,12 +172,15 @@ export default class Chatdetails extends BaseComponent<
     )
       .then(() => {
         var date = new Date();
+      
         // const modifiedDate = new Date(date.getTime() - 19800000);
         console.log('Msg sent:', model.Message);
         var sendMsg = new Chatss();
         sendMsg.sMsg = model.Message;
         sendMsg.lSenderId = model.senderId;
-        sendMsg.dtMsg = date.toISOString();
+        sendMsg.dtMsg = new Date().toString();
+        console.log("SendDate",sendMsg.dtMsg);
+        
         console.log('Send MSg: ', sendMsg);
 
         model.Chats.push(sendMsg);
@@ -194,7 +197,7 @@ export default class Chatdetails extends BaseComponent<
     const prefix = 'https://';
     var Model = this.state.Model;
 
-    console.log('Chats:', Model.Chats);
+    // console.log('Chats:', Model.Chats);
 
     return (
       <View style={styles.container}>

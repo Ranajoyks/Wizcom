@@ -21,6 +21,7 @@ import {NavigationContainer} from '@react-navigation/native';
 import Groupchat from './Groupchat';
 
 export class SinglechatpageViewModel {
+  BranchName: string = '';
   CityList: any[] = [
     {id: 1, name: 'Aaron Loeb'},
     {id: 2, name: 'Adeline Palmerston'},
@@ -45,6 +46,9 @@ export default class Singlechatpage extends BaseComponent<
   constructor(props: any) {
     super(props);
     this.state = new BaseState(new SinglechatpageViewModel());
+    this.state.Model.BranchName = props.route.params.BranchName;
+    console.log("Branch",this.state.Model.BranchName);
+    
   }
   renderScene = SceneMap({
     first: () => {
@@ -60,14 +64,6 @@ export default class Singlechatpage extends BaseComponent<
       return <Groupchat navigation={this.props.navigation} />;
     },
   });
-
-  //  MessageItem = ({ name }) => {
-  //   return (
-  //     <View style={styles.messageItem}>
-  //       <Text style={styles.messageName}>{name}</Text>
-  //     </View>
-  //   );
-  // };
   renderTabBar = props => (
     <TabBar
       {...props}
@@ -103,9 +99,9 @@ export default class Singlechatpage extends BaseComponent<
                   color: '#0383FA',
                   marginRight: 8,
                 }}>
-                Online:0
+                {model.BranchName}
               </Text>
-              <Text
+              {/* <Text
                 style={{
                   fontSize: 16,
                   fontWeight: '200',
@@ -124,7 +120,7 @@ export default class Singlechatpage extends BaseComponent<
                   marginRight: 8,
                 }}>
                 All:0
-              </Text>
+              </Text> */}
             </View>
           </View>
           <TouchableOpacity

@@ -70,8 +70,6 @@ export default class Chatdetails extends BaseComponent<
   }
   MakeConnection = async () => {
     var Model = this.state.Model;
-    console.log('User: ', Model.User);
-
     var BranchID = await SessionHelper.GetBranchIdSession();
     Model.companyId = BranchID;
     this.UpdateViewModel();
@@ -85,10 +83,9 @@ export default class Chatdetails extends BaseComponent<
       })
       .catch((err: any) => {
         Model.Connection.start();
-
         console.error('SignalR connection error:', err);
       });
-    Model.Connection.on(
+    await Model.Connection.on(
       'ReceiveMessage',
       async (sender: any, receiver: any, message: any) => {
         const encodedUser = sender;
@@ -97,11 +94,19 @@ export default class Chatdetails extends BaseComponent<
         var ReceiveMSg = new Chatss();
 
         if (message) {
-          // var date = new Date()
+          var date = new Date()
           ReceiveMSg.sMsg = message;
           ReceiveMSg.lReceiverId = receiver;
           ReceiveMSg.lSenderId = sender;
-          ReceiveMSg.dtMsg = new Date().toString()
+
+          var newDate = new Date(
+            date.getTime() - date.getTimezoneOffset() * 60 * 1000,
+          );
+          var offset = date.getTimezoneOffset() / 60;
+          var hours = date.getHours();
+          newDate.setHours(hours + offset);
+          ReceiveMSg.dtMsg = new Date(newDate).toString();
+          // ReceiveMSg.dtMsg = new Date().toString()
           await Model.Chats.push(ReceiveMSg);
           console.log('REceiveMSG: ', ReceiveMSg.sMsg);
 
@@ -163,40 +168,54 @@ export default class Chatdetails extends BaseComponent<
       model.receiverId,
       model.Message,
     );
-    await model.Connection.invoke(
-      'SendMessage',
-      model.companyId,
-      model.senderId,
-      model.receiverId,
-      model.Message,
-    )
-      .then(() => {
-        var date = new Date();
-      
-        // const modifiedDate = new Date(date.getTime() - 19800000);
-        console.log('Msg sent:', model.Message);
-        var sendMsg = new Chatss();
-        sendMsg.sMsg = model.Message;
-        sendMsg.lSenderId = model.senderId;
-        sendMsg.dtMsg = new Date().toString();
-        console.log("SendDate",sendMsg.dtMsg);
-        
-        console.log('Send MSg: ', sendMsg);
+    if (model.Message.trim() === '') {
+      return;
+    } else {
+      // model.Chats.push(sendMsg);
 
-        model.Chats.push(sendMsg);
-        model.Message = '';
-        this.UpdateViewModel();
-        // this.GetAllMsg()
-      })
-      .catch((error: any) => {
-        console.error('Error invoking SendMessage:', error);
-      });
+      await model.Connection.invoke(
+        'SendMessage',
+        model.companyId,
+        model.senderId,
+        model.receiverId,
+        model.Message,
+      )
+        .then(() => {
+          var date = new Date();
+          // const modifiedDate = new Date(date.getTime() - 19800000);
+          console.log('Msg sent:', model.Message);
+          var sendMsg = new Chatss();
+          sendMsg.sMsg = model.Message;
+          sendMsg.lSenderId = model.senderId;
+          var newDate = new Date(
+            date.getTime() - date.getTimezoneOffset() * 60 * 1000,
+          );
+          var offset = date.getTimezoneOffset() / 60;
+          var hours = date.getHours();
+          newDate.setHours(hours + offset);
+          sendMsg.dtMsg = new Date(newDate).toString();
+
+          //sendMsg.dtMsg = new Date().toString();
+          console.log('SendDate', sendMsg.dtMsg);
+          console.log('Send MSg: ', sendMsg);
+          if (model.Message.trim() === '') {
+            return;
+          } else {
+            model.Chats.push(sendMsg);
+          }
+          model.Message = '';
+          this.UpdateViewModel();
+          // this.GetAllMsg()
+        })
+        .catch((error: any) => {
+          console.error('Error invoking SendMessage:', error);
+        });
+    }
   };
   render() {
     // const { url } = this.state;
     const prefix = 'https://';
     var Model = this.state.Model;
-
     // console.log('Chats:', Model.Chats);
 
     return (
@@ -257,7 +276,9 @@ export default class Chatdetails extends BaseComponent<
                       {/* {new Date(
                         new Date(i.dtMsg).getTime() + 19800000,
                       ).toLocaleTimeString()} */}
-                      {EntityHelperService.convertUTCDateToLocalDate(new Date(i?.dtMsg))}
+                      {EntityHelperService.convertUTCDateToLocalDate(
+                        new Date(i?.dtMsg),
+                      )}
                     </Text>
                   </View>
                 </View>
@@ -283,7 +304,9 @@ export default class Chatdetails extends BaseComponent<
                   </View>
                   <View style={styles.messagefromtime}>
                     <Text style={styles.messagefromtimetext}>
-                    {EntityHelperService.convertUTCDateToLocalDate(new Date(i?.dtMsg))}
+                      {EntityHelperService.convertUTCDateToLocalDate(
+                        new Date(i?.dtMsg),
+                      )}
                     </Text>
                   </View>
                 </View>

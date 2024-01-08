@@ -9,25 +9,34 @@ import BaseState from '../../Core/BaseState';
 import CustomPicker from '../../Control/CustomPicker';
 import {Picker} from 'native-base';
 import SessionHelper from '../../Core/SessionHelper';
+import {Branch} from '../../Entity/Branch';
 export class BranchViewModel {
   BranchId: string = '';
   BranchList: any[] = [];
+  BranchName: string = '';
 }
 export default class Branchpage extends BaseComponent<any, BranchViewModel> {
   constructor(props: any) {
     super(props);
     this.state = new BaseState(new BranchViewModel());
     this.state.Model.BranchList = props.route.params.BranchList;
+    // console.log(this.state.Model.BranchList);
   }
 
   SetCompany = (event: any) => {
     var Model = this.state.Model;
+    console.log(Model.BranchList);
+    console.log(event.value);
+    var Branch: Branch = Model.BranchList.find(
+      (i: Branch) => i?.lId === event.value,
+    );
+    console.log('BranchName', Branch);
 
     this.SetModelValue(event.name, event.value);
-    this.props.navigation.navigate({
-      name: 'Singlechatpage',
+    this.props.navigation.navigate('Singlechatpage', {
+      BranchName: Branch.sName,
     });
-    SessionHelper.SetBranchIdSession(event.value)
+    SessionHelper.SetBranchIdSession(event.value);
   };
   render() {
     var model = this.state.Model;
@@ -64,7 +73,7 @@ export default class Branchpage extends BaseComponent<any, BranchViewModel> {
           <Text style={styles.text}>Please select your branch</Text>
           {/* <Text style={styles.text2}>Select Company</Text> */}
           <CustomPicker
-            Name="CityId"
+            Name="BranchId"
             LabelText="Select Branch"
             selectedValue={model.BranchId}
             onValueChange={this.SetCompany}

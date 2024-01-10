@@ -86,7 +86,7 @@ export default class Singlechatpage extends BaseComponent<
       indicatorStyle={{backgroundColor: 'black'}}
       style={{backgroundColor: 'white'}}
       renderLabel={({route, focused, color}) => (
-        <Text style={{color: 'black', margin: 8}}>{route.title}</Text>
+        <Text style={{color: 'black', marginBottom: 8,marginHorizontal:8}}>{route.title}</Text>
       )}
     />
   );
@@ -235,11 +235,12 @@ const styles = StyleSheet.create({
   },
   header: {
     backgroundColor: '#FFFFFF', // Lighter blue header
-    padding: 15,
+    paddingTop: 10,
+    paddingHorizontal:15,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop:10
+    // marginTop:10
   },
   headerTitle: {
     color: '#fff', // Replace with desired text color

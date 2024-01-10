@@ -45,7 +45,7 @@ export default class Allmessage extends BaseComponent<
     axios
       .get('https://wemessanger.azurewebsites.net/api/user')
       .then(response => {
-        // console.log('data', response.data);
+        console.log('data', response.data);
         model.alluser = response.data;
         var Find = response.data.find((i: any) => i.userName == UserName);
         model.SenderId = Find.lId;
@@ -106,16 +106,16 @@ export default class Allmessage extends BaseComponent<
                       style={{
                         color: 'black',
                         fontWeight: '600',
-                        fontFamily: 'Poppins-Regular',
+                        fontFamily: 'OpenSans-VariableFont_wdth,wght',
                         marginBottom: 5,
                       }}>
                       {i.userFullName}
                     </Text>
                     <Text
                       style={{
-                        color: '#0383FA',
+                        color: i.status?'#0383FA': '#a6a6a6',
                         fontWeight: '200',
-                        fontFamily: 'Poppins-Regular',
+                        fontFamily: 'OpenSans-VariableFont_wdth,wght',
                         fontSize: 12,
                       }}>
                       {i.message ? i.message : 'No message'}

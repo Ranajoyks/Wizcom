@@ -655,6 +655,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: '#000',
     lineHeight: 25,
+    fontFamily: 'OpenSans-VariableFont_wdth,wght',
   },
   messagefromtime: {
     flexDirections: 'row-reverse',
@@ -677,6 +678,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: '#C66E12',
     lineHeight: 25,
+    fontFamily: 'OpenSans-VariableFont_wdth,wght',
   },
   messagetotime: {
     flexDirections: 'row-reverse',

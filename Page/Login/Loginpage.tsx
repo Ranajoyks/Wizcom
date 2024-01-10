@@ -76,6 +76,7 @@ export default class Loginpage extends BaseComponent<any, LoginViewModel> {
           this.UpdateViewModel();
           this.props.navigation.navigate('Branchpage', {
             BranchList: response.data.d.data.ado,
+            UserName:Model.UserName
           });
         }
       })

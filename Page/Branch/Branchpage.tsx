@@ -7,19 +7,21 @@ import DropDownPicker from 'react-native-dropdown-picker';
 import BaseComponent from '../../Core/BaseComponent';
 import BaseState from '../../Core/BaseState';
 import CustomPicker from '../../Control/CustomPicker';
-import {Picker} from 'native-base';
+import {Badge, Picker} from 'native-base';
 import SessionHelper from '../../Core/SessionHelper';
 import {Branch} from '../../Entity/Branch';
 export class BranchViewModel {
   BranchId: string = '';
   BranchList: any[] = [];
   BranchName: string = '';
+  UserName: string = '';
 }
 export default class Branchpage extends BaseComponent<any, BranchViewModel> {
   constructor(props: any) {
     super(props);
     this.state = new BaseState(new BranchViewModel());
     this.state.Model.BranchList = props.route.params.BranchList;
+    this.state.Model.UserName = props.route.params.UserName;
     // console.log(this.state.Model.BranchList);
   }
 
@@ -35,6 +37,7 @@ export default class Branchpage extends BaseComponent<any, BranchViewModel> {
     this.SetModelValue(event.name, event.value);
     this.props.navigation.navigate('Singlechatpage', {
       BranchName: Branch.sName,
+      UserName:Model.UserName
     });
     SessionHelper.SetBranchIdSession(event.value);
   };
@@ -58,15 +61,28 @@ export default class Branchpage extends BaseComponent<any, BranchViewModel> {
           <Text style={styles.title}>Branch</Text>
           <TouchableOpacity
             onPress={() => {
-              this.props.navigation.navigate({
-                name: 'settingspage',
-              });
               /* Right icon action */
             }}>
-            <Image
-              source={require('../../assets/settings.png')}
-              style={{height: 30, width: 30, marginRight: 10}}
-            />
+            <Badge
+              style={{
+                backgroundColor: '#E9E9E9',
+                width: 35,
+                height: 35,
+                borderRadius: 50,
+                // justifyContent: 'center',
+                alignItems: 'center',
+                display: 'flex',
+                marginTop: 0,
+              }}>
+              <Text
+                style={{
+                  color: 'black',
+                  fontSize: 22,
+                  fontWeight: '400',
+                }}>
+                {model.UserName.charAt(0)}
+              </Text>
+            </Badge>
           </TouchableOpacity>
         </View>
         <View style={styles.body}>

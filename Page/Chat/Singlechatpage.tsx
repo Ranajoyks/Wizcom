@@ -8,8 +8,9 @@ import {
   Dimensions,
   TouchableOpacity,
   Image,
+  TextInput,
 } from 'react-native';
-import {Root} from 'native-base';
+import {Badge, Root} from 'native-base';
 import BaseComponent from '../../Core/BaseComponent';
 import BaseState from '../../Core/BaseState';
 import {TabView, SceneMap, TabBar} from 'react-native-tab-view';
@@ -22,6 +23,10 @@ import Groupchat from './Groupchat';
 
 export class SinglechatpageViewModel {
   BranchName: string = '';
+  UserName: string = '';
+  IsShow: boolean = false;
+  Message: string = '';
+
   CityList: any[] = [
     {id: 1, name: 'Aaron Loeb'},
     {id: 2, name: 'Adeline Palmerston'},
@@ -34,8 +39,8 @@ export class SinglechatpageViewModel {
   index: number = 0;
   routes: any[] = [
     {key: 'first', title: 'All Messages'},
-    {key: 'second', title: 'Chat'},
-    {key: 'third', title: 'Notification'},
+    // {key: 'second', title: 'Chat'},
+    {key: 'second', title: 'Notification'},
   ];
 }
 
@@ -47,9 +52,20 @@ export default class Singlechatpage extends BaseComponent<
     super(props);
     this.state = new BaseState(new SinglechatpageViewModel());
     this.state.Model.BranchName = props.route.params.BranchName;
-    console.log("Branch",this.state.Model.BranchName);
-    
+    this.state.Model.UserName = props.route.params.UserName;
+
+    console.log('Branch', this.state.Model.BranchName);
   }
+  Search = async () => {
+    var Model = this.state.Model;
+    Model.IsShow = !Model.IsShow;
+    this.UpdateViewModel();
+  };
+  Cancle = async () => {
+    var Model = this.state.Model;
+    Model.IsShow = !Model.IsShow;
+    this.UpdateViewModel();
+  };
   renderScene = SceneMap({
     first: () => {
       // console.log('Navigation Prop in Allmessage:', this.props.navigation);
@@ -59,10 +75,10 @@ export default class Singlechatpage extends BaseComponent<
       // console.log('Navigation Prop in Loginpage:', this.props.navigation);
       return <Allmessage navigation={this.props.navigation} />;
     },
-    third: () => {
-      // console.log('Navigation Prop in Loginpage:', this.props.navigation);
-      return <Groupchat navigation={this.props.navigation} />;
-    },
+    // third: () => {
+    //   // console.log('Navigation Prop in Loginpage:', this.props.navigation);
+    //   return <Groupchat navigation={this.props.navigation} />;
+    // },
   });
   renderTabBar = props => (
     <TabBar
@@ -79,29 +95,30 @@ export default class Singlechatpage extends BaseComponent<
     var model = this.state.Model;
     return (
       <View style={styles.container}>
-        <View style={styles.header}>
-          <View>
-            <Text
-              style={{
-                fontSize: 18,
-                fontWeight: '800',
-                fontFamily: 'Poppins-Regular',
-                color: 'black',
-              }}>
-              EResource Messenger
-            </Text>
-            <View style={{flexDirection: 'row', marginTop: 5}}>
+        {model.IsShow == false && (
+          <View style={styles.header}>
+            <View>
               <Text
                 style={{
-                  fontSize: 16,
-                  fontWeight: '100',
+                  fontSize: 18,
+                  fontWeight: '800',
                   fontFamily: 'Poppins-Regular',
-                  color: '#0383FA',
-                  marginRight: 8,
+                  color: 'black',
                 }}>
-                {model.BranchName}
+                EResource Messenger
               </Text>
-              {/* <Text
+              <View style={{flexDirection: 'row', marginTop: 5}}>
+                <Text
+                  style={{
+                    fontSize: 16,
+                    fontWeight: '100',
+                    fontFamily: 'Poppins-Regular',
+                    color: '#0383FA',
+                    marginRight: 8,
+                  }}>
+                  {model.BranchName}
+                </Text>
+                {/* <Text
                 style={{
                   fontSize: 16,
                   fontWeight: '200',
@@ -121,36 +138,76 @@ export default class Singlechatpage extends BaseComponent<
                 }}>
                 All:0
               </Text> */}
+              </View>
+            </View>
+            <TouchableOpacity
+              onPress={() => {
+                this.Search();
+              }}>
+              <Image
+                source={require('../../assets/search.png')}
+                style={{height: 30, width: 30, marginRight: 10}}
+              />
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => {
+                /* Right icon action */
+              }}>
+              <Badge
+                style={{
+                  backgroundColor: '#E9E9E9',
+                  width: 35,
+                  height: 35,
+                  borderRadius: 50,
+                  // justifyContent: 'center',
+                  alignItems: 'center',
+                  display: 'flex',
+                  marginTop: -5,
+                }}>
+                <Text
+                  style={{
+                    color: 'black',
+                    fontSize: 22,
+                    fontWeight: '400',
+                  }}>
+                  {model.UserName.charAt(0)}
+                </Text>
+              </Badge>
+              {/* <Icon name="bell" size={24} style={styles.icon} /> */}
+            </TouchableOpacity>
+          </View>
+        )}
+        {model.IsShow == true && (
+          <View style={{padding: 10}}>
+            <View
+              style={{
+                backgroundColor: '#F1F1F1',
+                paddingHorizontal: 10,
+                paddingVertical: 5,
+                borderRadius: 6,
+                flexDirection: 'row',
+              }}>
+              <TextInput
+                value={model.Message}
+                onChangeText={text => {
+                  model.Message = text;
+                  this.UpdateViewModel();
+                }}
+                style={
+                  (styles.input, {width: Dimensions.get('window').width - 70})
+                }
+                placeholder="Search....."></TextInput>
+              <TouchableOpacity
+                onPress={this.Cancle}
+                style={{flexShrink: 1, width: 25, justifyContent: 'center'}}>
+                <Image
+                  source={require('../../assets/cancel.png')}
+                  style={{height: 25, width: 25}}
+                />
+              </TouchableOpacity>
             </View>
           </View>
-          <TouchableOpacity
-            onPress={() => {
-              /* Left icon action */
-            }}>
-            <Image
-              source={require('../../assets/search.png')}
-              style={{height: 30, width: 30, marginRight: 10}}
-            />
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={() => {
-              this.props.navigation.navigate({
-                name: 'settingspage',
-              });
-              /* Right icon action */
-            }}>
-            <Image
-              source={require('../../assets/settings.png')}
-              style={{height: 30, width: 30, marginRight: 10}}
-            />
-            {/* <Icon name="bell" size={24} style={styles.icon} /> */}
-          </TouchableOpacity>
-        </View>
-        {/* <View style={styles.tabsContainer}>
-        <Text style={styles.tabButton}>All Messages</Text>
-        <Text style={styles.tabButton}>Groups</Text>
-      </View> */}
-        {/* <NavigationContainer> */}
+        )}
         <TabView
           renderTabBar={this.renderTabBar}
           navigationState={{
@@ -160,20 +217,7 @@ export default class Singlechatpage extends BaseComponent<
           renderScene={this.renderScene}
           onIndexChange={index => (model.index = index)}
           initialLayout={{width: Dimensions.get('window').width}}
-
-          // tabBar={props => <View style={{ backgroundColor: 'white' }} {...props} /> as any}
         />
-        {/* </NavigationContainer> */}
-        {/* <FlatList
-        data={model.CityList}
-        renderItem={({ item }) => (
-          <View style={styles.messageItem}>
-          <Text style={styles.messageName}>{item.name}</Text>
-        </View>
-          
-        )}
-        keyExtractor={(item) => item.id.toString()}
-      /> */}
       </View>
     );
   }
@@ -195,6 +239,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    marginTop:10
   },
   headerTitle: {
     color: '#fff', // Replace with desired text color
@@ -208,7 +253,7 @@ const styles = StyleSheet.create({
   tabsContainer: {
     flexDirection: 'row',
     justifyContent: 'space-around',
-    marginTop: 10,
+    // marginTop: 10,
   },
   tabButton: {
     padding: 10,
@@ -221,5 +266,11 @@ const styles = StyleSheet.create({
   },
   messageName: {
     fontSize: 18, // Adjust font size as needed
+  },
+  input: {
+    alignSelf: 'center',
+    backgroundColor: '#F1F1F1',
+    borderColor: '#F1F1F1',
+    paddingHorizontal: 5,
   },
 });

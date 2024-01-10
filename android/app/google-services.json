@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1082592053287",
+    "project_id": "wizcom-159ca",
+    "storage_bucket": "wizcom-159ca.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1082592053287:android:86bc0e4694b42ad69ee602",
+        "android_client_info": {
+          "package_name": "com.wizcom"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDoE2cPXzAG9mTQn9e_kzUgO_26AdQvuzs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

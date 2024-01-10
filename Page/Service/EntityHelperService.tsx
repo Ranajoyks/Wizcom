@@ -1,9 +1,9 @@
 import {format, parseISO} from 'date-fns';
-import Service from '../Entity/Service';
+// import Service from '../Entity/Service';
 import moment from 'moment';
 
 export default class EntityHelperService {
-  public static IsOfferPercentageAvaialble(productItem: Service): boolean {
+  public static IsOfferPercentageAvaialble(productItem: any): boolean {
     return (
       productItem.ActualPrice !== productItem.ActualPrice &&
       productItem.GSTAmount !== undefined &&
@@ -50,7 +50,20 @@ export default class EntityHelperService {
 
     newDate.setHours(hours - offset);
     // console.log(newDate);
-    const formattedDate = moment(newDate.toString()).format('HH:mm:ss');
+    const formattedDate = moment(newDate.toString()).format('HH:mm');
+    return formattedDate;
+  }
+  public static convertLocalDate(date: any) {
+    var newDate = new Date(
+      date.getTime() + date.getTimezoneOffset() * 60 * 1000,
+    );
+
+    var offset = date.getTimezoneOffset() / 60;
+    var hours = date.getHours();
+
+    newDate.setHours(hours - offset);
+    // console.log(newDate);
+    const formattedDate = moment(newDate.toString()).format('YYYY-MM-DD');
     return formattedDate;
   }
 }

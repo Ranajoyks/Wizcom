@@ -15,7 +15,7 @@ import {
 import Icon from 'react-native-vector-icons/FontAwesome'; // Replace with your icon library
 import AppIconImage from '../../assets/AppIconImage';
 import DropDownPicker from 'react-native-dropdown-picker';
-import {Button} from 'native-base';
+import {Badge, Button} from 'native-base';
 import BaseComponent from '../../Core/BaseComponent';
 import BaseState from '../../Core/BaseState';
 import * as signalR from '@microsoft/signalr';
@@ -23,15 +23,25 @@ import SessionHelper from '../../Core/SessionHelper';
 import axios from 'axios';
 import {Chat} from '../../Entity/Chat';
 import EntityHelperService from '../Service/EntityHelperService';
-// import {HubConnectionBuilder} from '';
+import messaging from '@react-native-firebase/messaging';
+import DeviceInfo from 'react-native-device-info';
 export class ChatdetailsViewModel {
   Message: string = '';
   senderId: number = 0;
   receiverId: string = '';
   companyId?: number = 18;
+  itype:number =0;
+  msgflag:string="U"
   Connection: any;
   Chats: Chat[] = [];
   User: any;
+  NewChat: AllChats[] = [];
+  IsShow: boolean = false;
+}
+export class AllChats {
+  date: any = new Date();
+  Chat: Chatss[] = [];
+  istoday: boolean = false;
 }
 export class Chatss {
   bEmlStatus: number = 0;
@@ -61,13 +71,35 @@ export default class Chatdetails extends BaseComponent<
     this.state.Model.User = props.route.params.User;
     this.state.Model.senderId = props.route.params.SenderID;
   }
-  componentDidMount(): void {
+  async componentDidMount(): Promise<void> {
     var Model = this.state.Model;
     Model.receiverId = Model.User.lId.toString();
     this.MakeConnection();
     this.GetAllMsg();
     this.ReceiveMsg();
+    // this.requestUserPermission();
+    // this.getDeviceToken();
+    const deviceId = DeviceInfo.getDeviceId();
+    console.log('deviceId: ', deviceId);
   }
+  // requestUserPermission = async () => {
+  //   const authStatus = await messaging().requestPermission();
+  //   const enabled =
+  //     authStatus === messaging.AuthorizationStatus.AUTHORIZED ||
+  //     authStatus === messaging.AuthorizationStatus.PROVISIONAL;
+
+  //   if (enabled) {
+  //     console.log('Authorization status:', authStatus);
+  //   }
+  // };
+  // getDeviceToken = async () => {
+  //   try {
+  //     const token = await messaging().getToken();
+  //     console.log('Device Token:', token);
+  //   } catch (error) {
+  //     console.error('Error getting device token:', error);
+  //   }
+  // };
   MakeConnection = async () => {
     var Model = this.state.Model;
     var BranchID = await SessionHelper.GetBranchIdSession();
@@ -94,11 +126,10 @@ export default class Chatdetails extends BaseComponent<
         var ReceiveMSg = new Chatss();
 
         if (message) {
-          var date = new Date()
+          var date = new Date();
           ReceiveMSg.sMsg = message;
           ReceiveMSg.lReceiverId = receiver;
           ReceiveMSg.lSenderId = sender;
-
           var newDate = new Date(
             date.getTime() - date.getTimezoneOffset() * 60 * 1000,
           );
@@ -106,10 +137,40 @@ export default class Chatdetails extends BaseComponent<
           var hours = date.getHours();
           newDate.setHours(hours + offset);
           ReceiveMSg.dtMsg = new Date(newDate).toString();
-          // ReceiveMSg.dtMsg = new Date().toString()
-          await Model.Chats.push(ReceiveMSg);
-          console.log('REceiveMSG: ', ReceiveMSg.sMsg);
+          var XyzIndex = Model.NewChat.findIndex((i: AllChats) => {
+            // Create new Date objects with only the year, month, and day
+            const itemDate = new Date();
+            const iDate = new Date(i.date);
 
+            // Compare only the date part
+            return (
+              itemDate.getFullYear() === iDate.getFullYear() &&
+              itemDate.getMonth() === iDate.getMonth() &&
+              itemDate.getDate() === iDate.getDate()
+            );
+          });
+          // ReceiveMSg.dtMsg = new Date().toString()
+          if (XyzIndex) {
+            // await Model.Chats.push(ReceiveMSg);
+            await Model.NewChat[XyzIndex].Chat.push(ReceiveMSg);
+          } else {
+            var NewChatArray = new AllChats();
+            var date = new Date();
+            if (
+              date.getFullYear() === new Date(ReceiveMSg.dtMsg).getFullYear() &&
+              date.getMonth() === new Date(ReceiveMSg.dtMsg).getMonth() &&
+              date.getDate() === new Date(ReceiveMSg.dtMsg).getDate()
+            ) {
+              NewChatArray.istoday = true;
+            } else {
+              NewChatArray.istoday = false;
+            }
+            console.log('sendMsg date', ReceiveMSg.dtMsg);
+            NewChatArray.date = ReceiveMSg.dtMsg.toString();
+            NewChatArray.Chat.push(ReceiveMSg);
+            Model.NewChat.push(NewChatArray);
+          }
+          console.log('REceiveMSG: ', ReceiveMSg.sMsg);
           this.UpdateViewModel();
         }
       },
@@ -122,8 +183,62 @@ export default class Chatdetails extends BaseComponent<
         `https://wemessanger.azurewebsites.net/api/User/readmessage?companyId=${Model.companyId}&senderId=${Model.senderId}&receiverId=${Model.receiverId}`,
       )
       .then(res => {
-        Model.Chats = res.data;
-        this.UpdateViewModel();
+        // console.log('ResData: ', res.data);
+
+        res.data.forEach((item: Chat) => {
+          var Xyz = Model.NewChat.find((i: AllChats) => {
+            // Create new Date objects with only the year, month, and day
+            const itemDate = new Date(item.dtMsg);
+            const iDate = new Date(i.date);
+
+            // Compare only the date part
+            return (
+              itemDate.getFullYear() === iDate.getFullYear() &&
+              itemDate.getMonth() === iDate.getMonth() &&
+              itemDate.getDate() === iDate.getDate()
+            );
+          });
+
+          var XyzIndex = Model.NewChat.findIndex((i: AllChats) => {
+            // Create new Date objects with only the year, month, and day
+            const itemDate = new Date(item.dtMsg);
+            const iDate = new Date(i.date);
+            // Compare only the date part
+            return (
+              itemDate.getFullYear() === iDate.getFullYear() &&
+              itemDate.getMonth() === iDate.getMonth() &&
+              itemDate.getDate() === iDate.getDate()
+            );
+          });
+
+          const itemDate = new Date(item.dtMsg);
+          if (Xyz) {
+            Model.NewChat[XyzIndex].Chat.push(item);
+            //    this.UpdateViewModel();
+            // var NewChatArray = new Chatss()
+            // NewChatArray.
+          } else {
+            var NewChatArray = new AllChats();
+            var date = new Date();
+            if (
+              date.getFullYear() === new Date(item.dtMsg).getFullYear() &&
+              date.getMonth() === new Date(item.dtMsg).getMonth() &&
+              date.getDate() === new Date(item.dtMsg).getDate()
+            ) {
+              NewChatArray.istoday = true;
+            } else {
+              NewChatArray.istoday = false;
+            }
+            console.log('new date', item.dtMsg);
+            NewChatArray.date = item.dtMsg.toString();
+            NewChatArray.Chat.push(item);
+            Model.NewChat.push(NewChatArray);
+          }
+          this.UpdateViewModel();
+        });
+        // Model.Chats = res.data;
+        // this.UpdateViewModel();
+        // console.log('MOdelNewChat: ', JSON.stringify(Model.NewChat));
       })
       .catch((err: any) => {
         console.log(err);
@@ -167,6 +282,8 @@ export default class Chatdetails extends BaseComponent<
       model.senderId,
       model.receiverId,
       model.Message,
+      model.msgflag,
+      model.itype
     );
     if (model.Message.trim() === '') {
       return;
@@ -179,11 +296,25 @@ export default class Chatdetails extends BaseComponent<
         model.senderId,
         model.receiverId,
         model.Message,
+        model.msgflag,
+        model.itype
       )
         .then(() => {
           var date = new Date();
           // const modifiedDate = new Date(date.getTime() - 19800000);
           console.log('Msg sent:', model.Message);
+          var XyzIndex = model.NewChat.findIndex((i: AllChats) => {
+            // Create new Date objects with only the year, month, and day
+            const itemDate = new Date();
+            const iDate = new Date(i.date);
+
+            // Compare only the date part
+            return (
+              itemDate.getFullYear() === iDate.getFullYear() &&
+              itemDate.getMonth() === iDate.getMonth() &&
+              itemDate.getDate() === iDate.getDate()
+            );
+          });
           var sendMsg = new Chatss();
           sendMsg.sMsg = model.Message;
           sendMsg.lSenderId = model.senderId;
@@ -194,14 +325,31 @@ export default class Chatdetails extends BaseComponent<
           var hours = date.getHours();
           newDate.setHours(hours + offset);
           sendMsg.dtMsg = new Date(newDate).toString();
-
-          //sendMsg.dtMsg = new Date().toString();
           console.log('SendDate', sendMsg.dtMsg);
           console.log('Send MSg: ', sendMsg);
           if (model.Message.trim() === '') {
             return;
           } else {
-            model.Chats.push(sendMsg);
+            if (XyzIndex) {
+              model.NewChat[XyzIndex].Chat.push(sendMsg);
+            } else {
+              var NewChatArray = new AllChats();
+              var date = new Date();
+              if (
+                date.getFullYear() === new Date(sendMsg.dtMsg).getFullYear() &&
+                date.getMonth() === new Date(sendMsg.dtMsg).getMonth() &&
+                date.getDate() === new Date(sendMsg.dtMsg).getDate()
+              ) {
+                NewChatArray.istoday = true;
+              } else {
+                NewChatArray.istoday = false;
+              }
+              console.log('sendMsg date', sendMsg.dtMsg);
+              NewChatArray.date = sendMsg.dtMsg.toString();
+              NewChatArray.Chat.push(sendMsg);
+              model.NewChat.push(NewChatArray);
+            }
+            // model.Chats.push(sendMsg);
           }
           model.Message = '';
           this.UpdateViewModel();
@@ -212,42 +360,109 @@ export default class Chatdetails extends BaseComponent<
         });
     }
   };
+  Search = async () => {
+    var Model = this.state.Model;
+    Model.IsShow = !Model.IsShow;
+    this.UpdateViewModel()
+  };
+  Cancle = async () => {
+    var Model = this.state.Model;
+    Model.IsShow = !Model.IsShow;
+    this.UpdateViewModel()
+
+  };
   render() {
     // const { url } = this.state;
     const prefix = 'https://';
     var Model = this.state.Model;
-    // console.log('Chats:', Model.Chats);
+    // console.log('Chats:', JSON.stringify(Model.NewChat) );
 
     return (
       <View style={styles.container}>
-        <View style={styles.header}>
-          <TouchableOpacity
-            onPress={() => {
-              this.props.navigation.navigate('Singlechatpage');
-            }}>
-            <Image
-              source={require('../../assets/backimg.png')}
-              style={{height: 30, width: 30, marginLeft: 10}}
-            />
-          </TouchableOpacity>
-          <View style={{flex: 1}}>
-            <Text style={styles.title}>{Model.User.userFullName}</Text>
-            {/* <Text style={(styles.subtitle, styles.online)}>Online</Text> */}
+        {/* {Model.IsShow == false && ( */}
+          <View style={styles.header}>
+            <TouchableOpacity
+              onPress={() => {
+                this.props.navigation.navigate('Singlechatpage');
+              }}>
+              <Image
+                source={require('../../assets/backimg.png')}
+                style={{height: 30, width: 30, marginLeft: 10}}
+              />
+            </TouchableOpacity>
+            <View style={{flex: 1}}>
+              <Text style={styles.title}>{Model.User.userFullName}</Text>
+              {/* <Text style={(styles.subtitle, styles.online)}>Online</Text> */}
 
-            {/* <Text style={(styles.subtitle, styles.offline)}>Offline</Text> */}
+              {/* <Text style={(styles.subtitle, styles.offline)}>Offline</Text> */}
+            </View>
+            {/* <TouchableOpacity
+              onPress={() => {
+                this.Search();
+              }}>
+              <Image
+                source={require('../../assets/search.png')}
+                style={{height: 30, width: 30, marginRight: 10, marginTop: 5}}
+              />
+            </TouchableOpacity> */}
+            <TouchableOpacity
+              onPress={() => {
+                /* Right icon action */
+              }}>
+              <Badge
+                style={{
+                  backgroundColor: '#E9E9E9',
+                  width: 35,
+                  height: 35,
+                  borderRadius: 50,
+                  // justifyContent: 'center',
+                  alignItems: 'center',
+                  display: 'flex',
+                  // paddingTop: -10,
+                }}>
+                <Text
+                  style={{
+                    color: 'black',
+                    fontSize: 22,
+                    fontWeight: '400',
+                  }}>
+                  {Model.User.userFullName.charAt(0)}
+                </Text>
+              </Badge>
+            </TouchableOpacity>
           </View>
-
-          <TouchableOpacity
-            onPress={() => {
-              /* Right icon action */
-            }}>
-            <Image
-              source={require('../../assets/settings.png')}
-              style={{height: 30, width: 30, marginRight: 10}}
-            />
-            <Icon name="bell" size={24} style={styles.icon} />
-          </TouchableOpacity>
-        </View>
+        {/* )} */}
+        {/* {Model.IsShow == true && (
+          <View style={{padding: 10}}>
+            <View
+              style={{
+                backgroundColor: '#F1F1F1',
+                paddingHorizontal: 10,
+                paddingVertical: 5,
+                borderRadius: 6,
+                flexDirection: 'row',
+              }}>
+              <TextInput
+                value={Model.Message}
+                onChangeText={text => {
+                  Model.Message = text;
+                  this.UpdateViewModel();
+                }}
+                style={
+                  (styles.input, {width: Dimensions.get('window').width - 70})
+                }
+                placeholder="Search....."></TextInput>
+              <TouchableOpacity
+                onPress={this.Cancle}
+                style={{flexShrink: 1, width: 25, justifyContent: 'center'}}>
+                <Image
+                  source={require('../../assets/cancel.png')}
+                  style={{height: 25, width: 25}}
+                />
+              </TouchableOpacity>
+            </View>
+          </View>
+        )} */}
         <SafeAreaView style={styles.body}>
           <ScrollView
             style={styles.scrollView}
@@ -260,142 +475,75 @@ export default class Chatdetails extends BaseComponent<
             onContentSizeChange={(width, height) =>
               this.refs.scrollView.scrollTo({y: height})
             }>
-            <View>
-              <Text style={styles.today}>Today</Text>
-            </View>
-            {Model.Chats.map((i: Chat) =>
-              i.lSenderId === Model.senderId ? (
-                <View style={styles.messageto}>
-                  <View style={styles.messagetomessage}>
-                    <View style={styles.messagetotext}>
-                      <Text style={styles.messagetotextcontent}>{i?.sMsg}</Text>
-                    </View>
-                  </View>
-                  <View style={styles.messagetotime}>
-                    <Text style={styles.messagetotimetext}>
-                      {/* {new Date(
-                        new Date(i.dtMsg).getTime() + 19800000,
-                      ).toLocaleTimeString()} */}
-                      {EntityHelperService.convertUTCDateToLocalDate(
-                        new Date(i?.dtMsg),
-                      )}
-                    </Text>
-                  </View>
-                </View>
-              ) : (
-                <View style={styles.messagefrom}>
-                  <View style={styles.messagefrommessage}>
-                    <View style={styles.messagefromicon}>
-                      <Text
-                        style={{
-                          color: '#000',
-                          flex: 1,
-                          fontSize: 15,
-                          textAlign: 'center',
-                        }}>
-                        A
-                      </Text>
-                    </View>
-                    <View style={styles.messagefromtext}>
-                      <Text style={styles.messagefromtextcontent}>
-                        {i?.sMsg}
-                      </Text>
-                    </View>
-                  </View>
-                  <View style={styles.messagefromtime}>
-                    <Text style={styles.messagefromtimetext}>
-                      {EntityHelperService.convertUTCDateToLocalDate(
-                        new Date(i?.dtMsg),
-                      )}
-                    </Text>
-                  </View>
-                </View>
-              ),
-            )}
-
-            {/* <View style={styles.messagefrom}>
-              <View style={styles.messagefrommessage}>
-                <View style={styles.messagefromicon}>
-                  <Text
-                    style={{
-                      color: '#000',
-                      flex: 1,
-                      fontSize: 15,
-                      textAlign: 'center',
-                    }}>
-                    BS
+            {Model.NewChat.map((item: AllChats) => (
+              <View>
+                {item.istoday ? (
+                  <Text style={styles.today}>Today</Text>
+                ) : (
+                  <Text style={styles.today}>
+                    {EntityHelperService.ToDdMmmYyyy(item?.date)}
                   </Text>
-                </View>
-                <View style={styles.messagefromtext}>
-                  <Text style={styles.messagefromtextcontent}>Hi there!</Text>
-                </View>
-              </View>
-              <View style={styles.messagefromtime}>
-                <Text style={styles.messagefromtimetext}>10.45 AM</Text>
-              </View>
-            </View> */}
+                )}
 
-            {/* <View style={styles.messageto}>
-              <View style={styles.messagetomessage}>
-                <View style={styles.messagetotext}>
-                  <Text style={styles.messagetotextcontent}>Hi there!</Text>
-                </View>
+                {item.Chat.map((i: Chat) =>
+                  i.lSenderId === Model.senderId ? (
+                    <>
+                      <View style={styles.messageto}>
+                        <View style={styles.messagetomessage}>
+                          <View style={styles.messagetotext}>
+                            <Text style={styles.messagetotextcontent}>
+                              {i?.sMsg}
+                            </Text>
+                          </View>
+                        </View>
+                        <View style={styles.messagetotime}>
+                          <Text style={styles.messagefromtimetext}>
+                            {EntityHelperService.convertUTCDateToLocalDate(
+                              new Date(i?.dtMsg),
+                            )}
+                          </Text>
+                        </View>
+                      </View>
+                    </>
+                  ) : (
+                    <>
+                      <View style={styles.messagefrom}>
+                        <View style={styles.messagefrommessage}>
+                          <View style={styles.messagefromicon}>
+                            <Text
+                              style={{
+                                color: '#000',
+                                flex: 1,
+                                fontSize: 15,
+                                textAlign: 'center',
+                              }}>
+                              A
+                            </Text>
+                          </View>
+                          <View style={styles.messagefromtext}>
+                            <Text style={styles.messagefromtextcontent}>
+                              {i?.sMsg}
+                            </Text>
+                          </View>
+                        </View>
+                        <View style={styles.messagefromtime}>
+                          <Text style={styles.messagefromtimetext}>
+                            {EntityHelperService.convertUTCDateToLocalDate(
+                              new Date(i?.dtMsg),
+                            )}
+                          </Text>
+                        </View>
+                      </View>
+                      <View>
+                        {/* <Text style={styles.today}> {EntityHelperService.convertLocalDate(
+                        new Date(i?.dtMsg)
+                      )}</Text> */}
+                      </View>
+                    </>
+                  ),
+                )}
               </View>
-              <View style={styles.messagetotime}>
-                <Text style={styles.messagetotimetext}>10.45 AM</Text>
-              </View>
-            </View>
-
-            <View>
-              <Text style={styles.unread}>Unread</Text>
-            </View>
-
-            <View style={styles.messagefrom}>
-              <View style={styles.messagefrommessage}>
-                <View style={styles.messagefromicon}>
-                  <Text
-                    style={{
-                      color: '#000',
-                      flex: 1,
-                      fontSize: 15,
-                      textAlign: 'center',
-                    }}>
-                    BS
-                  </Text>
-                </View>
-                <View style={styles.messagefromtext}>
-                  <Text style={styles.messagefromtextcontent}>Hi there!</Text>
-                </View>
-              </View>
-              <View style={styles.messagefromtime}>
-                <Text style={styles.messagefromtimetext}>10.45 AM</Text>
-              </View>
-            </View>
-
-            <View style={styles.messagefrom}>
-              <View style={styles.messagefrommessage}>
-                <View style={styles.messagefromicon}>
-                  <Text
-                    style={{
-                      color: '#000',
-                      flex: 1,
-                      fontSize: 15,
-                      textAlign: 'center',
-                    }}>
-                    BS
-                  </Text>
-                </View>
-                <View style={styles.messagefromtext}>
-                  <Text style={styles.messagefromtextcontent}>
-                    Hi there, are you available around 4PM today for meeting
-                    with a new client?
-                  </Text>
-                </View>
-              </View>
-              <View style={styles.messagefromtime}>
-                <Text style={styles.messagefromtimetext}>10.45 AM</Text>
-              </View>
-            </View> */}
+            ))}
           </ScrollView>
           <View style={{padding: 10}}>
             <View
@@ -513,7 +661,7 @@ const styles = StyleSheet.create({
     paddingRight: 30,
     paddingVertical: 5,
   },
-  messagefromtimetext: {flexShrink: 1, textAlign: 'right'},
+  messagefromtimetext: {flexShrink: 1, textAlign: 'right',fontSize:12},
   messageto: {
     flexDirection: 'column',
     paddingHorizontal: 15,

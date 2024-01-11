@@ -19,12 +19,14 @@ import {Button} from 'native-base';
 import SessionHelper from '../../Core/SessionHelper';
 import axios from 'axios';
 import * as signalR from '@microsoft/signalr';
+import DeviceInfo from 'react-native-device-info';
 
 export class LoginViewModel {
   UserName: string = '';
   Password: string = '';
   BranchList: [] = [];
   showMessage: boolean = false;
+  DeviceId: string = '';
 }
 export default class Loginpage extends BaseComponent<any, LoginViewModel> {
   constructor(props: any) {
@@ -35,7 +37,13 @@ export default class Loginpage extends BaseComponent<any, LoginViewModel> {
   //   var value = await SessionHelper.GetSession();
   //   console.log('value: ', value);
   // }
-  componentDidMount() {}
+  componentDidMount() {
+    var Model = this.state.Model;
+    const deviceId = DeviceInfo.getDeviceId();
+    Model.DeviceId = deviceId;
+    this.UpdateViewModel();
+    console.log('deviceId: ', deviceId);
+  }
   onChangeText() {}
   handleSetUrl = () => {
     this.props.navigation.navigate({
@@ -46,6 +54,7 @@ export default class Loginpage extends BaseComponent<any, LoginViewModel> {
     var Model = this.state.Model;
     var value = await SessionHelper.GetSession();
     SessionHelper.SetUserNameSession(Model.UserName);
+    SessionHelper.SetDeviceIdSession(Model.DeviceId);
     const headers = {
       'Content-Type': 'application/json',
       Cookie: `ASP.NET_SessionId=${value}`,
@@ -76,8 +85,23 @@ export default class Loginpage extends BaseComponent<any, LoginViewModel> {
           this.UpdateViewModel();
           this.props.navigation.navigate('Branchpage', {
             BranchList: response.data.d.data.ado,
-            UserName:Model.UserName
+            UserName: Model.UserName,
           });
+          axios
+            .get(
+              `https://wemessanger.azurewebsites.net/api/user?sname=${Model.UserName}&deviceId=${Model.DeviceId}`,
+            )
+            .then(response => {
+              console.log('data', response.data);
+              SessionHelper.SetUserDetailsSession(response.data[0])
+              // model.alluser = response.data;
+              // var Find = response.data.find((i: any) => i.userName == UserName);
+              // model.SenderId = Find.lId;
+              // this.UpdateViewModel();
+            })
+            .catch(error => {
+              console.error('Error fetching data:', error);
+            });
         }
       })
       .catch(error => {

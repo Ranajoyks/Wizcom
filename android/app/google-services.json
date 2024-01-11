@@ -1,13 +1,13 @@
 {
   "project_info": {
-    "project_number": "1082592053287",
-    "project_id": "wizcom-159ca",
-    "storage_bucket": "wizcom-159ca.appspot.com"
+    "project_number": "232616558401",
+    "project_id": "eresource-messenger",
+    "storage_bucket": "eresource-messenger.appspot.com"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:1082592053287:android:86bc0e4694b42ad69ee602",
+        "mobilesdk_app_id": "1:232616558401:android:76f24395689086f63fabc0",
         "android_client_info": {
           "package_name": "com.wizcom"
         }
@@ -15,7 +15,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyDoE2cPXzAG9mTQn9e_kzUgO_26AdQvuzs"
+          "current_key": "AIzaSyD969Ip8DeDJxlONqZeuD-k5HlXU3z4vt4"
         }
       ],
       "services": {

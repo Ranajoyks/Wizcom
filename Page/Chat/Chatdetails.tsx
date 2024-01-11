@@ -30,8 +30,8 @@ export class ChatdetailsViewModel {
   senderId: number = 0;
   receiverId: string = '';
   companyId?: number = 18;
-  itype:number =0;
-  msgflag:string="U"
+  itype: number = 0;
+  msgflag: string = 'U';
   Connection: any;
   Chats: Chat[] = [];
   User: any;
@@ -69,18 +69,24 @@ export default class Chatdetails extends BaseComponent<
     super(props);
     this.state = new BaseState(new ChatdetailsViewModel());
     this.state.Model.User = props.route.params.User;
-    this.state.Model.senderId = props.route.params.SenderID;
+    // this.state.Model.senderId = props.route.params.SenderID;
   }
   async componentDidMount(): Promise<void> {
     var Model = this.state.Model;
     Model.receiverId = Model.User.lId.toString();
     this.MakeConnection();
-    this.GetAllMsg();
     this.ReceiveMsg();
     // this.requestUserPermission();
     // this.getDeviceToken();
     const deviceId = DeviceInfo.getDeviceId();
     console.log('deviceId: ', deviceId);
+    var UserDetails = await SessionHelper.GetUserDetailsSession();
+    Model.senderId = UserDetails.lId;
+    console.log("UserDetails.lId",UserDetails.lId);
+    
+    this.UpdateViewModel();
+    this.GetAllMsg();
+
   }
   // requestUserPermission = async () => {
   //   const authStatus = await messaging().requestPermission();
@@ -178,12 +184,15 @@ export default class Chatdetails extends BaseComponent<
   };
   GetAllMsg = async () => {
     var Model = this.state.Model;
+    console.log(Model.companyId);
+    console.log(Model.senderId);
+    console.log(Model.receiverId);
     axios
       .get(
-        `https://wemessanger.azurewebsites.net/api/User/readmessage?companyId=${Model.companyId}&senderId=${Model.senderId}&receiverId=${Model.receiverId}`,
+        `https://wemessanger.azurewebsites.net/api/User/readmessage?companyId=${Model.companyId}&senderId=u_${Model.senderId}&receiverId=u_${Model.receiverId}`,
       )
       .then(res => {
-        // console.log('ResData: ', res.data);
+        console.log('ResData: ', res.data);
 
         res.data.forEach((item: Chat) => {
           var Xyz = Model.NewChat.find((i: AllChats) => {
@@ -283,7 +292,7 @@ export default class Chatdetails extends BaseComponent<
       model.receiverId,
       model.Message,
       model.msgflag,
-      model.itype
+      model.itype,
     );
     if (model.Message.trim() === '') {
       return;
@@ -297,7 +306,7 @@ export default class Chatdetails extends BaseComponent<
         model.receiverId,
         model.Message,
         model.msgflag,
-        model.itype
+        model.itype,
       )
         .then(() => {
           var date = new Date();
@@ -363,13 +372,12 @@ export default class Chatdetails extends BaseComponent<
   Search = async () => {
     var Model = this.state.Model;
     Model.IsShow = !Model.IsShow;
-    this.UpdateViewModel()
+    this.UpdateViewModel();
   };
   Cancle = async () => {
     var Model = this.state.Model;
     Model.IsShow = !Model.IsShow;
-    this.UpdateViewModel()
-
+    this.UpdateViewModel();
   };
   render() {
     // const { url } = this.state;
@@ -380,23 +388,23 @@ export default class Chatdetails extends BaseComponent<
     return (
       <View style={styles.container}>
         {/* {Model.IsShow == false && ( */}
-          <View style={styles.header}>
-            <TouchableOpacity
-              onPress={() => {
-                this.props.navigation.navigate('Singlechatpage');
-              }}>
-              <Image
-                source={require('../../assets/backimg.png')}
-                style={{height: 30, width: 30, marginLeft: 10}}
-              />
-            </TouchableOpacity>
-            <View style={{flex: 1}}>
-              <Text style={styles.title}>{Model.User.userFullName}</Text>
-              {/* <Text style={(styles.subtitle, styles.online)}>Online</Text> */}
+        <View style={styles.header}>
+          <TouchableOpacity
+            onPress={() => {
+              this.props.navigation.navigate('Singlechatpage');
+            }}>
+            <Image
+              source={require('../../assets/backimg.png')}
+              style={{height: 30, width: 30, marginLeft: 10}}
+            />
+          </TouchableOpacity>
+          <View style={{flex: 1}}>
+            <Text style={styles.title}>{Model.User.userFullName}</Text>
+            {/* <Text style={(styles.subtitle, styles.online)}>Online</Text> */}
 
-              {/* <Text style={(styles.subtitle, styles.offline)}>Offline</Text> */}
-            </View>
-            {/* <TouchableOpacity
+            {/* <Text style={(styles.subtitle, styles.offline)}>Offline</Text> */}
+          </View>
+          {/* <TouchableOpacity
               onPress={() => {
                 this.Search();
               }}>
@@ -405,32 +413,32 @@ export default class Chatdetails extends BaseComponent<
                 style={{height: 30, width: 30, marginRight: 10, marginTop: 5}}
               />
             </TouchableOpacity> */}
-            <TouchableOpacity
-              onPress={() => {
-                /* Right icon action */
+          <TouchableOpacity
+            onPress={() => {
+              /* Right icon action */
+            }}>
+            <Badge
+              style={{
+                backgroundColor: '#E9E9E9',
+                width: 35,
+                height: 35,
+                borderRadius: 50,
+                // justifyContent: 'center',
+                alignItems: 'center',
+                display: 'flex',
+                // paddingTop: -10,
               }}>
-              <Badge
+              <Text
                 style={{
-                  backgroundColor: '#E9E9E9',
-                  width: 35,
-                  height: 35,
-                  borderRadius: 50,
-                  // justifyContent: 'center',
-                  alignItems: 'center',
-                  display: 'flex',
-                  // paddingTop: -10,
+                  color: 'black',
+                  fontSize: 22,
+                  fontWeight: '400',
                 }}>
-                <Text
-                  style={{
-                    color: 'black',
-                    fontSize: 22,
-                    fontWeight: '400',
-                  }}>
-                  {Model.User.userFullName.charAt(0)}
-                </Text>
-              </Badge>
-            </TouchableOpacity>
-          </View>
+                {Model.User.userFullName.charAt(0)}
+              </Text>
+            </Badge>
+          </TouchableOpacity>
+        </View>
         {/* )} */}
         {/* {Model.IsShow == true && (
           <View style={{padding: 10}}>
@@ -662,7 +670,7 @@ const styles = StyleSheet.create({
     paddingRight: 30,
     paddingVertical: 5,
   },
-  messagefromtimetext: {flexShrink: 1, textAlign: 'right',fontSize:12},
+  messagefromtimetext: {flexShrink: 1, textAlign: 'right', fontSize: 12},
   messageto: {
     flexDirection: 'column',
     paddingHorizontal: 15,

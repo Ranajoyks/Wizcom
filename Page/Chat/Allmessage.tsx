@@ -19,6 +19,9 @@ import {TouchableOpacity} from 'react-native-gesture-handler';
 import axios from 'axios';
 import alluser from '../../Entity/alluser';
 import SessionHelper from '../../Core/SessionHelper';
+import DeviceInfo from 'react-native-device-info';
+import * as signalR from '@microsoft/signalr';
+import messaging from '@react-native-firebase/messaging';
 
 // const navigation = useNavigation();
 export class allchatpageViewModel {
@@ -36,34 +39,43 @@ export default class Allmessage extends BaseComponent<
     super(props);
     this.state = new BaseState(new allchatpageViewModel());
   }
-  componentDidMount() {
+  async componentDidMount() {
     this.Fetchmessage();
+    const FCM = await messaging().getToken();
+    console.log('FCM', FCM);
+    if (FCM) {
+      console.log('FCM', FCM);
+    }
   }
   Fetchmessage = async () => {
-    var UserName = await SessionHelper.GetUserNameSession();
     var model = this.state.Model;
-    axios
-      .get('https://wemessanger.azurewebsites.net/api/user')
-      .then(response => {
-        console.log('data', response.data);
-        model.alluser = response.data;
-        var Find = response.data.find((i: any) => i.userName == UserName);
-        model.SenderId = Find.lId;
-        this.UpdateViewModel();
-      })
-      .catch(error => {
-        console.error('Error fetching data:', error);
-      });
+    var UserName = await SessionHelper.GetUserNameSession();
+    var UserDetails = await SessionHelper.GetUserDetailsSession();
+    var myId = `u_${UserDetails.lId}`;
+    const deviceId = DeviceInfo.getDeviceId();
+    var Connection = new signalR.HubConnectionBuilder()
+      .withUrl('https://wemessanger.azurewebsites.net/chatHub')
+      .build();
+    Connection.start().then(() => {
+      console.log('SignalR connected');
+      Connection.invoke('GetAllUser', myId, 0)
+        .then(user => {
+          // console.log(user);
+          model.alluser = user;
+          this.UpdateViewModel();
+        })
+        .catch((err: any) => {
+          console.log('Error to invoke: ', err);
+        });
+    });
   };
   NextPage = (user: alluser) => {
     var Model = this.state.Model;
-    this.props.navigation.navigate(
-      'Chatdetails',
-      {
-        User: user,
-        SenderID: Model.SenderId,
-      },
-    );
+    this.props.navigation.navigate('Chatdetails', {
+      User: user,
+      // SenderID: Model.SenderId,
+    });
+    // console.log("ModelSenderID: ",Model.SenderId,);
   };
   render() {
     var model = this.state.Model;
@@ -113,7 +125,7 @@ export default class Allmessage extends BaseComponent<
                     </Text>
                     <Text
                       style={{
-                        color: i.status?'#0383FA': '#a6a6a6',
+                        color: i.status ? '#0383FA' : '#a6a6a6',
                         fontWeight: '200',
                         fontFamily: 'OpenSans-VariableFont_wdth,wght',
                         fontSize: 12,

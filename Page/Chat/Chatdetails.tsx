@@ -37,6 +37,7 @@ export class ChatdetailsViewModel {
   User: any;
   NewChat: AllChats[] = [];
   IsShow: boolean = false;
+  sender:string=""
 }
 export class AllChats {
   date: any = new Date();
@@ -76,10 +77,15 @@ export default class Chatdetails extends BaseComponent<
     Model.receiverId = Model.User.lId.toString();
     this.MakeConnection();
     this.ReceiveMsg();
+    var User = await SessionHelper.GetUserDetailsSession();
+    console.log("user: ", User);
+    Model.sender = User.userName
+    this.UpdateViewModel()
+    
+
     // this.requestUserPermission();
     // this.getDeviceToken();
-    const deviceId = DeviceInfo.getDeviceId();
-    console.log('deviceId: ', deviceId);
+    
     var UserDetails = await SessionHelper.GetUserDetailsSession();
     Model.senderId = UserDetails.lId;
     console.log("UserDetails.lId",UserDetails.lId);
@@ -434,7 +440,7 @@ export default class Chatdetails extends BaseComponent<
                   fontSize: 22,
                   fontWeight: '400',
                 }}>
-                {Model.User.userFullName.charAt(0)}
+                {Model.sender.charAt(0)}
               </Text>
             </Badge>
           </TouchableOpacity>

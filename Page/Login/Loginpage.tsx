@@ -79,7 +79,7 @@ export default class Loginpage extends BaseComponent<any, LoginViewModel> {
           Model.showMessage = true;
           this.UpdateViewModel();
         }
-        if (response.data.d.bStatus) {
+        if (response.data.d.bStatus) {       
           Model.showMessage = false;
           // Model.BranchList = response.data.d.data.ado
           this.UpdateViewModel();
@@ -93,11 +93,34 @@ export default class Loginpage extends BaseComponent<any, LoginViewModel> {
             )
             .then(response => {
               console.log('data', response.data);
-              SessionHelper.SetUserDetailsSession(response.data[0])
-              // model.alluser = response.data;
-              // var Find = response.data.find((i: any) => i.userName == UserName);
-              // model.SenderId = Find.lId;
-              // this.UpdateViewModel();
+              SessionHelper.SetUserDetailsSession(response.data[0]);
+              var Connection = new signalR.HubConnectionBuilder()
+              .withUrl(`https://wemessanger.azurewebsites.net/chatHub?UserId=${response.data[0].lId.toString()}`)
+              .build();
+              Connection.start().then(() => {
+                console.log('SignalR connected');
+                Connection.invoke(
+                  'JoinChat',
+                  response.data[0].lId.toString(),
+                ).then(res => {
+                  Connection.invoke(
+                    'IsUserConnected',
+                    response.data[0].lId.toString(),
+                  )
+                    .then(isConnected => {
+                      console.log('Connection', isConnected);
+
+                      if (isConnected) {
+                        console.log(`User ${response.data[0].lId} is live`);
+                      } else {
+                        console.log(`User ${response.data[0].lId} is not live`);
+                      }
+                    })
+                    .catch(error => {
+                      console.log(error);
+                    });
+                });
+              });
             })
             .catch(error => {
               console.error('Error fetching data:', error);

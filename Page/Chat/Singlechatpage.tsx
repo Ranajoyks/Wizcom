@@ -6,11 +6,20 @@ import {
   StyleSheet,
   FlatList,
   Dimensions,
-  TouchableOpacity,
   Image,
   TextInput,
 } from 'react-native';
-import {Badge, Root} from 'native-base';
+import {
+  Badge,
+  Body,
+  Content,
+  Left,
+  List,
+  ListItem,
+  Right,
+  Root,
+} from 'native-base';
+import {Container, Header, Tab, Tabs, TabHeading} from 'native-base';
 import BaseComponent from '../../Core/BaseComponent';
 import BaseState from '../../Core/BaseState';
 import {TabView, SceneMap, TabBar} from 'react-native-tab-view';
@@ -20,28 +29,24 @@ import Icon from 'react-native-vector-icons/FontAwesome';
 import Allmessage from './Allmessage';
 import {NavigationContainer} from '@react-navigation/native';
 import Groupchat from './Groupchat';
+import SessionHelper from '../../Core/SessionHelper';
+import DeviceInfo from 'react-native-device-info';
+import * as signalR from '@microsoft/signalr';
+import alluser from '../../Entity/alluser';
+import {TouchableOpacity} from 'react-native-gesture-handler';
 
 export class SinglechatpageViewModel {
   BranchName: string = '';
   UserName: string = '';
   IsShow: boolean = false;
   Message: string = '';
-
-  CityList: any[] = [
-    {id: 1, name: 'Aaron Loeb'},
-    {id: 2, name: 'Adeline Palmerston'},
-    {id: 3, name: 'Daniel Gallego'},
-    {id: 4, name: 'Juliana Sive'},
-    {id: 5, name: 'Redro Femandes'},
-    {id: 6, name: 'Korina Villanueva'},
-    // Add more companies
-  ];
+  IsOpen: boolean = false;
+  DeviceId: string = '';
+  AppVersion: string = 'O.0.1';
+  alluser: alluser[] = [];
   index: number = 0;
-  routes: any[] = [
-    {key: 'first', title: 'All Messages'},
-    // {key: 'second', title: 'Chat'},
-    {key: 'second', title: 'Notification'},
-  ];
+  FilterUser: alluser[] = [];
+  OnlineText: string = 'Users Online';
 }
 
 export default class Singlechatpage extends BaseComponent<
@@ -53,8 +58,18 @@ export default class Singlechatpage extends BaseComponent<
     this.state = new BaseState(new SinglechatpageViewModel());
     this.state.Model.BranchName = props.route.params.BranchName;
     this.state.Model.UserName = props.route.params.UserName;
-
     console.log('Branch', this.state.Model.BranchName);
+  }
+  async componentDidMount() {
+    var Model = this.state.Model;
+    const deviceId = DeviceInfo.getDeviceId();
+    Model.DeviceId = deviceId;
+    this.UpdateViewModel();
+    console.log('deviceId: ', deviceId);
+    var User = await SessionHelper.GetUserDetailsSession();
+    console.log('User: ', User);
+    console.log('User: ', Model.UserName);
+    this.Fetchmessage();
   }
   Search = async () => {
     var Model = this.state.Model;
@@ -66,159 +81,374 @@ export default class Singlechatpage extends BaseComponent<
     Model.IsShow = !Model.IsShow;
     this.UpdateViewModel();
   };
-  renderScene = SceneMap({
-    first: () => {
-      // console.log('Navigation Prop in Allmessage:', this.props.navigation);
-      return <Allmessage navigation={this.props.navigation} />;
-    },
-    second: () => {
-      // console.log('Navigation Prop in Loginpage:', this.props.navigation);
-      return <Allmessage navigation={this.props.navigation} />;
-    },
-    // third: () => {
-    //   // console.log('Navigation Prop in Loginpage:', this.props.navigation);
-    //   return <Groupchat navigation={this.props.navigation} />;
-    // },
-  });
-  renderTabBar = props => (
-    <TabBar
-      {...props}
-      indicatorStyle={{backgroundColor: 'black'}}
-      style={{backgroundColor: 'white'}}
-      renderLabel={({route, focused, color}) => (
-        <Text style={{color: 'black', marginBottom: 8,marginHorizontal:8}}>{route.title}</Text>
-      )}
-    />
-  );
+  DropDowmOpen = async () => {
+    var Model = this.state.Model;
+    Model.IsOpen = !Model.IsOpen;
+    this.UpdateViewModel();
+  };
+  handleSelection = async (option: any) => {
+    console.log(option);
+  };
+  Fetchmessage = async () => {
+    var model = this.state.Model;
+    var UserName = await SessionHelper.GetUserNameSession();
+    var UserDetails = await SessionHelper.GetUserDetailsSession();
+    var myId = `u_${UserDetails.lId}`;
+    const deviceId = DeviceInfo.getDeviceId();
+    var Connection = new signalR.HubConnectionBuilder()
+      .withUrl('https://wemessanger.azurewebsites.net/chatHub')
+      .build();
+    Connection.start().then(() => {
+      console.log('SignalR connected');
+      Connection.invoke('GetAllUser', myId, 0)
+        .then(user => {
+          // console.log(user);
+          model.alluser = user;
+          model.FilterUser = model.alluser;
+          this.UpdateViewModel();
+        })
+        .catch((err: any) => {
+          console.log('Error to invoke: ', err);
+        });
+    });
+  };
+  NextPage = (user: alluser) => {
+    console.log('Hi');
+
+    var Model = this.state.Model;
+    this.props.navigation.navigate('Chatdetails', {
+      User: user,
+      // SenderID: Model.SenderId,
+    });
+    // console.log("ModelSenderID: ",Model.SenderId,);
+  };
+  UserOnline = () => {
+    var Model = this.state.Model;
+    console.log(Model.alluser);
+    if ((Model.OnlineText = 'Users Online')) {
+      var UserOnline = Model.alluser.filter(
+        (i: alluser) => i.isUserLive === true,
+      );
+      console.log('Hi');
+      console.log('UserOnline', UserOnline);
+      if (UserOnline) {
+        Model.FilterUser = UserOnline;
+        Model.OnlineText = 'All User';
+        this.UpdateViewModel();
+      }
+    }
+  };
+  AllUserss = () => {
+    var Model = this.state.Model;
+    Model.OnlineText = 'Users Online';
+    console.log('Model.user', Model.alluser);
+    Model.FilterUser = Model.alluser
+    this.UpdateViewModel()
+  };
+  SearchText=(text:string)=>{
+    var Model = this.state.Model
+    Model.Message = text
+    const NewArray = Model.alluser.filter((i:alluser)=>{
+      const itemData = `${i.userName.toLowerCase()}`;
+      //  console.log(itemData)
+      //  if(model.SearchText){
+      const textData = text.toLowerCase();
+      //  }
+      if (textData.toLowerCase()) {
+        return itemData.indexOf(textData) > -1;
+      }
+    });
+    console.log("NewArray",NewArray);
+    this.UpdateViewModel()
+  }
+  // if ((Model.OnlineText = 'All User')) {
+  //   Model.FilterUser = Model.alluser;
+  //   this.UpdateViewModel();
+  // }
+
   initialLayout = {width: Dimensions.get('window').width};
   render() {
     var model = this.state.Model;
     return (
-      <View style={styles.container}>
-        {model.IsShow == false && (
-          <View style={styles.header}>
-            <View>
-              <Text
-                style={{
-                  fontSize: 18,
-                  fontWeight: '800',
-                  fontFamily: 'Poppins-Regular',
-                  color: 'black',
-                }}>
-                EResource Messenger
-              </Text>
-              <View style={{flexDirection: 'row', marginTop: 5}}>
+      <Container>
+        <View style={styles.container}>
+          {model.IsShow == false && (
+            <View style={styles.header}>
+              <View style={{flex: 1}}>
                 <Text
                   style={{
-                    fontSize: 16,
-                    fontWeight: '100',
+                    fontSize: 18,
+                    fontWeight: '800',
                     fontFamily: 'Poppins-Regular',
-                    color: '#0383FA',
-                    marginRight: 8,
-                  }}>
-                  {model.BranchName}
-                </Text>
-                {/* <Text
-                style={{
-                  fontSize: 16,
-                  fontWeight: '200',
-                  fontFamily: 'Poppins-Regular',
-                  color: 'black',
-                  marginRight: 8,
-                }}>
-                Offline:0
-              </Text>
-              <Text
-                style={{
-                  fontSize: 16,
-                  fontWeight: '200',
-                  fontFamily: 'Poppins-Regular',
-                  color: 'black',
-                  marginRight: 8,
-                }}>
-                All:0
-              </Text> */}
-              </View>
-            </View>
-            <TouchableOpacity
-              onPress={() => {
-                this.Search();
-              }}>
-              <Image
-                source={require('../../assets/search.png')}
-                style={{height: 30, width: 30, marginRight: 10}}
-              />
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={() => {
-                /* Right icon action */
-              }}>
-              <Badge
-                style={{
-                  backgroundColor: '#E9E9E9',
-                  width: 35,
-                  height: 35,
-                  borderRadius: 50,
-                  // justifyContent: 'center',
-                  alignItems: 'center',
-                  display: 'flex',
-                  marginTop: -5,
-                }}>
-                <Text
-                  style={{
                     color: 'black',
-                    fontSize: 22,
-                    fontWeight: '400',
                   }}>
-                  {model.UserName.charAt(0)}
+                  EResource Messenger
                 </Text>
-              </Badge>
-              {/* <Icon name="bell" size={24} style={styles.icon} /> */}
-            </TouchableOpacity>
-          </View>
-        )}
-        {model.IsShow == true && (
-          <View style={{padding: 10}}>
-            <View
-              style={{
-                backgroundColor: '#F1F1F1',
-                paddingHorizontal: 10,
-                paddingVertical: 5,
-                borderRadius: 6,
-                flexDirection: 'row',
-              }}>
-              <TextInput
-                value={model.Message}
-                onChangeText={text => {
-                  model.Message = text;
-                  this.UpdateViewModel();
-                }}
-                style={
-                  (styles.input, {width: Dimensions.get('window').width - 70})
-                }
-                placeholder="Search....."></TextInput>
+                <View style={{flexDirection: 'row', marginTop: 5}}>
+                  <Text
+                    style={{
+                      fontSize: 16,
+                      fontWeight: '100',
+                      fontFamily: 'Poppins-Regular',
+                      color: '#0383FA',
+                      marginRight: 8,
+                    }}>
+                    {model.BranchName}
+                  </Text>
+                </View>
+              </View>
+
               <TouchableOpacity
-                onPress={this.Cancle}
-                style={{flexShrink: 1, width: 25, justifyContent: 'center'}}>
+                style={{width: 25, paddingRight: 40, marginTop: -5}}
+                onPress={() => {
+                  this.Search();
+                }}>
                 <Image
-                  source={require('../../assets/cancel.png')}
+                  source={require('../../assets/search.png')}
                   style={{height: 25, width: 25}}
                 />
               </TouchableOpacity>
+              <TouchableOpacity
+                style={{marginTop: -5}}
+                onPress={() => {
+                  this.DropDowmOpen();
+                }}>
+                <Badge
+                  style={{
+                    backgroundColor: '#E9E9E9',
+                    width: 35,
+                    height: 35,
+                    borderRadius: 50,
+                    // justifyContent: 'center',
+                    alignItems: 'center',
+                    display: 'flex',
+                    marginTop: -5,
+                  }}>
+                  <Text
+                    style={{
+                      color: 'black',
+                      fontSize: 22,
+                      fontWeight: '400',
+                    }}>
+                    {model.UserName.charAt(0)}
+                  </Text>
+                </Badge>
+                {/* <Icon name="bell" size={24} style={styles.icon} /> */}
+              </TouchableOpacity>
             </View>
-          </View>
-        )}
-        <TabView
-          renderTabBar={this.renderTabBar}
-          navigationState={{
-            index: model.index,
-            routes: model.routes,
-          }}
-          renderScene={this.renderScene}
-          onIndexChange={index => (model.index = index)}
-          initialLayout={{width: Dimensions.get('window').width}}
-        />
-      </View>
+          )}
+          {model.IsShow == true && (
+            <View style={{padding: 10}}>
+              <View
+                style={{
+                  backgroundColor: '#F1F1F1',
+                  paddingHorizontal: 10,
+                  paddingVertical: 5,
+                  borderRadius: 6,
+                  flexDirection: 'row',
+                }}>
+                <TextInput
+                  value={model.Message}
+                  onChangeText={(text) => this.SearchText(text)}
+                  style={
+                    (styles.input, {width: Dimensions.get('window').width - 70})
+                  }
+                  placeholder="Search....."></TextInput>
+                <TouchableOpacity
+                  onPress={this.Cancle}
+                  style={{flexShrink: 1, width: 25, justifyContent: 'center'}}>
+                  <Image
+                    source={require('../../assets/cancel.png')}
+                    style={{height: 25, width: 25}}
+                  />
+                </TouchableOpacity>
+              </View>
+            </View>
+          )}
+          {model.IsOpen == true && (
+            <View style={styles.dropdownContainer}>
+              <View style={styles.dropdown}>
+                <View>
+                  <Text
+                    style={{
+                      padding: 10,
+                      color: 'black',
+                      // margin: 10,
+                      alignSelf: 'center',
+                    }}>
+                    {model.UserName}
+                  </Text>
+                  <Text
+                    style={{
+                      padding: 10,
+                      color: 'black',
+                      // margin: 10,
+                      alignSelf: 'center',
+                    }}>
+                    {model.DeviceId}
+                  </Text>
+                  <Text
+                    style={{
+                      padding: 10,
+                      color: 'black',
+                      // margin: 10,
+                      alignSelf: 'center',
+                    }}>
+                    {model.AppVersion}
+                  </Text>
+                  {model.OnlineText == 'Users Online' ? (
+                    <TouchableOpacity onPress={() => this.UserOnline()}>
+                      <Text
+                        style={{
+                          padding: 10,
+                          color: 'black',
+                          // margin: 10,
+                          alignSelf: 'center',
+                        }}>
+                        {model.OnlineText}
+                      </Text>
+                    </TouchableOpacity>
+                  ) : (
+                    <TouchableOpacity onPress={() => this.AllUserss()}>
+                      <Text
+                        style={{
+                          padding: 10,
+                          color: 'black',
+                          // margin: 10,
+                          alignSelf: 'center',
+                        }}>
+                        {model.OnlineText}
+                      </Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+              </View>
+            </View>
+          )}
+
+          <Tabs style={{backgroundColor: 'white'}}>
+            <Tab heading="AllMessage">
+              <Content>
+                <List>
+                  {model.FilterUser.map((i: alluser) => (
+                    <TouchableOpacity onPress={() => this.NextPage(i)}>
+                      <ListItem avatar>
+                        <Left>
+                          {/* <Thumbnail
+                    source={{
+                      uri: 'https://filmfare.wwmindia.com/content/2020/nov/hrithik-roshan-411605007858.jpg',
+                    }}
+                    style={{height: 40, width: 40}}
+                  /> */}
+                          <Badge
+                            style={{
+                              backgroundColor: '#E9E9E9',
+                              width: 50,
+                              height: 50,
+                              borderRadius: 25,
+                              justifyContent: 'center',
+                              alignItems: 'center',
+                            }}>
+                            <Text
+                              style={{
+                                color: 'black',
+                                fontSize: 22,
+                                fontWeight: '400',
+                              }}>
+                              {i.userFullName.charAt(0)}
+                            </Text>
+                          </Badge>
+                        </Left>
+                        <Body>
+                          <Text
+                            style={{
+                              color: 'black',
+                              fontWeight: '600',
+                              fontFamily: 'OpenSans-VariableFont_wdth,wght',
+                              marginBottom: 5,
+                              fontSize: 14.5,
+                            }}>
+                            {i.userFullName}
+                          </Text>
+                          <Text
+                            style={{
+                              color: i.status ? '#0383FA' : '#a6a6a6',
+                              fontWeight: '200',
+                              fontFamily: 'OpenSans-VariableFont_wdth,wght',
+                              fontSize: 12,
+                            }}>
+                            {i.message ? i.message : 'No message'}
+                          </Text>
+                        </Body>
+                        <Right></Right>
+                      </ListItem>
+                    </TouchableOpacity>
+                  ))}
+                </List>
+              </Content>
+            </Tab>
+            <Tab heading="Notification">
+              <Content>
+                <List>
+                  {model.alluser.map((i: alluser) => (
+                    <TouchableOpacity onPress={() => this.NextPage(i)}>
+                      <ListItem avatar>
+                        <Left>
+                          {/* <Thumbnail
+                    source={{
+                      uri: 'https://filmfare.wwmindia.com/content/2020/nov/hrithik-roshan-411605007858.jpg',
+                    }}
+                    style={{height: 40, width: 40}}
+                  /> */}
+                          <Badge
+                            style={{
+                              backgroundColor: '#E9E9E9',
+                              width: 50,
+                              height: 50,
+                              borderRadius: 25,
+                              justifyContent: 'center',
+                              alignItems: 'center',
+                            }}>
+                            <Text
+                              style={{
+                                color: 'black',
+                                fontSize: 22,
+                                fontWeight: '400',
+                              }}>
+                              {i.userFullName.charAt(0)}
+                            </Text>
+                          </Badge>
+                        </Left>
+                        <Body>
+                          <Text
+                            style={{
+                              color: 'black',
+                              fontWeight: '600',
+                              fontFamily: 'OpenSans-VariableFont_wdth,wght',
+                              marginBottom: 5,
+                            }}>
+                            {i.userFullName}
+                          </Text>
+                          <Text
+                            style={{
+                              color: i.status ? '#0383FA' : '#a6a6a6',
+                              fontWeight: '200',
+                              fontFamily: 'OpenSans-VariableFont_wdth,wght',
+                              fontSize: 12,
+                            }}>
+                            {i.message ? i.message : 'No message'}
+                          </Text>
+                        </Body>
+                        <Right></Right>
+                      </ListItem>
+                    </TouchableOpacity>
+                  ))}
+                </List>
+              </Content>
+            </Tab>
+          </Tabs>
+        </View>
+      </Container>
     );
   }
 }
@@ -233,10 +463,27 @@ const styles = StyleSheet.create({
     fontFamily: 'Poppins-Regular',
     color: 'black', // Darker blue title
   },
+  dropdownContainer: {
+    position: 'absolute',
+    top: 60,
+    right: 10,
+    // Set a height for the container
+    height: 'auto',
+    width: 200,
+    zIndex: 1,
+  },
+  dropdown: {
+    backgroundColor: '#f1f1f1',
+    color: 'black',
+    borderRadius: 10,
+    textAlign: 'center',
+    display: 'flex',
+    justifyContent: 'center',
+  },
   header: {
     backgroundColor: '#FFFFFF', // Lighter blue header
     paddingTop: 10,
-    paddingHorizontal:15,
+    paddingHorizontal: 15,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',

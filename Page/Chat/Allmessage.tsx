@@ -22,7 +22,7 @@ import SessionHelper from '../../Core/SessionHelper';
 import DeviceInfo from 'react-native-device-info';
 import * as signalR from '@microsoft/signalr';
 import messaging from '@react-native-firebase/messaging';
-
+import {PermissionsAndroid} from 'react-native';
 // const navigation = useNavigation();
 export class allchatpageViewModel {
   alluser: alluser[] = [];
@@ -40,12 +40,9 @@ export default class Allmessage extends BaseComponent<
     this.state = new BaseState(new allchatpageViewModel());
   }
   async componentDidMount() {
+    PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS);
     this.Fetchmessage();
-    const FCM = await messaging().getToken();
-    console.log('FCM', FCM);
-    if (FCM) {
-      console.log('FCM', FCM);
-    }
+ 
   }
   Fetchmessage = async () => {
     var model = this.state.Model;
@@ -138,99 +135,7 @@ export default class Allmessage extends BaseComponent<
               </TouchableOpacity>
             ))}
 
-            {/* <ListItem avatar>
-              <Left>
-                <Thumbnail
-                  source={{
-                    uri: 'https://th.bing.com/th/id/OIP.6a7hLDHlrsA0-vzMrABZ2AHaIT?w=164&h=184&c=7&r=0&o=5&pid=1.7',
-                  }}
-                  style={{height: 40, width: 40}}
-                />
-              </Left>
-              <Body>
-                <Text
-                  style={{
-                    color: 'black',
-                    fontWeight: '600',
-                    fontFamily: 'Poppins-Regular',
-                    marginBottom: 5,
-                  }}>
-                  Joun Doe
-                </Text>
-                <Text
-                  style={{
-                    color: '#0383FA',
-                    fontWeight: '200',
-                    fontFamily: 'Poppins-Regular',
-                    fontSize: 12,
-                  }}>
-                  Thank You
-                </Text>
-              </Body>
-              <Right></Right>
-            </ListItem>
-            <ListItem avatar>
-              <Left>
-                <Thumbnail
-                  source={{
-                    uri: 'https://filmfare.wwmindia.com/content/2020/nov/hrithik-roshan-411605007858.jpg',
-                  }}
-                  style={{height: 40, width: 40}}
-                />
-              </Left>
-              <Body>
-                <Text
-                  style={{
-                    color: 'black',
-                    fontWeight: '600',
-                    fontFamily: 'Poppins-Regular',
-                    marginBottom: 5,
-                  }}>
-                  XYZ Group
-                </Text>
-                <Text
-                  style={{
-                    color: '#0383FA',
-                    fontWeight: '200',
-                    fontFamily: 'Poppins-Regular',
-                    fontSize: 12,
-                  }}>
-                  Hey Everyone
-                </Text>
-              </Body>
-              <Right></Right>
-            </ListItem>
-            <ListItem avatar>
-              <Left>
-                <Thumbnail
-                  source={{
-                    uri: 'https://th.bing.com/th/id/OIP.6a7hLDHlrsA0-vzMrABZ2AHaIT?w=164&h=184&c=7&r=0&o=5&pid=1.7',
-                  }}
-                  style={{height: 40, width: 40}}
-                />
-              </Left>
-              <Body>
-                <Text
-                  style={{
-                    color: 'black',
-                    fontWeight: '600',
-                    fontFamily: 'Poppins-Regular',
-                    marginBottom: 5,
-                  }}>
-                  ABC Group
-                </Text>
-                <Text
-                  style={{
-                    color: '#0383FA',
-                    fontWeight: '200',
-                    fontFamily: 'Poppins-Regular',
-                    fontSize: 12,
-                  }}>
-                  Thank You
-                </Text>
-              </Body>
-              <Right></Right>
-            </ListItem> */}
+           
           </List>
         </Content>
       </Container>

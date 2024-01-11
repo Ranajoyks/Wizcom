@@ -1,9 +1,10 @@
 export default interface alluser {
-    lId: number
-    userCode: string
-    userName: string
-    userFullName: string
-    message: string
-    status: boolean
+  isUserLive: boolean
+  lId: number
+  message: string
+  status: boolean
+  userCode: string
+  userFullName: string
+  userName: string
   }
   

@@ -83,6 +83,7 @@ export default class Chatdetails extends BaseComponent<
     console.log('user: ', User);
     Model.sender = User.userName;
     this.UpdateViewModel();
+    console.log('@Receiver', this.props.route.params.User);
 
     // this.requestUserPermission();
     // this.getDeviceToken();
@@ -406,18 +407,18 @@ export default class Chatdetails extends BaseComponent<
     Model.IsOpen = !Model.IsOpen;
     this.UpdateViewModel();
   };
-  Logout=()=>{
-    SessionHelper.SetBranchIdSession(null)
-    SessionHelper.SetDeviceIdSession(null)
-    SessionHelper.SetSenderIdSession(null)
-    SessionHelper.SetURLSession(null)
-    SessionHelper.SetUserDetailsSession(null)
-    SessionHelper.SetUserNameSession(null)
+  Logout = () => {
+    SessionHelper.SetBranchIdSession(null);
+    SessionHelper.SetDeviceIdSession(null);
+    SessionHelper.SetSenderIdSession(null);
+    SessionHelper.SetURLSession(null);
+    SessionHelper.SetUserDetailsSession(null);
+    SessionHelper.SetUserNameSession(null);
     this.props.navigation.reset({
       index: 0,
-      routes: [{ name: 'Loginpage' }],
+      routes: [{name: 'Loginpage'}],
     });
-  }
+  };
   render() {
     // const { url } = this.state;
     const prefix = 'https://';
@@ -439,9 +440,11 @@ export default class Chatdetails extends BaseComponent<
           </TouchableOpacity>
           <View style={{flex: 1}}>
             <Text style={styles.title}>{Model.User.userFullName}</Text>
-            {/* <Text style={(styles.subtitle, styles.online)}>Online</Text> */}
-
-            {/* <Text style={(styles.subtitle, styles.offline)}>Offline</Text> */}
+            {Model.User.isUserLive ? (
+              <Text style={(styles.subtitle, styles.online)}>Online</Text>
+            ) : (
+              <Text style={(styles.subtitle, styles.offline)}>Offline</Text>
+            )}
           </View>
           {/* <TouchableOpacity
               onPress={() => {
@@ -516,84 +519,84 @@ export default class Chatdetails extends BaseComponent<
               <View style={styles.dropdown}>
                 <View>
                   <View>
-                  <Text
-                    style={{
-                      padding: 20,
-                      paddingBottom:1,
-                      paddingTop:10,
-                      color: '#0383FA',
-                      // margin: 10,
-                      alignSelf: 'left',
-                      fontSize:12
-                    }}>
-                    User:
-                  </Text>
-                  <Text
-                    style={{
-                      padding: 20,
-                      paddingBottom:10,
-                      paddingTop:0,
-                      color: 'black',
-                      // margin: 10,
-                      alignSelf: 'left',
-                      fontSize:16
-                    }}>
-                    {Model.sender}
-                  </Text>
+                    <Text
+                      style={{
+                        padding: 20,
+                        paddingBottom: 1,
+                        paddingTop: 10,
+                        color: '#0383FA',
+                        // margin: 10,
+                        alignSelf: 'left',
+                        fontSize: 12,
+                      }}>
+                      User:
+                    </Text>
+                    <Text
+                      style={{
+                        padding: 20,
+                        paddingBottom: 10,
+                        paddingTop: 0,
+                        color: 'black',
+                        // margin: 10,
+                        alignSelf: 'left',
+                        fontSize: 16,
+                      }}>
+                      {Model.sender}
+                    </Text>
                   </View>
                   <View>
-                  <Text
-                     style={{
-                      padding: 20,
-                      paddingBottom:1,
-                      paddingTop:10,
-                      color: '#0383FA',
-                      // margin: 10,
-                      alignSelf: 'left',
-                      fontSize:12
-                    }}>
-                    Designation:
-                  </Text>
+                    <Text
+                      style={{
+                        padding: 20,
+                        paddingBottom: 1,
+                        paddingTop: 10,
+                        color: '#0383FA',
+                        // margin: 10,
+                        alignSelf: 'left',
+                        fontSize: 12,
+                      }}>
+                      Designation:
+                    </Text>
                   </View>
                   <View style={{}}>
-                  <Text
-                    style={{
-                      padding: 20,
-                      paddingBottom:1,
-                      paddingTop:10,
-                      color: '#0383FA',
-                      // margin: 10,
-                      alignSelf: 'left',
-                      fontSize:12
-                    }}>
-                    Connection Code:
-                  </Text>
+                    <Text
+                      style={{
+                        padding: 20,
+                        paddingBottom: 1,
+                        paddingTop: 10,
+                        color: '#0383FA',
+                        // margin: 10,
+                        alignSelf: 'left',
+                        fontSize: 12,
+                      }}>
+                      Connection Code:
+                    </Text>
                   </View>
                   <View style={{}}>
-                  <Text
-                    style={{
-                      padding: 20,
-                      paddingBottom:1,
-                      paddingTop:10,
-                      color: '#0383FA',
-                      // margin: 10,
-                      alignSelf: 'left',
-                      fontSize:12
-                    }}>
-                    Version:
-                  </Text>
-                  <Text
-                    style={{
-                      padding: 20,
-                      paddingBottom:10,
-                      paddingTop:0,
-                      color: 'black',
-                      // margin: 10,
-                      alignSelf: 'left',
-                      fontSize:16
-                    }}>
-                    {Model.AppVersion}
-                  </Text>
+                    <Text
+                      style={{
+                        padding: 20,
+                        paddingBottom: 1,
+                        paddingTop: 10,
+                        color: '#0383FA',
+                        // margin: 10,
+                        alignSelf: 'left',
+                        fontSize: 12,
+                      }}>
+                      Version:
+                    </Text>
+                    <Text
+                      style={{
+                        padding: 20,
+                        paddingBottom: 10,
+                        paddingTop: 0,
+                        color: 'black',
+                        // margin: 10,
+                        alignSelf: 'left',
+                        fontSize: 16,
+                      }}>
+                      {Model.AppVersion}
+                    </Text>
                   </View>
                   {/* {model.OnlineText == 'Users Online' ? (
                     <TouchableOpacity onPress={() => this.UserOnline()}>
@@ -624,8 +627,8 @@ export default class Chatdetails extends BaseComponent<
                     <Text
                       style={{
                         padding: 20,
-                        paddingBottom:1,
-                        paddingTop:10,
+                        paddingBottom: 1,
+                        paddingTop: 10,
                         color: '#0383FA',
                         // margin: 10,
                         alignSelf: 'left',
@@ -650,13 +653,13 @@ export default class Chatdetails extends BaseComponent<
             }>
             {Model.NewChat.map((item: AllChats) => (
               <View style={{zIndex: 1}}>
-                {item.istoday ? (
+                {/* {item.istoday ? (
                   <Text style={styles.today}>Today</Text>
                 ) : (
                   <Text style={styles.today}>
                     {EntityHelperService.ToDdMmmYyyy(item?.date)}
                   </Text>
-                )}
+                )} */}
 
                 {item.Chat.map((i: Chat) =>
                   'u_' + i.lSenderId == Model.senderId ||

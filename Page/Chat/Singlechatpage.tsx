@@ -47,11 +47,11 @@ export class SinglechatpageViewModel {
   Message: string = '';
   IsOpen: boolean = false;
   DeviceId: string = '';
-  AppVersion: string = 'O.0.1';
+  AppVersion: string = '1.0.0';
+  OnlineText: string = 'Users Online';
   alluser: alluser[] = [];
   index: number = 0;
   FilterUser: alluser[] = [];
-  OnlineText: string = 'Users Online';
 }
 
 export default class Singlechatpage extends BaseComponent<
@@ -75,6 +75,7 @@ export default class Singlechatpage extends BaseComponent<
     console.log('User: ', User);
     console.log('User: ', Model.UserName);
     this.Fetchmessage();
+    setInterval(this.Fetchmessage, 120000);
   }
   Search = async () => {
     var Model = this.state.Model;
@@ -108,7 +109,8 @@ export default class Singlechatpage extends BaseComponent<
       .build();
     Connection.start().then(() => {
       console.log('SignalR connected');
-      Connection.invoke('GetAllUser', myId, 0)
+
+      var UserList = Connection.invoke('GetAllUser', myId, 0)
         .then(user => {
           // console.log(user);
           model.alluser = user;
@@ -174,10 +176,24 @@ export default class Singlechatpage extends BaseComponent<
       this.UpdateViewModel();
     }
   };
+  Logout=()=>{
+SessionHelper.SetBranchIdSession(null)
+SessionHelper.SetDeviceIdSession(null)
+SessionHelper.SetSenderIdSession(null)
+SessionHelper.SetURLSession(null)
+SessionHelper.SetUserDetailsSession(null)
+SessionHelper.SetUserNameSession(null)
+this.props.navigation.reset({
+  index: 0,
+  routes: [{ name: 'Loginpage' }],
+});
+  }
 
   initialLayout = {width: Dimensions.get('window').width};
   render() {
     var model = this.state.Model;
+    // console.log('FilterUser: ', model.FilterUser);
+
     return (
       <Container>
         <View style={styles.container}>
@@ -239,7 +255,7 @@ export default class Singlechatpage extends BaseComponent<
                       fontSize: 22,
                       fontWeight: '400',
                     }}>
-                    {model.UserName.charAt(0)}
+                    {model.UserName.toLocaleUpperCase().charAt(0)}
                   </Text>
                 </Badge>
                 {/* <Icon name="bell" size={24} style={styles.icon} /> */}
@@ -283,41 +299,96 @@ export default class Singlechatpage extends BaseComponent<
             <View style={styles.dropdownContainer}>
               <View style={styles.dropdown}>
                 <View>
+                <View>
                   <Text
                     style={{
-                      padding: 10,
+                      padding: 20,
+                      paddingBottom:1,
+                      paddingTop:10,
+                      color: '#0383FA',
+                      // margin: 10,
+                      alignSelf: 'left',
+                      fontSize:12
+                    }}>
+                    User:
+                  </Text>
+                  <Text
+                    style={{
+                      padding: 20,
+                      paddingBottom:10,
+                      paddingTop:0,
                       color: 'black',
                       // margin: 10,
-                      alignSelf: 'center',
+                      alignSelf: 'left',
+                      fontSize:16
                     }}>
                     {model.UserName}
                   </Text>
+                  </View>
+                  <View>
+                  <Text
+                     style={{
+                      padding: 20,
+                      paddingBottom:1,
+                      paddingTop:10,
+                      color: '#0383FA',
+                      // margin: 10,
+                      alignSelf: 'left',
+                      fontSize:12
+                    }}>
+                    Designation:
+                  </Text>
+                  </View>
+                  <View style={{}}>
                   <Text
                     style={{
-                      padding: 10,
-                      color: 'black',
+                      padding: 20,
+                      paddingBottom:1,
+                      paddingTop:10,
+                      color: '#0383FA',
                       // margin: 10,
-                      alignSelf: 'center',
+                      alignSelf: 'left',
+                      fontSize:12
                     }}>
-                    {model.DeviceId}
+                    Connection Code:
+                  </Text>
+                  </View>
+                  <View style={{}}>
+                  <Text
+                    style={{
+                      padding: 20,
+                      paddingBottom:1,
+                      paddingTop:10,
+                      color: '#0383FA',
+                      // margin: 10,
+                      alignSelf: 'left',
+                      fontSize:12
+                    }}>
+                    Version:
                   </Text>
                   <Text
                     style={{
-                      padding: 10,
+                      padding: 20,
+                      paddingBottom:10,
+                      paddingTop:0,
                       color: 'black',
                       // margin: 10,
-                      alignSelf: 'center',
+                      alignSelf: 'left',
+                      fontSize:16
                     }}>
                     {model.AppVersion}
                   </Text>
+                  </View>
                   {model.OnlineText == 'Users Online' ? (
                     <TouchableOpacity onPress={() => this.UserOnline()}>
                       <Text
                         style={{
-                          padding: 10,
-                          color: 'black',
+                          padding: 20,
+                          paddingBottom:1,
+                          paddingTop:10,
+                          color: '#0383FA',
                           // margin: 10,
-                          alignSelf: 'center',
+                          alignSelf: 'left',
                         }}>
                         {model.OnlineText}
                       </Text>
@@ -326,15 +397,30 @@ export default class Singlechatpage extends BaseComponent<
                     <TouchableOpacity onPress={() => this.AllUserss()}>
                       <Text
                         style={{
-                          padding: 10,
-                          color: 'black',
+                          padding: 20,
+                          paddingBottom:1,
+                          paddingTop:10,
+                          color: '#0383FA',
                           // margin: 10,
-                          alignSelf: 'center',
+                          alignSelf: 'left',
                         }}>
                         {model.OnlineText}
                       </Text>
                     </TouchableOpacity>
                   )}
+                  <TouchableOpacity onPress={() => this.Logout()}>
+                    <Text
+                      style={{
+                        padding: 20,
+                        paddingBottom:1,
+                        paddingTop:10,
+                        color: '#0383FA',
+                        // margin: 10,
+                        alignSelf: 'left',
+                      }}>
+                      Logout
+                    </Text>
+                  </TouchableOpacity>
                 </View>
               </View>
             </View>
@@ -344,11 +430,11 @@ export default class Singlechatpage extends BaseComponent<
             tabBarUnderlineStyle={{
               borderColor: 'white',
               backgroundColor: 'black',
-              borderWidth: 0,
+              borderWidth: 0.5,
               height: 0,
             }}
             tabContainerStyle={{
-              borderBlockColor:"white"
+              borderColor: 'white',
             }}>
             <Tab
               heading="AllMessage"
@@ -356,50 +442,53 @@ export default class Singlechatpage extends BaseComponent<
               textStyle={{color: 'black'}}
               activeTextStyle={{color: 'black'}}
               tabContainerStyle={{backgroundColor: 'white'}}
-              tabStyle={{backgroundColor: 'white',borderBlockColor:"white"}}
-              activeTabStyle={{backgroundColor: 'white',borderColor:"white"}}>
+              tabStyle={{backgroundColor: 'white'}}
+              activeTabStyle={{backgroundColor: 'white', borderColor: 'white'}}>
               <Content>
                 <List>
                   {model.FilterUser.map((i: alluser) => (
                     <TouchableOpacity onPress={() => this.NextPage(i)}>
                       <ListItem avatar>
                         <Left>
-                          {/* <Thumbnail
-                    source={{
-                      uri: 'https://filmfare.wwmindia.com/content/2020/nov/hrithik-roshan-411605007858.jpg',
-                    }}
-                    style={{height: 40, width: 40}}
-                  /> */}
-                          <Badge
-                            style={{
-                              backgroundColor: '#E9E9E9',
-                              width: 50,
-                              height: 50,
-                              borderRadius: 25,
-                              justifyContent: 'center',
-                              alignItems: 'center',
-                            }}>
+                          <View>
+                            <Badge
+                              style={{
+                                backgroundColor: '#E9E9E9',
+                                width: 50,
+                                height: 50,
+                                borderRadius: 25,
+                                justifyContent: 'center',
+                                alignItems: 'center',
+                              }}>
+                              <Text
+                                style={{
+                                  color: 'black',
+                                  fontSize: 22,
+                                  fontWeight: '400',
+                                }}>
+                                {i.userFullName.toLocaleUpperCase().charAt(0)}
+                              </Text>
+                            </Badge>
+                            {i?.isUserLive ? (
+                              <View style={styles.circle}></View>
+                            ) : (
+                              <View style={styles.circle2}></View>
+                            )}
+                          </View>
+                        </Left>
+                        <Body>
+                          <View style={{flexDirection: 'row'}}>
                             <Text
                               style={{
                                 color: 'black',
-                                fontSize: 22,
-                                fontWeight: '400',
+                                fontWeight: '600',
+                                fontFamily: 'OpenSans-VariableFont_wdth,wght',
+                                marginBottom: 5,
+                                fontSize: 14.5,
                               }}>
-                              {i.userFullName.charAt(0)}
+                              {i.userFullName}
                             </Text>
-                          </Badge>
-                        </Left>
-                        <Body>
-                          <Text
-                            style={{
-                              color: 'black',
-                              fontWeight: '600',
-                              fontFamily: 'OpenSans-VariableFont_wdth,wght',
-                              marginBottom: 5,
-                              fontSize: 14.5,
-                            }}>
-                            {i.userFullName}
-                          </Text>
+                          </View>
                           <Text
                             style={{
                               color: i.status ? '#0383FA' : '#a6a6a6',
@@ -426,17 +515,11 @@ export default class Singlechatpage extends BaseComponent<
               tabStyle={{backgroundColor: 'white'}}
               activeTabStyle={{backgroundColor: 'white'}}>
               <Content>
-                <List>
+                {/* <List>
                   {model.alluser.map((i: alluser) => (
                     <TouchableOpacity onPress={() => this.NextPage(i)}>
                       <ListItem avatar>
                         <Left>
-                          {/* <Thumbnail
-                    source={{
-                      uri: 'https://filmfare.wwmindia.com/content/2020/nov/hrithik-roshan-411605007858.jpg',
-                    }}
-                    style={{height: 40, width: 40}}
-                  /> */}
                           <Badge
                             style={{
                               backgroundColor: '#E9E9E9',
@@ -480,7 +563,7 @@ export default class Singlechatpage extends BaseComponent<
                       </ListItem>
                     </TouchableOpacity>
                   ))}
-                </List>
+                </List> */}
               </Content>
             </Tab>
           </Tabs>
@@ -527,8 +610,8 @@ const styles = StyleSheet.create({
     // marginTop:10
   },
   headerTitle: {
-    color: '#fff', // Replace with desired text color
-    fontSize: 20, // Adjust font size as needed
+    color: '#fff',
+    fontSize: 20,
     fontWeight: 'bold',
   },
   searchBar: {
@@ -557,5 +640,31 @@ const styles = StyleSheet.create({
     backgroundColor: '#F1F1F1',
     borderColor: '#F1F1F1',
     paddingHorizontal: 5,
+  },
+  circle: {
+    width: 10,
+    height: 10,
+    borderRadius: 30,
+    marginTop: 6,
+    marginLeft: 4,
+    backgroundColor: 'green',
+    justifyContent: 'center',
+    alignItems: 'center',
+    position: 'absolute',
+    bottom: 5,
+    right: 1,
+  },
+  circle2: {
+    width: 10,
+    height: 10,
+    borderRadius: 30,
+    marginTop: 6,
+    marginLeft: 4,
+    backgroundColor: 'orange',
+    justifyContent: 'center',
+    alignItems: 'center',
+    position: 'absolute',
+    bottom: 5,
+    right: 1,
   },
 });

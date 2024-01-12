@@ -38,6 +38,8 @@ export class ChatdetailsViewModel {
   NewChat: AllChats[] = [];
   IsShow: boolean = false;
   sender: string = '';
+  IsOpen: boolean = false;
+  AppVersion: string = '1.0.0';
 }
 export class AllChats {
   date: any = new Date();
@@ -88,7 +90,7 @@ export default class Chatdetails extends BaseComponent<
     var UserDetails = await SessionHelper.GetUserDetailsSession();
     Model.senderId = `u_${UserDetails.lId.toString()}`;
     console.log('UserDetails.lId', UserDetails);
-    console.log('UserDetails.lId',  Model.senderId);
+    console.log('UserDetails.lId', Model.senderId);
 
     this.UpdateViewModel();
     this.GetAllMsg();
@@ -341,7 +343,7 @@ export default class Chatdetails extends BaseComponent<
               itemDate.getDate() === iDate.getDate()
             );
           });
-          console.log('index',XyzIndex);
+          console.log('index', XyzIndex);
           var sendMsg = new Chatss();
           sendMsg.sMsg = model.Message;
           sendMsg.lSenderId = model.senderId;
@@ -358,7 +360,7 @@ export default class Chatdetails extends BaseComponent<
             return;
           } else {
             if (Xyz) {
-              console.log('indexavailable',model.NewChat[XyzIndex]);
+              console.log('indexavailable', model.NewChat[XyzIndex]);
               model.NewChat[XyzIndex].Chat.push(sendMsg);
             } else {
               var NewChatArray = new AllChats();
@@ -375,7 +377,7 @@ export default class Chatdetails extends BaseComponent<
               console.log('sendMsg date', sendMsg.dtMsg);
               NewChatArray.date = sendMsg.dtMsg.toString();
               NewChatArray.Chat.push(sendMsg);
-              console.log('indexnotavailable',NewChatArray);
+              console.log('indexnotavailable', NewChatArray);
               model.NewChat.push(NewChatArray);
             }
             // model.Chats.push(sendMsg);
@@ -399,6 +401,23 @@ export default class Chatdetails extends BaseComponent<
     Model.IsShow = !Model.IsShow;
     this.UpdateViewModel();
   };
+  DropDowmOpen = async () => {
+    var Model = this.state.Model;
+    Model.IsOpen = !Model.IsOpen;
+    this.UpdateViewModel();
+  };
+  Logout=()=>{
+    SessionHelper.SetBranchIdSession(null)
+    SessionHelper.SetDeviceIdSession(null)
+    SessionHelper.SetSenderIdSession(null)
+    SessionHelper.SetURLSession(null)
+    SessionHelper.SetUserDetailsSession(null)
+    SessionHelper.SetUserNameSession(null)
+    this.props.navigation.reset({
+      index: 0,
+      routes: [{ name: 'Loginpage' }],
+    });
+  }
   render() {
     // const { url } = this.state;
     const prefix = 'https://';
@@ -435,7 +454,7 @@ export default class Chatdetails extends BaseComponent<
             </TouchableOpacity> */}
           <TouchableOpacity
             onPress={() => {
-              /* Right icon action */
+              this.DropDowmOpen();
             }}>
             <Badge
               style={{
@@ -454,7 +473,7 @@ export default class Chatdetails extends BaseComponent<
                   fontSize: 22,
                   fontWeight: '400',
                 }}>
-                {Model.sender.charAt(0)}
+                {Model.sender.toLocaleUpperCase().charAt(0)}
               </Text>
             </Badge>
           </TouchableOpacity>
@@ -492,10 +511,136 @@ export default class Chatdetails extends BaseComponent<
           </View>
         )} */}
         <SafeAreaView style={styles.body}>
+          {Model.IsOpen == true && (
+            <View style={styles.dropdownContainer}>
+              <View style={styles.dropdown}>
+                <View>
+                  <View>
+                  <Text
+                    style={{
+                      padding: 20,
+                      paddingBottom:1,
+                      paddingTop:10,
+                      color: '#0383FA',
+                      // margin: 10,
+                      alignSelf: 'left',
+                      fontSize:12
+                    }}>
+                    User:
+                  </Text>
+                  <Text
+                    style={{
+                      padding: 20,
+                      paddingBottom:10,
+                      paddingTop:0,
+                      color: 'black',
+                      // margin: 10,
+                      alignSelf: 'left',
+                      fontSize:16
+                    }}>
+                    {Model.sender}
+                  </Text>
+                  </View>
+                  <View>
+                  <Text
+                     style={{
+                      padding: 20,
+                      paddingBottom:1,
+                      paddingTop:10,
+                      color: '#0383FA',
+                      // margin: 10,
+                      alignSelf: 'left',
+                      fontSize:12
+                    }}>
+                    Designation:
+                  </Text>
+                  </View>
+                  <View style={{}}>
+                  <Text
+                    style={{
+                      padding: 20,
+                      paddingBottom:1,
+                      paddingTop:10,
+                      color: '#0383FA',
+                      // margin: 10,
+                      alignSelf: 'left',
+                      fontSize:12
+                    }}>
+                    Connection Code:
+                  </Text>
+                  </View>
+                  <View style={{}}>
+                  <Text
+                    style={{
+                      padding: 20,
+                      paddingBottom:1,
+                      paddingTop:10,
+                      color: '#0383FA',
+                      // margin: 10,
+                      alignSelf: 'left',
+                      fontSize:12
+                    }}>
+                    Version:
+                  </Text>
+                  <Text
+                    style={{
+                      padding: 20,
+                      paddingBottom:10,
+                      paddingTop:0,
+                      color: 'black',
+                      // margin: 10,
+                      alignSelf: 'left',
+                      fontSize:16
+                    }}>
+                    {Model.AppVersion}
+                  </Text>
+                  </View>
+                  {/* {model.OnlineText == 'Users Online' ? (
+                    <TouchableOpacity onPress={() => this.UserOnline()}>
+                      <Text
+                        style={{
+                          padding: 10,
+                          color: 'black',
+                          // margin: 10,
+                          alignSelf: 'center',
+                        }}>
+                        {model.OnlineText}
+                      </Text>
+                    </TouchableOpacity>
+                  ) : (
+                    <TouchableOpacity onPress={() => this.AllUserss()}>
+                      <Text
+                        style={{
+                          padding: 10,
+                          color: 'black',
+                          // margin: 10,
+                          alignSelf: 'center',
+                        }}>
+                        {model.OnlineText}
+                      </Text>
+                    </TouchableOpacity>
+                  )} */}
+                  <TouchableOpacity onPress={() => this.Logout()}>
+                    <Text
+                      style={{
+                        padding: 20,
+                        paddingBottom:1,
+                        paddingTop:10,
+                        color: '#0383FA',
+                        // margin: 10,
+                        alignSelf: 'left',
+                      }}>
+                      Logout
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </View>
+          )}
           <ScrollView
             style={styles.scrollView}
             contentContainerStyle={{
-              flexGrow: 1,
+              // flexGrow: 1,
               justifyContent: 'flex-end',
               flexDirection: 'column',
             }}
@@ -504,7 +649,7 @@ export default class Chatdetails extends BaseComponent<
               this.refs.scrollView.scrollTo({y: height})
             }>
             {Model.NewChat.map((item: AllChats) => (
-              <View>
+              <View style={{zIndex: 1}}>
                 {item.istoday ? (
                   <Text style={styles.today}>Today</Text>
                 ) : (
@@ -514,7 +659,8 @@ export default class Chatdetails extends BaseComponent<
                 )}
 
                 {item.Chat.map((i: Chat) =>
-                  i.lSenderId === Model.senderId ? (
+                  'u_' + i.lSenderId == Model.senderId ||
+                  i.lSenderId == Model.senderId ? (
                     <>
                       <View style={styles.messageto}>
                         <View style={styles.messagetomessage}>
@@ -545,7 +691,9 @@ export default class Chatdetails extends BaseComponent<
                                 fontSize: 15,
                                 textAlign: 'center',
                               }}>
-                              A
+                              {Model.User.userFullName
+                                .toLocaleUpperCase()
+                                .charAt(0)}
                             </Text>
                           </View>
                           <View style={styles.messagefromtext}>
@@ -624,6 +772,24 @@ const styles = StyleSheet.create({
   icon: {
     color: '#fff', // White icons
   },
+  dropdownContainer: {
+    position: 'absolute',
+    top: 20,
+    right: 10,
+    // Set a height for the container
+    height: 'auto',
+    width: 200,
+    zIndex: 100,
+  },
+  dropdown: {
+    backgroundColor: '#f1f1f1',
+    color: 'black',
+    borderRadius: 10,
+    textAlign: 'center',
+    display: 'flex',
+    justifyContent: 'center',
+    zIndex: 10,
+  },
   title: {
     fontSize: 18,
     fontWeight: '700',
@@ -649,7 +815,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Poppins-Regular',
     alignSelf: 'center',
   },
-  scrollView: {},
+  scrollView: {zIndex: 1},
   text2: {
     fontSize: 16,
     fontFamily: 'Poppins-Regular',
@@ -674,7 +840,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flexDirection: 'row',
   },
-  messagefromtext: {paddingLeft: 10, paddingRight: 30},
+  messagefromtext: {paddingLeft: 10, paddingRight: 30, zIndex: 1},
   messagefromtextcontent: {
     paddingVertical: 5,
     paddingHorizontal: 10,
@@ -695,9 +861,10 @@ const styles = StyleSheet.create({
     flexDirection: 'column',
     paddingHorizontal: 15,
     paddingVertical: 10,
+    zIndex: 1,
   },
-  messagetomessage: {flexDirection: 'row-reverse'},
-  messagetotext: {paddingLeft: 10, paddingRight: 0},
+  messagetomessage: {flexDirection: 'row-reverse', zIndex: 1},
+  messagetotext: {paddingLeft: 10, paddingRight: 0, zIndex: 1},
   messagetotextcontent: {
     paddingVertical: 5,
     paddingHorizontal: 10,
@@ -707,6 +874,7 @@ const styles = StyleSheet.create({
     color: '#C66E12',
     lineHeight: 25,
     fontFamily: 'OpenSans-VariableFont_wdth,wght',
+    zIndex: 1,
   },
   messagetotime: {
     flexDirections: 'row-reverse',

@@ -20,7 +20,7 @@ import SessionHelper from '../../Core/SessionHelper';
 import axios from 'axios';
 import * as signalR from '@microsoft/signalr';
 import DeviceInfo from 'react-native-device-info';
-
+import messaging from '@react-native-firebase/messaging';
 export class LoginViewModel {
   UserName: string = '';
   Password: string = '';
@@ -39,10 +39,27 @@ export default class Loginpage extends BaseComponent<any, LoginViewModel> {
   // }
   componentDidMount() {
     var Model = this.state.Model;
-    const deviceId = DeviceInfo.getDeviceId();
-    Model.DeviceId = deviceId;
-    this.UpdateViewModel();
-    console.log('deviceId: ', deviceId);
+    // const deviceId = DeviceInfo.getDeviceId();
+ 
+    this.FirebaseSetup()
+  }
+  FirebaseSetup=()=>{
+    var Model = this.state.Model
+    messaging()
+    .requestPermission()
+    .then(() => {
+      return messaging().getToken();
+    })
+    .then((token) => {
+      // Log the FCM token
+      console.log('FCM Token:', token);
+      Model.DeviceId = token;
+      this.UpdateViewModel();
+      // console.log('deviceId: ', deviceId);
+    })
+    .catch((error) => {
+      console.error('Error getting FCM token:', error);
+    });
   }
   onChangeText() {}
   handleSetUrl = () => {

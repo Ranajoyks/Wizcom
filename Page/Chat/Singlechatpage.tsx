@@ -18,8 +18,13 @@ import {
   ListItem,
   Right,
   Root,
+  Container,
+  Header,
+  Tab,
+  Tabs,
+  TabHeading,
 } from 'native-base';
-import {Container, Header, Tab, Tabs, TabHeading} from 'native-base';
+// import { TabHeading} from 'native-base';
 import BaseComponent from '../../Core/BaseComponent';
 import BaseState from '../../Core/BaseState';
 import {TabView, SceneMap, TabBar} from 'react-native-tab-view';
@@ -74,11 +79,14 @@ export default class Singlechatpage extends BaseComponent<
   Search = async () => {
     var Model = this.state.Model;
     Model.IsShow = !Model.IsShow;
+
     this.UpdateViewModel();
   };
   Cancle = async () => {
     var Model = this.state.Model;
     Model.IsShow = !Model.IsShow;
+    Model.Message = '';
+    Model.FilterUser = Model.alluser;
     this.UpdateViewModel();
   };
   DropDowmOpen = async () => {
@@ -142,29 +150,30 @@ export default class Singlechatpage extends BaseComponent<
     var Model = this.state.Model;
     Model.OnlineText = 'Users Online';
     console.log('Model.user', Model.alluser);
-    Model.FilterUser = Model.alluser
-    this.UpdateViewModel()
+    Model.FilterUser = Model.alluser;
+    this.UpdateViewModel();
   };
-  SearchText=(text:string)=>{
-    var Model = this.state.Model
-    Model.Message = text
-    const NewArray = Model.alluser.filter((i:alluser)=>{
+  SearchText = (text: string) => {
+    var Model = this.state.Model;
+    Model.Message = text;
+    var NewArray = Model.alluser.filter((i: alluser) => {
       const itemData = `${i.userName.toLowerCase()}`;
-      //  console.log(itemData)
-      //  if(model.SearchText){
       const textData = text.toLowerCase();
-      //  }
       if (textData.toLowerCase()) {
         return itemData.indexOf(textData) > -1;
       }
     });
-    console.log("NewArray",NewArray);
-    this.UpdateViewModel()
-  }
-  // if ((Model.OnlineText = 'All User')) {
-  //   Model.FilterUser = Model.alluser;
-  //   this.UpdateViewModel();
-  // }
+    console.log('NewArray', NewArray);
+    if (NewArray) {
+      Model.FilterUser = NewArray;
+      this.UpdateViewModel();
+    }
+    if (text == '') {
+      console.log('Hii');
+      Model.FilterUser = Model.alluser;
+      this.UpdateViewModel();
+    }
+  };
 
   initialLayout = {width: Dimensions.get('window').width};
   render() {
@@ -249,14 +258,19 @@ export default class Singlechatpage extends BaseComponent<
                 }}>
                 <TextInput
                   value={model.Message}
-                  onChangeText={(text) => this.SearchText(text)}
+                  onChangeText={text => this.SearchText(text)}
                   style={
                     (styles.input, {width: Dimensions.get('window').width - 70})
                   }
                   placeholder="Search....."></TextInput>
                 <TouchableOpacity
                   onPress={this.Cancle}
-                  style={{flexShrink: 1, width: 25, justifyContent: 'center'}}>
+                  style={{
+                    flexShrink: 1,
+                    width: 25,
+                    justifyContent: 'center',
+                    marginTop: 11,
+                  }}>
                   <Image
                     source={require('../../assets/cancel.png')}
                     style={{height: 25, width: 25}}
@@ -326,8 +340,24 @@ export default class Singlechatpage extends BaseComponent<
             </View>
           )}
 
-          <Tabs style={{backgroundColor: 'white'}}>
-            <Tab heading="AllMessage">
+          <Tabs
+            tabBarUnderlineStyle={{
+              borderColor: 'white',
+              backgroundColor: 'black',
+              borderWidth: 0,
+              height: 0,
+            }}
+            tabContainerStyle={{
+              borderBlockColor:"white"
+            }}>
+            <Tab
+              heading="AllMessage"
+              color="black"
+              textStyle={{color: 'black'}}
+              activeTextStyle={{color: 'black'}}
+              tabContainerStyle={{backgroundColor: 'white'}}
+              tabStyle={{backgroundColor: 'white',borderBlockColor:"white"}}
+              activeTabStyle={{backgroundColor: 'white',borderColor:"white"}}>
               <Content>
                 <List>
                   {model.FilterUser.map((i: alluser) => (
@@ -387,7 +417,14 @@ export default class Singlechatpage extends BaseComponent<
                 </List>
               </Content>
             </Tab>
-            <Tab heading="Notification">
+            <Tab
+              heading="Notification"
+              color="black"
+              textStyle={{color: 'black'}}
+              activeTextStyle={{color: 'black'}}
+              tabContainerStyle={{backgroundColor: 'white'}}
+              tabStyle={{backgroundColor: 'white'}}
+              activeTabStyle={{backgroundColor: 'white'}}>
               <Content>
                 <List>
                   {model.alluser.map((i: alluser) => (

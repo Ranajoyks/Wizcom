@@ -27,9 +27,9 @@ import messaging from '@react-native-firebase/messaging';
 import DeviceInfo from 'react-native-device-info';
 export class ChatdetailsViewModel {
   Message: string = '';
-  senderId: number = 0;
+  senderId: string = '';
   receiverId: string = '';
-  companyId?: number = 18;
+  companyId: number = 18;
   itype: number = 0;
   msgflag: string = 'U';
   Connection: any;
@@ -37,7 +37,7 @@ export class ChatdetailsViewModel {
   User: any;
   NewChat: AllChats[] = [];
   IsShow: boolean = false;
-  sender:string=""
+  sender: string = '';
 }
 export class AllChats {
   date: any = new Date();
@@ -55,7 +55,7 @@ export class Chatss {
   lId: number = 0;
   lRecCompId: number = 0;
   lReceiverId: number = 0;
-  lSenderId: number = 0;
+  lSenderId: string = '';
   lSrId: number = 0;
   lToStatusId: number = 0;
   lTypId: number = 0;
@@ -74,25 +74,24 @@ export default class Chatdetails extends BaseComponent<
   }
   async componentDidMount(): Promise<void> {
     var Model = this.state.Model;
-    Model.receiverId = Model.User.lId.toString();
+    Model.receiverId = `u_${Model.User.lId.toString()}`;
     this.MakeConnection();
     this.ReceiveMsg();
     var User = await SessionHelper.GetUserDetailsSession();
-    console.log("user: ", User);
-    Model.sender = User.userName
-    this.UpdateViewModel()
-    
+    console.log('user: ', User);
+    Model.sender = User.userName;
+    this.UpdateViewModel();
 
     // this.requestUserPermission();
     // this.getDeviceToken();
-    
+
     var UserDetails = await SessionHelper.GetUserDetailsSession();
-    Model.senderId = UserDetails.lId;
-    console.log("UserDetails.lId",UserDetails.lId);
-    
+    Model.senderId = `u_${UserDetails.lId.toString()}`;
+    console.log('UserDetails.lId', UserDetails);
+    console.log('UserDetails.lId',  Model.senderId);
+
     this.UpdateViewModel();
     this.GetAllMsg();
-
   }
   // requestUserPermission = async () => {
   //   const authStatus = await messaging().requestPermission();
@@ -195,7 +194,7 @@ export default class Chatdetails extends BaseComponent<
     console.log(Model.receiverId);
     axios
       .get(
-        `https://wemessanger.azurewebsites.net/api/User/readmessage?companyId=${Model.companyId}&senderId=u_${Model.senderId}&receiverId=u_${Model.receiverId}`,
+        `https://wemessanger.azurewebsites.net/api/User/readmessage?companyId=${Model.companyId}&senderId=${Model.senderId}&receiverId=${Model.receiverId}`,
       )
       .then(res => {
         console.log('ResData: ', res.data);
@@ -330,6 +329,19 @@ export default class Chatdetails extends BaseComponent<
               itemDate.getDate() === iDate.getDate()
             );
           });
+          var Xyz = model.NewChat.find((i: AllChats) => {
+            // Create new Date objects with only the year, month, and day
+            const itemDate = new Date();
+            const iDate = new Date(i.date);
+
+            // Compare only the date part
+            return (
+              itemDate.getFullYear() === iDate.getFullYear() &&
+              itemDate.getMonth() === iDate.getMonth() &&
+              itemDate.getDate() === iDate.getDate()
+            );
+          });
+          console.log('index',XyzIndex);
           var sendMsg = new Chatss();
           sendMsg.sMsg = model.Message;
           sendMsg.lSenderId = model.senderId;
@@ -345,7 +357,8 @@ export default class Chatdetails extends BaseComponent<
           if (model.Message.trim() === '') {
             return;
           } else {
-            if (XyzIndex) {
+            if (Xyz) {
+              console.log('indexavailable',model.NewChat[XyzIndex]);
               model.NewChat[XyzIndex].Chat.push(sendMsg);
             } else {
               var NewChatArray = new AllChats();
@@ -362,6 +375,7 @@ export default class Chatdetails extends BaseComponent<
               console.log('sendMsg date', sendMsg.dtMsg);
               NewChatArray.date = sendMsg.dtMsg.toString();
               NewChatArray.Chat.push(sendMsg);
+              console.log('indexnotavailable',NewChatArray);
               model.NewChat.push(NewChatArray);
             }
             // model.Chats.push(sendMsg);

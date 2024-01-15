@@ -1,9 +1,6 @@
 import React, {Component} from 'react';
 
 import {View, Text, StyleSheet, TouchableOpacity, Image} from 'react-native';
-import Icon from 'react-native-vector-icons/FontAwesome'; // Replace with your icon library
-import AppIconImage from '../../assets/AppIconImage';
-import DropDownPicker from 'react-native-dropdown-picker';
 import BaseComponent from '../../Core/BaseComponent';
 import BaseState from '../../Core/BaseState';
 import CustomPicker from '../../Control/CustomPicker';

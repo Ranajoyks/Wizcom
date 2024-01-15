@@ -27,13 +27,6 @@ import {
 // import { TabHeading} from 'native-base';
 import BaseComponent from '../../Core/BaseComponent';
 import BaseState from '../../Core/BaseState';
-import {TabView, SceneMap, TabBar} from 'react-native-tab-view';
-import Selectcompanypage from '../Company/Selectcompanypage';
-import Loginpage from '../Login/Loginpage';
-import Icon from 'react-native-vector-icons/FontAwesome';
-import Allmessage from './Allmessage';
-import {NavigationContainer} from '@react-navigation/native';
-import Groupchat from './Groupchat';
 import SessionHelper from '../../Core/SessionHelper';
 import DeviceInfo from 'react-native-device-info';
 import * as signalR from '@microsoft/signalr';
@@ -52,6 +45,7 @@ export class SinglechatpageViewModel {
   alluser: alluser[] = [];
   index: number = 0;
   FilterUser: alluser[] = [];
+  FCMToken:string=""
 }
 
 export default class Singlechatpage extends BaseComponent<
@@ -72,6 +66,8 @@ export default class Singlechatpage extends BaseComponent<
     this.UpdateViewModel();
     console.log('deviceId: ', deviceId);
     var User = await SessionHelper.GetUserDetailsSession();
+    var FCMToken = await SessionHelper.GetFCMTokenSession()
+    Model.FCMToken = FCMToken
     console.log('User: ', User);
     console.log('User: ', Model.UserName);
     this.Fetchmessage();
@@ -112,10 +108,26 @@ export default class Singlechatpage extends BaseComponent<
 
       var UserList = Connection.invoke('GetAllUser', myId, 0)
         .then(user => {
-          // console.log(user);
+          // console.log("GetallUser: ",user);
           model.alluser = user;
           model.FilterUser = model.alluser;
           this.UpdateViewModel();
+          Connection.invoke(
+            'IsUserConnected',
+            UserDetails.lId.toString(),
+          )
+            .then(isConnected => {
+              console.log('Connection', isConnected);
+
+              if (isConnected) {
+                console.log(`User - ${UserDetails.lId} is live`);
+              } else {
+                console.log(`User - ${UserDetails.lId} is not live`);
+              }
+            })
+            .catch(error => {
+              console.log(error);
+            });
         })
         .catch((err: any) => {
           console.log('Error to invoke: ', err);
@@ -425,7 +437,6 @@ this.props.navigation.reset({
               </View>
             </View>
           )}
-
           <Tabs
             tabBarUnderlineStyle={{
               borderColor: 'white',
@@ -465,6 +476,7 @@ this.props.navigation.reset({
                                   color: 'black',
                                   fontSize: 22,
                                   fontWeight: '400',
+                                  
                                 }}>
                                 {i.userFullName.toLocaleUpperCase().charAt(0)}
                               </Text>
@@ -482,18 +494,20 @@ this.props.navigation.reset({
                               style={{
                                 color: 'black',
                                 fontWeight: '600',
-                                fontFamily: 'OpenSans-VariableFont_wdth,wght',
+                                fontFamily:"OpenSans-Regular",
                                 marginBottom: 5,
                                 fontSize: 14.5,
                               }}>
                               {i.userFullName}
+
                             </Text>
                           </View>
                           <Text
                             style={{
                               color: i.status ? '#0383FA' : '#a6a6a6',
                               fontWeight: '200',
-                              fontFamily: 'OpenSans-VariableFont_wdth,wght',
+                              fontFamily:"OpenSans-Regular",
+                              letterSpacing:0.2,
                               fontSize: 12,
                             }}>
                             {i.message ? i.message : 'No message'}

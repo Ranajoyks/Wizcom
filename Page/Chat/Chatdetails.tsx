@@ -11,10 +11,9 @@ import {
   SafeAreaView,
   ScrollView,
   Dimensions,
+  Alert,
+  ActivityIndicator
 } from 'react-native';
-import Icon from 'react-native-vector-icons/FontAwesome'; // Replace with your icon library
-import AppIconImage from '../../assets/AppIconImage';
-import DropDownPicker from 'react-native-dropdown-picker';
 import {Badge, Button} from 'native-base';
 import BaseComponent from '../../Core/BaseComponent';
 import BaseState from '../../Core/BaseState';
@@ -23,8 +22,7 @@ import SessionHelper from '../../Core/SessionHelper';
 import axios from 'axios';
 import {Chat} from '../../Entity/Chat';
 import EntityHelperService from '../Service/EntityHelperService';
-import messaging from '@react-native-firebase/messaging';
-import DeviceInfo from 'react-native-device-info';
+import NetInfo from '@react-native-community/netinfo';
 export class ChatdetailsViewModel {
   Message: string = '';
   senderId: string = '';
@@ -40,6 +38,11 @@ export class ChatdetailsViewModel {
   sender: string = '';
   IsOpen: boolean = false;
   AppVersion: string = '1.0.0';
+  FCMToken: string = '';
+  InterNetConnection: any;
+  SignalRConnected:boolean=false;
+  intervalId:any
+
 }
 export class AllChats {
   date: any = new Date();
@@ -64,16 +67,19 @@ export class Chatss {
   sConnId: string = '';
   sMsg: string = '';
 }
+var intervalId:any;
 export default class Chatdetails extends BaseComponent<
   any,
   ChatdetailsViewModel
 > {
   constructor(props: any) {
+ 
     super(props);
     this.state = new BaseState(new ChatdetailsViewModel());
     this.state.Model.User = props.route.params.User;
     // this.state.Model.senderId = props.route.params.SenderID;
   }
+
   async componentDidMount(): Promise<void> {
     var Model = this.state.Model;
     Model.receiverId = `u_${Model.User.lId.toString()}`;
@@ -81,21 +87,51 @@ export default class Chatdetails extends BaseComponent<
     this.ReceiveMsg();
     var User = await SessionHelper.GetUserDetailsSession();
     console.log('user: ', User);
+    var FCMToken = await SessionHelper.GetFCMTokenSession();
+    Model.FCMToken = FCMToken;
     Model.sender = User.userName;
     this.UpdateViewModel();
     console.log('@Receiver', this.props.route.params.User);
-
-    // this.requestUserPermission();
-    // this.getDeviceToken();
-
     var UserDetails = await SessionHelper.GetUserDetailsSession();
     Model.senderId = `u_${UserDetails.lId.toString()}`;
     console.log('UserDetails.lId', UserDetails);
     console.log('UserDetails.lId', Model.senderId);
-
     this.UpdateViewModel();
     this.GetAllMsg();
+    if(Model.SignalRConnected === false){
+      intervalId = setInterval(this.CheckInternetConnetion, 7000);
+    // this.UpdateViewModel()
+    }
   }
+  componentWillUnmount() {
+    var Model = this.state.Model
+
+    // if(Model.SignalRConnected === false){
+    //   intervalId = setInterval(this.CheckInternetConnetion, 3000);
+    // // this.UpdateViewModel()
+    // }
+
+  }
+  // async componentWillUnmount() {
+  //   var model = this.state.Model
+  //   console.log('gdfgfgf')
+  //   if (model.InterNetConnection == true) {
+  //     console.log("ModelConnecrtion: ", model.Connection);
+  //     console.log("ModelInternetConnecrtion: ", model.InterNetConnection);
+
+  //     // if(model.Connection==null){
+  //    await this.MakeConnection();
+  //      await model.Connection.start()
+  //     .then(() => {
+  //       console.log('SignalR connected');
+  //       model.Connection.invoke('JoinChat', model.senderId);
+  //     })
+  //     // }
+
+  //   }
+  //   this.UpdateViewModel()
+
+  // }
   // requestUserPermission = async () => {
   //   const authStatus = await messaging().requestPermission();
   //   const enabled =
@@ -115,6 +151,7 @@ export default class Chatdetails extends BaseComponent<
   //   }
   // };
   MakeConnection = async () => {
+    console.log('hello');
     var Model = this.state.Model;
     var BranchID = await SessionHelper.GetBranchIdSession();
     Model.companyId = BranchID;
@@ -125,10 +162,16 @@ export default class Chatdetails extends BaseComponent<
     Model.Connection.start()
       .then(() => {
         console.log('SignalR connected');
+        Model.SignalRConnected = true
+        this.UpdateViewModel()
+     //   clearInterval(intervalId);
         Model.Connection.invoke('JoinChat', Model.senderId);
       })
       .catch((err: any) => {
         Model.Connection.start();
+        Model.SignalRConnected = false
+        this.UpdateViewModel()
+       // intervalId = setInterval(this.CheckInternetConnetion, 3000);
         console.error('SignalR connection error:', err);
       });
     await Model.Connection.on(
@@ -189,6 +232,20 @@ export default class Chatdetails extends BaseComponent<
         }
       },
     );
+  };
+  CheckInternetConnetion = () => {
+    var model = this.state.Model;
+    NetInfo.addEventListener(state => {
+      model.InterNetConnection = state.isConnected;
+      // console.log('ModelConnection: ', state.isConnected);
+      this.UpdateViewModel();
+    
+    });
+    if (model.InterNetConnection == true) {
+      this.MakeConnection()
+    }
+    console.log('InternetConnetion: ', model.InterNetConnection);
+
   };
   GetAllMsg = async () => {
     var Model = this.state.Model;
@@ -293,103 +350,184 @@ export default class Chatdetails extends BaseComponent<
   };
   ButtonClick = async () => {
     var model = this.state.Model;
-    console.log(
-      'Modelvalue:',
-      model.companyId,
-      model.senderId,
-      model.receiverId,
-      model.Message,
-      model.msgflag,
-      model.itype,
-    );
-    if (model.Message.trim() === '') {
-      return;
-    } else {
-      // model.Chats.push(sendMsg);
+    console.log('InternetConnetion: ', model.InterNetConnection);
 
-      await model.Connection.invoke(
-        'SendMessage',
-        model.companyId,
-        model.senderId,
-        model.receiverId,
-        model.Message,
-        model.msgflag,
-        model.itype,
-      )
-        .then(() => {
-          var date = new Date();
-          // const modifiedDate = new Date(date.getTime() - 19800000);
-          console.log('Msg sent:', model.Message);
-          var XyzIndex = model.NewChat.findIndex((i: AllChats) => {
-            // Create new Date objects with only the year, month, and day
-            const itemDate = new Date();
-            const iDate = new Date(i.date);
-
-            // Compare only the date part
-            return (
-              itemDate.getFullYear() === iDate.getFullYear() &&
-              itemDate.getMonth() === iDate.getMonth() &&
-              itemDate.getDate() === iDate.getDate()
-            );
-          });
-          var Xyz = model.NewChat.find((i: AllChats) => {
-            // Create new Date objects with only the year, month, and day
-            const itemDate = new Date();
-            const iDate = new Date(i.date);
-
-            // Compare only the date part
-            return (
-              itemDate.getFullYear() === iDate.getFullYear() &&
-              itemDate.getMonth() === iDate.getMonth() &&
-              itemDate.getDate() === iDate.getDate()
-            );
-          });
-          console.log('index', XyzIndex);
-          var sendMsg = new Chatss();
-          sendMsg.sMsg = model.Message;
-          sendMsg.lSenderId = model.senderId;
-          var newDate = new Date(
-            date.getTime() - date.getTimezoneOffset() * 60 * 1000,
+    console.log('ModelConnection: ', model.InterNetConnection);
+    if (model.InterNetConnection == true) {
+      console.log('ModelConnecrtion: ', model.Connection);
+      if (model.Message.trim() === '') {
+        return;
+      } else {
+        var date = new Date();
+        // const modifiedDate = new Date(date.getTime() - 19800000);
+        console.log('Msg sent:', model.Message);
+        var XyzIndex = model.NewChat.findIndex((i: AllChats) => {
+          const itemDate = new Date();
+          const iDate = new Date(i.date);
+          return (
+            itemDate.getFullYear() === iDate.getFullYear() &&
+            itemDate.getMonth() === iDate.getMonth() &&
+            itemDate.getDate() === iDate.getDate()
           );
-          var offset = date.getTimezoneOffset() / 60;
-          var hours = date.getHours();
-          newDate.setHours(hours + offset);
-          sendMsg.dtMsg = new Date(newDate).toString();
-          console.log('SendDate', sendMsg.dtMsg);
-          console.log('Send MSg: ', sendMsg);
-          if (model.Message.trim() === '') {
-            return;
-          } else {
-            if (Xyz) {
-              console.log('indexavailable', model.NewChat[XyzIndex]);
-              model.NewChat[XyzIndex].Chat.push(sendMsg);
-            } else {
-              var NewChatArray = new AllChats();
-              var date = new Date();
-              if (
-                date.getFullYear() === new Date(sendMsg.dtMsg).getFullYear() &&
-                date.getMonth() === new Date(sendMsg.dtMsg).getMonth() &&
-                date.getDate() === new Date(sendMsg.dtMsg).getDate()
-              ) {
-                NewChatArray.istoday = true;
-              } else {
-                NewChatArray.istoday = false;
-              }
-              console.log('sendMsg date', sendMsg.dtMsg);
-              NewChatArray.date = sendMsg.dtMsg.toString();
-              NewChatArray.Chat.push(sendMsg);
-              console.log('indexnotavailable', NewChatArray);
-              model.NewChat.push(NewChatArray);
-            }
-            // model.Chats.push(sendMsg);
-          }
-          model.Message = '';
-          this.UpdateViewModel();
-          // this.GetAllMsg()
-        })
-        .catch((error: any) => {
-          console.error('Error invoking SendMessage:', error);
         });
+        var Xyz = model.NewChat.find((i: AllChats) => {
+          const itemDate = new Date();
+          const iDate = new Date(i.date);
+          return (
+            itemDate.getFullYear() === iDate.getFullYear() &&
+            itemDate.getMonth() === iDate.getMonth() &&
+            itemDate.getDate() === iDate.getDate()
+          );
+        });
+        console.log('index', XyzIndex);
+        var sendMsg = new Chatss();
+        sendMsg.sMsg = model.Message;
+        sendMsg.lSenderId = model.senderId;
+        var newDate = new Date(
+          date.getTime() - date.getTimezoneOffset() * 60 * 1000,
+        );
+        var offset = date.getTimezoneOffset() / 60;
+        var hours = date.getHours();
+        newDate.setHours(hours + offset);
+        sendMsg.dtMsg = new Date(newDate).toString();
+        console.log('SendDate', sendMsg.dtMsg);
+        console.log('Send MSg: ', sendMsg);
+        if (Xyz) {
+          console.log('indexavailable', model.NewChat[XyzIndex]);
+          model.NewChat[XyzIndex].Chat.push(sendMsg);
+        } else {
+          var NewChatArray = new AllChats();
+          var date = new Date();
+          if (
+            date.getFullYear() === new Date(sendMsg.dtMsg).getFullYear() &&
+            date.getMonth() === new Date(sendMsg.dtMsg).getMonth() &&
+            date.getDate() === new Date(sendMsg.dtMsg).getDate()
+          ) {
+            NewChatArray.istoday = true;
+          } else {
+            NewChatArray.istoday = false;
+          }
+          console.log('sendMsg date', sendMsg.dtMsg);
+          NewChatArray.date = sendMsg.dtMsg.toString();
+          NewChatArray.Chat.push(sendMsg);
+          console.log('indexnotavailable', NewChatArray);
+          model.NewChat.push(NewChatArray);
+        }
+        await model.Connection.invoke(
+          'SendMessage',
+          model.companyId,
+          model.senderId,
+          model.receiverId,
+          model.Message,
+          model.msgflag,
+          model.itype,
+        )
+          .then(() => {
+            console.log('ok');
+            model.Message = '';
+            this.UpdateViewModel();
+          })
+          .catch((error: any) => {
+            console.log('errorsssss');
+            console.error('Error invoking SendMessage:', error);
+          });
+      }
+    }
+    if (model.InterNetConnection == false) {
+      model.SignalRConnected = false
+      this.UpdateViewModel()
+      var date = new Date();
+      console.log('Msg sent:', model.Message);
+      var XyzIndex = model.NewChat.findIndex((i: AllChats) => {
+        const itemDate = new Date();
+        const iDate = new Date(i.date);
+        return (
+          itemDate.getFullYear() === iDate.getFullYear() &&
+          itemDate.getMonth() === iDate.getMonth() &&
+          itemDate.getDate() === iDate.getDate()
+        );
+      });
+      var Xyz = model.NewChat.find((i: AllChats) => {
+        const itemDate = new Date();
+        const iDate = new Date(i.date);
+        return (
+          itemDate.getFullYear() === iDate.getFullYear() &&
+          itemDate.getMonth() === iDate.getMonth() &&
+          itemDate.getDate() === iDate.getDate()
+        );
+      });
+      console.log('index', XyzIndex);
+      var sendMsg = new Chatss();
+      sendMsg.sMsg = model.Message;
+      sendMsg.lSenderId = model.senderId;
+      var newDate = new Date(
+        date.getTime() - date.getTimezoneOffset() * 60 * 1000,
+      );
+      var offset = date.getTimezoneOffset() / 60;
+      var hours = date.getHours();
+      newDate.setHours(hours + offset);
+      sendMsg.dtMsg = new Date(newDate).toString();
+      console.log('SendDate', sendMsg.dtMsg);
+      console.log('Send MSg: ', sendMsg);
+      if (Xyz) {
+        console.log('indexavailable', model.NewChat[XyzIndex]);
+        model.NewChat[XyzIndex].Chat.push(sendMsg);
+        Alert.alert(
+          'Connection Status',
+          'No internet connection',
+          [
+            {
+              text: 'OK',
+              onPress: () => {
+                var ChatLength = model.NewChat.length - 1;
+                model.NewChat[ChatLength].Chat.pop();
+                model.Message = '';
+                this.UpdateViewModel();
+                console.log('NewChat2: ', model.NewChat);
+                console.log('OK Pressed');
+              },
+            },
+          ],
+          {cancelable: false},
+        );
+      } else {
+        var NewChatArray = new AllChats();
+        var date = new Date();
+        if (
+          date.getFullYear() === new Date(sendMsg.dtMsg).getFullYear() &&
+          date.getMonth() === new Date(sendMsg.dtMsg).getMonth() &&
+          date.getDate() === new Date(sendMsg.dtMsg).getDate()
+        ) {
+          NewChatArray.istoday = true;
+        } else {
+          NewChatArray.istoday = false;
+        }
+        console.log('sendMsg date', sendMsg.dtMsg);
+        NewChatArray.date = sendMsg.dtMsg.toString();
+        NewChatArray.Chat.push(sendMsg);
+        console.log('indexnotavailable', NewChatArray);
+        model.NewChat.push(NewChatArray);
+        console.log('NewChat: ', model.NewChat);
+
+        Alert.alert(
+          'Connection Status',
+          'No internet connection',
+          [
+            {
+              text: 'OK',
+              onPress: () => {
+                var ChatLength = model.NewChat.length - 1;
+                model.NewChat[ChatLength].Chat.pop();
+                model.Message = '';
+                this.UpdateViewModel();
+                console.log('NewChat2: ', model.NewChat);
+                console.log('OK Pressed');
+              },
+            },
+          ],
+          {cancelable: false},
+        );
+      }
     }
   };
   Search = async () => {
@@ -423,6 +561,8 @@ export default class Chatdetails extends BaseComponent<
     // const { url } = this.state;
     const prefix = 'https://';
     var Model = this.state.Model;
+    console.log("Signal R: ", Model.SignalRConnected);
+    
     // console.log('Chats:', JSON.stringify(Model.NewChat) );
 
     return (
@@ -481,38 +621,6 @@ export default class Chatdetails extends BaseComponent<
             </Badge>
           </TouchableOpacity>
         </View>
-        {/* )} */}
-        {/* {Model.IsShow == true && (
-          <View style={{padding: 10}}>
-            <View
-              style={{
-                backgroundColor: '#F1F1F1',
-                paddingHorizontal: 10,
-                paddingVertical: 5,
-                borderRadius: 6,
-                flexDirection: 'row',
-              }}>
-              <TextInput
-                value={Model.Message}
-                onChangeText={text => {
-                  Model.Message = text;
-                  this.UpdateViewModel();
-                }}
-                style={
-                  (styles.input, {width: Dimensions.get('window').width - 70})
-                }
-                placeholder="Search....."></TextInput>
-              <TouchableOpacity
-                onPress={this.Cancle}
-                style={{flexShrink: 1, width: 25, justifyContent: 'center'}}>
-                <Image
-                  source={require('../../assets/cancel.png')}
-                  style={{height: 25, width: 25}}
-                />
-              </TouchableOpacity>
-            </View>
-          </View>
-        )} */}
         <SafeAreaView style={styles.body}>
           {Model.IsOpen == true && (
             <View style={styles.dropdownContainer}>
@@ -651,7 +759,9 @@ export default class Chatdetails extends BaseComponent<
             onContentSizeChange={(width, height) =>
               this.refs.scrollView.scrollTo({y: height})
             }>
-            {Model.NewChat.map((item: AllChats) => (
+              {Model.SignalRConnected === false && <ActivityIndicator size="large" color="#0000ff" />}
+
+              {Model.SignalRConnected === true && Model.NewChat.map((item: AllChats) => (
               <View style={{zIndex: 1}}>
                 {/* {item.istoday ? (
                   <Text style={styles.today}>Today</Text>

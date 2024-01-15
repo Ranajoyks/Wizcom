@@ -11,10 +11,7 @@ import {
   ScrollView,
   Dimensions,
 } from 'react-native';
-import Icon from 'react-native-vector-icons/FontAwesome'; // Replace with your icon library
-import AppIconImage from '../../assets/AppIconImage';
-import DropDownPicker from 'react-native-dropdown-picker';
-import {Button} from 'native-base';
+import Icon from 'react-native-vector-icons/FontAwesome';
 import BaseComponent from '../../Core/BaseComponent';
 import BaseState from '../../Core/BaseState';
 

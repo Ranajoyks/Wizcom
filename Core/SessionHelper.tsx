@@ -77,6 +77,16 @@ export default class SessionHelper {
         }
         return JSON.parse(item) as any;
     }
+    public static SetFCMTokenSession(FCMToken: any) {
+        AsyncStorage.setItem('FCMToken', JSON.stringify(FCMToken))
+    }
+    public static async GetFCMTokenSession() {
+        var item = await AsyncStorage.getItem('FCMToken');
+        if (!item) {
+            return item as unknown as any;
+        }
+        return JSON.parse(item) as any;
+    }
 
 
      

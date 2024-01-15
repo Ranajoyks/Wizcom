@@ -1,5 +1,5 @@
 import React, {Component} from 'react';
-import {Text, View} from 'react-native';
+import {PermissionsAndroid, Text, View} from 'react-native';
 
 import {
   Badge,
@@ -21,9 +21,6 @@ import alluser from '../../Entity/alluser';
 import SessionHelper from '../../Core/SessionHelper';
 import DeviceInfo from 'react-native-device-info';
 import * as signalR from '@microsoft/signalr';
-import messaging from '@react-native-firebase/messaging';
-import {PermissionsAndroid} from 'react-native';
-// const navigation = useNavigation();
 export class allchatpageViewModel {
   alluser: alluser[] = [];
   UserName: string = '';

@@ -8,18 +8,12 @@ import {
   Image,
   TextInput,
 } from 'react-native';
-import Icon from 'react-native-vector-icons/FontAwesome'; // Replace with your icon library
-import AppIconImage from '../../assets/AppIconImage';
-import DropDownPicker from 'react-native-dropdown-picker';
 import BaseComponent from '../../Core/BaseComponent';
 import BaseState from '../../Core/BaseState';
-import CustomPicker from '../../Control/CustomPicker';
-import {Picker} from 'native-base';
 import {Button} from 'native-base';
 import SessionHelper from '../../Core/SessionHelper';
 import axios from 'axios';
 import * as signalR from '@microsoft/signalr';
-import DeviceInfo from 'react-native-device-info';
 import messaging from '@react-native-firebase/messaging';
 export class LoginViewModel {
   UserName: string = '';
@@ -56,6 +50,7 @@ export default class Loginpage extends BaseComponent<any, LoginViewModel> {
       Model.DeviceId = token;
       this.UpdateViewModel();
       // console.log('deviceId: ', deviceId);
+      SessionHelper.SetFCMTokenSession(token)
     })
     .catch((error) => {
       console.error('Error getting FCM token:', error);

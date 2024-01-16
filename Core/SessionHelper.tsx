@@ -87,6 +87,16 @@ export default class SessionHelper {
         }
         return JSON.parse(item) as any;
     }
+    public static SetCompanyIDSession(CompanyID: any) {
+        AsyncStorage.setItem('CompanyID', JSON.stringify(CompanyID))
+    }
+    public static async GetCompanyIDSession() {
+        var item = await AsyncStorage.getItem('CompanyID');
+        if (!item) {
+            return item as unknown as any;
+        }
+        return JSON.parse(item) as any;
+    }
 
 
      

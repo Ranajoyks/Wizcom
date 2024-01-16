@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   Image,
   TextInput,
+  BackHandler 
 } from 'react-native';
 import BaseComponent from '../../Core/BaseComponent';
 import BaseState from '../../Core/BaseState';
@@ -15,6 +16,8 @@ import SessionHelper from '../../Core/SessionHelper';
 import axios from 'axios';
 import * as signalR from '@microsoft/signalr';
 import messaging from '@react-native-firebase/messaging';
+
+import { request, check, PERMISSIONS, RESULTS } from 'react-native-permissions';
 export class LoginViewModel {
   UserName: string = '';
   Password: string = '';
@@ -31,12 +34,30 @@ export default class Loginpage extends BaseComponent<any, LoginViewModel> {
   //   var value = await SessionHelper.GetSession();
   //   console.log('value: ', value);
   // }
-  componentDidMount() {
+  async componentDidMount() {
     var Model = this.state.Model;
     // const deviceId = DeviceInfo.getDeviceId();
- 
+    const checkPermission = await this.checkNotificationPermission();
+    console.log("checkPermission: ",checkPermission);
+    if (checkPermission !== RESULTS.GRANTED) {
+      
+      const request = await this.requestNotificationPermission();
+      console.log("request: ",request);
+       if(request !== RESULTS.GRANTED){
+       // BackHandler.exitApp()
+        }
+    }
     this.FirebaseSetup()
   }
+   requestNotificationPermission = async () => {
+    const result = await request(PERMISSIONS.ANDROID.POST_NOTIFICATIONS);
+    return result;
+  };
+  
+  checkNotificationPermission = async () => {
+    const result = await check(PERMISSIONS.ANDROID.POST_NOTIFICATIONS);
+    return result;
+  };
   FirebaseSetup=()=>{
     var Model = this.state.Model
     messaging()
@@ -107,25 +128,26 @@ export default class Loginpage extends BaseComponent<any, LoginViewModel> {
               console.log('data', response.data);
               SessionHelper.SetUserDetailsSession(response.data[0]);
               var Connection = new signalR.HubConnectionBuilder()
-              .withUrl(`https://wemessanger.azurewebsites.net/chatHub?UserId=${response.data[0].lId.toString()}`)
+              .withUrl(`https://wemessanger.azurewebsites.net/chatHub?UserId=u_${response.data[0].lId.toString()}`)
               .build();
               Connection.start().then(() => {
                 console.log('SignalR connected');
+                console.log('----',response.data[0].lId.toString());
                 Connection.invoke(
                   'JoinChat',
-                  response.data[0].lId.toString(),
+                  'u_'+response.data[0].lId.toString(),
                 ).then(res => {
                   Connection.invoke(
                     'IsUserConnected',
-                    response.data[0].lId.toString(),
+                    'u_'+response.data[0].lId.toString(),
                   )
                     .then(isConnected => {
                       console.log('Connection', isConnected);
 
                       if (isConnected) {
-                        console.log(`User ${response.data[0].lId} is live`);
+                        console.log(`User: u_${response.data[0].lId} is live`);
                       } else {
-                        console.log(`User ${response.data[0].lId} is not live`);
+                        console.log(`User:  u_${response.data[0].lId} is not live`);
                       }
                     })
                     .catch(error => {
@@ -210,8 +232,8 @@ export default class Loginpage extends BaseComponent<any, LoginViewModel> {
           <Text
             style={{
               color: 'white',
-              fontWeight: '800',
-              fontFamily: 'Poppins-Regular',
+              // fontWeight: '800',
+              fontFamily: 'Poppins-Bold',
             }}>
             Login
           </Text>
@@ -289,6 +311,7 @@ const styles = StyleSheet.create({
     borderRadius: 7,
     justifyContent: 'center',
     textAlign: 'center',
+    fontFamily:"OpenSans-Regular",
   },
   buttontest: {
     alignSelf: 'center',

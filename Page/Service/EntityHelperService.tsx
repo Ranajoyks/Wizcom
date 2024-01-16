@@ -46,7 +46,7 @@ export default class EntityHelperService {
     );
 
     var offset = date.getTimezoneOffset() / 60;
-    var hours = date.getHours();
+    var hours = date.getHours()+1;
 
     newDate.setHours(hours - offset);
     // console.log(newDate);

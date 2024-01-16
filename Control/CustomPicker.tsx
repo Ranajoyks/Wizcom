@@ -71,13 +71,18 @@ export default function CustomPicker(props: CustomPickerProps) {
           marginLeft: 0,
           borderRadius: 100,
           borderColor: '#F1F1F1',
+       
         }}
+        
         error={IsRequired && isEmpty}
         success={IsRequired && !isEmpty}>
         <Picker
           mode="dialog"
           iosIcon={<Icon name="chevron-down" />}
           selectedValue={selectedValue}
+          textStyle={{color:"red",fontSize:25}}
+          itemTextStyle={{color:"red",fontSize:25}}
+          placeholderStyle={{color:"red",fontSize:25}}
           style={{
             backgroundColor: '#F1F1F1', // Match body background
             borderWidth: 1,
@@ -85,6 +90,7 @@ export default function CustomPicker(props: CustomPickerProps) {
             borderColor: '#F1F1F1', // Lighter blue border
             borderRadius: 100,
             alignSelf: 'center',
+            // fontSize:100
             // padding: 10,
           }}
           onValueChange={itemValue => OnChangeInternal(itemValue)}>

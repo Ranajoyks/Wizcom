@@ -28,6 +28,7 @@ import Chatdetails from '../Page/Chat/Chatdetails';
 import Branchpage from '../Page/Branch/Branchpage';
 import Groupchat from '../Page/Chat/Groupchat';
 import Groupchatdetails from '../Page/Chat/Groupchatdetails';
+import NoficationDetails from '../Page/Chat/NoficationDetails';
 
 
 
@@ -93,6 +94,11 @@ function AppStack() {
 <Stack.Screen
       name="Groupchat"
       component={Groupchat}
+      options={{headerShown: false, gestureEnabled: false}}
+    />
+<Stack.Screen
+      name="NoficationDetails"
+      component={NoficationDetails}
       options={{headerShown: false, gestureEnabled: false}}
     />
    

@@ -72,6 +72,7 @@ export default class Selectcompanypage extends BaseComponent<
               // console.log("status",res.data.d.bStatus);
               // console.log('postData: ', postData);
               if (res.data.d.bStatus) {
+                SessionHelper.SetCompanyIDSession(CompanyArray[0].CODE)
                 this.props.navigation.navigate({
                   name: 'Loginpage',
                 });

@@ -43,6 +43,7 @@ export class ChatdetailsViewModel {
   SignalRConnected: boolean = false;
   intervalId: any;
   ConnectionCode:any
+  AllNotifiCationChat:any[]=[]
 }
 export class AllChats {
   date: any = new Date();
@@ -272,8 +273,13 @@ export default class Chatdetails extends BaseComponent<
       )
       .then(res => {
         console.log('AllChat: ', res.data);
+        var Notification = res.data.filter((i:any)=>i.cMsgFlg ==="F")
+        console.log("Notification: ",Notification);
+        Model.AllNotifiCationChat = Notification
+        this.UpdateViewModel()
+        
 
-        res.data.forEach((item: Chat) => {
+        Model.AllNotifiCationChat.forEach((item: Chat) => {
           var Xyz = Model.NewChat.find((i: AllChats) => {
             // Create new Date objects with only the year, month, and day
             const itemDate = new Date(item.dtMsg);

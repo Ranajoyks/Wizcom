@@ -32,6 +32,7 @@ import DeviceInfo from 'react-native-device-info';
 import * as signalR from '@microsoft/signalr';
 import alluser from '../../Entity/alluser';
 import {TouchableOpacity} from 'react-native-gesture-handler';
+import axios from 'axios';
 
 export class SinglechatpageViewModel {
   BranchName: string = '';
@@ -41,11 +42,15 @@ export class SinglechatpageViewModel {
   IsOpen: boolean = false;
   DeviceId: string = '';
   AppVersion: string = '1.0.0';
-  OnlineText: string = 'Users Online';
+  OnlineText: string = 'Online User';
   alluser: alluser[] = [];
   index: number = 0;
   FilterUser: alluser[] = [];
-  FCMToken:string=""
+  FCMToken: string = '';
+  SenderID: string = '';
+  BranchID: number = 1;
+  ConnectionCode:any
+  AllNotification: alluser[] = [];
 }
 
 export default class Singlechatpage extends BaseComponent<
@@ -57,7 +62,9 @@ export default class Singlechatpage extends BaseComponent<
     this.state = new BaseState(new SinglechatpageViewModel());
     this.state.Model.BranchName = props.route.params.BranchName;
     this.state.Model.UserName = props.route.params.UserName;
+    this.state.Model.BranchID = props.route.params.BranchID;
     console.log('Branch', this.state.Model.BranchName);
+    console.log('BranchID', this.state.Model.BranchID);
   }
   async componentDidMount() {
     var Model = this.state.Model;
@@ -66,11 +73,14 @@ export default class Singlechatpage extends BaseComponent<
     this.UpdateViewModel();
     console.log('deviceId: ', deviceId);
     var User = await SessionHelper.GetUserDetailsSession();
-    var FCMToken = await SessionHelper.GetFCMTokenSession()
-    Model.FCMToken = FCMToken
+    var FCMToken = await SessionHelper.GetFCMTokenSession();
+    var ConnectionCode = await SessionHelper.GetCompanyIDSession()
+    Model.ConnectionCode = ConnectionCode
+    Model.FCMToken = FCMToken;
     console.log('User: ', User);
     console.log('User: ', Model.UserName);
     this.Fetchmessage();
+    this.GetAllNotification()
     setInterval(this.Fetchmessage, 120000);
   }
   Search = async () => {
@@ -99,9 +109,15 @@ export default class Singlechatpage extends BaseComponent<
     var UserName = await SessionHelper.GetUserNameSession();
     var UserDetails = await SessionHelper.GetUserDetailsSession();
     var myId = `u_${UserDetails.lId}`;
+    model.SenderID = myId;
+    
+    this.UpdateViewModel();
+    console.log("MYID: ",model.SenderID);
     const deviceId = DeviceInfo.getDeviceId();
     var Connection = new signalR.HubConnectionBuilder()
-      .withUrl('https://wemessanger.azurewebsites.net/chatHub')
+      .withUrl(
+        `https://wemessanger.azurewebsites.net/chatHub?UserId=u_${UserDetails.lId.toString()}`,
+      )
       .build();
     Connection.start().then(() => {
       console.log('SignalR connected');
@@ -114,15 +130,17 @@ export default class Singlechatpage extends BaseComponent<
           this.UpdateViewModel();
           Connection.invoke(
             'IsUserConnected',
-            UserDetails.lId.toString(),
+            `u_${UserDetails.lId.toString()}`,
           )
             .then(isConnected => {
               console.log('Connection', isConnected);
 
               if (isConnected) {
-                console.log(`User - ${UserDetails.lId} is live`);
+                console.log(`User - u_${UserDetails.lId.toString()} is live`);
               } else {
-                console.log(`User - ${UserDetails.lId} is not live`);
+                console.log(
+                  `User - u_${UserDetails.lId.toString()} is not live`,
+                );
               }
             })
             .catch(error => {
@@ -135,6 +153,22 @@ export default class Singlechatpage extends BaseComponent<
     });
   };
   NextPage = (user: alluser) => {
+    var Model = this.state.Model;
+    console.log('Branch: ', Model.BranchID);
+    console.log('SenderID', Model.SenderID);
+    console.log('ReceiverId', `u_${user.lId}`);
+    const headers = {
+      'Content-Type': 'application/json'
+    };
+    var Data = JSON.stringify({"companyid":Model.BranchID,"senderId":Model.SenderID,"receiverId":`u_${user.lId}`});
+    axios
+      .put(`https://wemessanger.azurewebsites.net/api/user`,Data,{headers})
+      .then((res: any) => {
+        console.log('ReadMSg: ', res.data);
+      })
+      .catch((err: any) => {
+        console.log('ReadMSgERror: ', err);
+      });
     console.log('Hi');
 
     var Model = this.state.Model;
@@ -144,10 +178,36 @@ export default class Singlechatpage extends BaseComponent<
     });
     // console.log("ModelSenderID: ",Model.SenderId,);
   };
+  NotificationDetalis=(user: alluser)=>{
+    var Model = this.state.Model;
+    console.log('Branch: ', Model.BranchID);
+    console.log('SenderID', Model.SenderID);
+    console.log('ReceiverId', `u_${user.lId}`);
+    const headers = {
+      'Content-Type': 'application/json'
+    };
+    var Data = JSON.stringify({"companyid":Model.BranchID,"senderId":Model.SenderID,"receiverId":`u_${user.lId}`});
+    axios
+      .put(`https://wemessanger.azurewebsites.net/api/user`,Data,{headers})
+      .then((res: any) => {
+        console.log('ReadMSg: ', res.data);
+      })
+      .catch((err: any) => {
+        console.log('ReadMSgERror: ', err);
+      });
+    console.log('Hi');
+
+    var Model = this.state.Model;
+    this.props.navigation.navigate('NoficationDetails', {
+      User: user,
+      // SenderID: Model.SenderId,
+    });
+    // console.log("ModelSenderID: ",Model.SenderId,);
+  }
   UserOnline = () => {
     var Model = this.state.Model;
     console.log(Model.alluser);
-    if ((Model.OnlineText = 'Users Online')) {
+    if ((Model.OnlineText = 'Online User')) {
       var UserOnline = Model.alluser.filter(
         (i: alluser) => i.isUserLive === true,
       );
@@ -162,7 +222,7 @@ export default class Singlechatpage extends BaseComponent<
   };
   AllUserss = () => {
     var Model = this.state.Model;
-    Model.OnlineText = 'Users Online';
+    Model.OnlineText = 'Online User';
     console.log('Model.user', Model.alluser);
     Model.FilterUser = Model.alluser;
     this.UpdateViewModel();
@@ -188,17 +248,38 @@ export default class Singlechatpage extends BaseComponent<
       this.UpdateViewModel();
     }
   };
-  Logout=()=>{
-SessionHelper.SetBranchIdSession(null)
-SessionHelper.SetDeviceIdSession(null)
-SessionHelper.SetSenderIdSession(null)
-SessionHelper.SetURLSession(null)
-SessionHelper.SetUserDetailsSession(null)
-SessionHelper.SetUserNameSession(null)
-this.props.navigation.reset({
-  index: 0,
-  routes: [{ name: 'Loginpage' }],
-});
+  Logout = () => {
+    SessionHelper.SetBranchIdSession(null);
+    SessionHelper.SetDeviceIdSession(null);
+    SessionHelper.SetSenderIdSession(null);
+    SessionHelper.SetURLSession(null);
+    SessionHelper.SetUserDetailsSession(null);
+    SessionHelper.SetUserNameSession(null);
+    this.props.navigation.reset({
+      index: 0,
+      routes: [{name: 'Loginpage'}],
+    });
+  };
+  GetAllNotification =async()=>{
+    console.log("GetNotification");
+    var UserDetails = await SessionHelper.GetUserDetailsSession();
+    var myId = `u_${UserDetails.lId}`;
+    var Model = this.state.Model
+    console.log("MYID: ", Model.SenderID);
+    console.log("CompanyID: ", Model.BranchID);
+    
+    const headers = {
+      'Content-Type': 'application/json'
+    };
+    await axios
+      .get(`https://wemessanger.azurewebsites.net/api/user/getnotification?companyId=${Model.BranchID}&userId=${myId}`)
+      .then((res: any) => {
+        console.log('Notification: ', res.data);
+        Model.AllNotification = res.data
+      })
+      .catch((err: any) => {
+        console.log('NotificationERror: ', err);
+      });
   }
 
   initialLayout = {width: Dimensions.get('window').width};
@@ -215,8 +296,8 @@ this.props.navigation.reset({
                 <Text
                   style={{
                     fontSize: 18,
-                    fontWeight: '800',
-                    fontFamily: 'Poppins-Regular',
+                    // fontWeight: 'bold',
+                    fontFamily: 'Poppins-SemiBold',
                     color: 'black',
                   }}>
                   EResource Messenger
@@ -226,7 +307,7 @@ this.props.navigation.reset({
                     style={{
                       fontSize: 16,
                       fontWeight: '100',
-                      fontFamily: 'Poppins-Regular',
+                      fontFamily: 'OpenSans-Regular',
                       color: '#0383FA',
                       marginRight: 8,
                     }}>
@@ -266,6 +347,7 @@ this.props.navigation.reset({
                       color: 'black',
                       fontSize: 22,
                       fontWeight: '400',
+                      fontFamily: 'OpenSans-Regular',
                     }}>
                     {model.UserName.toLocaleUpperCase().charAt(0)}
                   </Text>
@@ -288,7 +370,11 @@ this.props.navigation.reset({
                   value={model.Message}
                   onChangeText={text => this.SearchText(text)}
                   style={
-                    (styles.input, {width: Dimensions.get('window').width - 70})
+                    (styles.input,
+                    {
+                      width: Dimensions.get('window').width - 70,
+                      fontFamily: 'OpenSans-Regular',
+                    })
                   }
                   placeholder="Search....."></TextInput>
                 <TouchableOpacity
@@ -311,96 +397,105 @@ this.props.navigation.reset({
             <View style={styles.dropdownContainer}>
               <View style={styles.dropdown}>
                 <View>
-                <View>
-                  <Text
-                    style={{
-                      padding: 20,
-                      paddingBottom:1,
-                      paddingTop:10,
-                      color: '#0383FA',
-                      // margin: 10,
-                      alignSelf: 'left',
-                      fontSize:12
-                    }}>
-                    User:
-                  </Text>
-                  <Text
-                    style={{
-                      padding: 20,
-                      paddingBottom:10,
-                      paddingTop:0,
-                      color: 'black',
-                      // margin: 10,
-                      alignSelf: 'left',
-                      fontSize:16
-                    }}>
-                    {model.UserName}
-                  </Text>
-                  </View>
-                  <View>
-                  <Text
-                     style={{
-                      padding: 20,
-                      paddingBottom:1,
-                      paddingTop:10,
-                      color: '#0383FA',
-                      // margin: 10,
-                      alignSelf: 'left',
-                      fontSize:12
-                    }}>
-                    Designation:
-                  </Text>
-                  </View>
                   <View style={{}}>
-                  <Text
-                    style={{
-                      padding: 20,
-                      paddingBottom:1,
-                      paddingTop:10,
-                      color: '#0383FA',
-                      // margin: 10,
-                      alignSelf: 'left',
-                      fontSize:12
-                    }}>
-                    Connection Code:
-                  </Text>
+                    <Text
+                      style={{
+                        fontFamily: 'OpenSans-SemiBold',
+                        marginTop: 15,
+                        paddingLeft:20,
+                        color: '#0383FA',
+                        alignSelf: 'left',
+                        fontSize: 12,
+                        
+                      }}>
+                      User:
+                    </Text>
+                    <Text
+                      style={{
+                        paddingLeft:20,
+                        color: 'black',
+                        alignSelf: 'left',
+                        fontSize: 12,
+                        fontFamily: 'OpenSans-SemiBold',
+                      }}>
+                      {model.UserName}
+                    </Text>
                   </View>
+                  <View style={styles.divider}></View>
                   <View style={{}}>
-                  <Text
-                    style={{
-                      padding: 20,
-                      paddingBottom:1,
-                      paddingTop:10,
-                      color: '#0383FA',
-                      // margin: 10,
-                      alignSelf: 'left',
-                      fontSize:12
-                    }}>
-                    Version:
-                  </Text>
-                  <Text
-                    style={{
-                      padding: 20,
-                      paddingBottom:10,
-                      paddingTop:0,
-                      color: 'black',
-                      // margin: 10,
-                      alignSelf: 'left',
-                      fontSize:16
-                    }}>
-                    {model.AppVersion}
-                  </Text>
+                    <Text
+                      style={{
+                        fontFamily: 'OpenSans-SemiBold',
+                        marginTop: 15,
+                        paddingLeft:20,
+                        color: '#0383FA',
+                        alignSelf: 'left',
+                        fontSize: 12,
+                      }}>
+                      Designation:
+                    </Text>
                   </View>
-                  {model.OnlineText == 'Users Online' ? (
+                  <View style={styles.divider}></View>
+                  <View style={{}}>
+                    <Text
+                      style={{
+                        fontFamily: 'OpenSans-SemiBold',
+                        marginTop: 15,
+                        paddingLeft:20,
+                        color: '#0383FA',
+                        alignSelf: 'left',
+                        fontSize: 12,
+                      }}>
+                      Connection Code:
+                    </Text>
+                    <Text
+                      style={{
+                        paddingLeft:20,
+                        color: 'black',
+                        alignSelf: 'left',
+                        fontSize: 12,
+                        fontFamily: 'OpenSans-SemiBold',
+                      }}>
+                      {model.ConnectionCode}
+                    </Text>
+                  </View>
+                  <View style={styles.divider}></View>
+
+                  <View style={{}}>
+                    <Text
+                      style={{
+                        fontFamily: 'OpenSans-SemiBold',
+                        marginTop: 15,
+                        paddingLeft:20,
+                        color: '#0383FA',
+                        alignSelf: 'left',
+                        fontSize: 12,
+                      }}>
+                      Version:
+                    </Text>
+                    <Text
+                      style={{
+                        paddingLeft:20,
+                        color: 'black',
+                        alignSelf: 'left',
+                        fontSize: 12,
+                        fontFamily: 'OpenSans-SemiBold',
+                      }}>
+                      {model.AppVersion}
+                    </Text>
+                  </View>
+                  <View style={styles.divider}></View>
+
+                  {model.OnlineText == 'Online User' ? (
                     <TouchableOpacity onPress={() => this.UserOnline()}>
                       <Text
                         style={{
-                          padding: 20,
-                          paddingBottom:1,
-                          paddingTop:10,
+                          fontFamily: 'OpenSans-SemiBold',
+                          marginTop: 15,
+                          paddingLeft:20,
                           color: '#0383FA',
-                          // margin: 10,
                           alignSelf: 'left',
+                          fontSize: 12,
                         }}>
                         {model.OnlineText}
                       </Text>
@@ -409,26 +504,29 @@ this.props.navigation.reset({
                     <TouchableOpacity onPress={() => this.AllUserss()}>
                       <Text
                         style={{
-                          padding: 20,
-                          paddingBottom:1,
-                          paddingTop:10,
+                          fontFamily: 'OpenSans-SemiBold',
+                          marginTop: 15,
+                          paddingLeft:20,
                           color: '#0383FA',
-                          // margin: 10,
                           alignSelf: 'left',
+                          fontSize: 12,
                         }}>
                         {model.OnlineText}
                       </Text>
                     </TouchableOpacity>
                   )}
+                  <View style={styles.divider}></View>
+
                   <TouchableOpacity onPress={() => this.Logout()}>
                     <Text
                       style={{
-                        padding: 20,
-                        paddingBottom:1,
-                        paddingTop:10,
+                        fontFamily: 'OpenSans-SemiBold',
+                        marginTop: 15,
+                        paddingLeft:20,
                         color: '#0383FA',
-                        // margin: 10,
                         alignSelf: 'left',
+                        fontSize: 12,
+                        marginBottom:20
                       }}>
                       Logout
                     </Text>
@@ -436,7 +534,7 @@ this.props.navigation.reset({
                 </View>
               </View>
             </View>
-          )}
+          )} 
           <Tabs
             tabBarUnderlineStyle={{
               borderColor: 'white',
@@ -446,12 +544,13 @@ this.props.navigation.reset({
             }}
             tabContainerStyle={{
               borderColor: 'white',
+              shadowColor:"white"
             }}>
             <Tab
-              heading="AllMessage"
+              heading="All Messages"
               color="black"
-              textStyle={{color: 'black'}}
-              activeTextStyle={{color: 'black'}}
+              textStyle={{color: '#a6a6a6', fontFamily: 'Poppins-SemiBold'}}
+              activeTextStyle={{color: 'black', fontFamily: 'Poppins-SemiBold'}}
               tabContainerStyle={{backgroundColor: 'white'}}
               tabStyle={{backgroundColor: 'white'}}
               activeTabStyle={{backgroundColor: 'white', borderColor: 'white'}}>
@@ -476,7 +575,7 @@ this.props.navigation.reset({
                                   color: 'black',
                                   fontSize: 22,
                                   fontWeight: '400',
-                                  
+                                  fontFamily: 'OpenSans-Regular',
                                 }}>
                                 {i.userFullName.toLocaleUpperCase().charAt(0)}
                               </Text>
@@ -494,20 +593,20 @@ this.props.navigation.reset({
                               style={{
                                 color: 'black',
                                 fontWeight: '600',
-                                fontFamily:"OpenSans-Regular",
+                                fontFamily: 'OpenSans-SemiBold',
                                 marginBottom: 5,
                                 fontSize: 14.5,
+                                // letterSpacing:0.5
                               }}>
                               {i.userFullName}
-
                             </Text>
                           </View>
                           <Text
                             style={{
                               color: i.status ? '#0383FA' : '#a6a6a6',
                               fontWeight: '200',
-                              fontFamily:"OpenSans-Regular",
-                              letterSpacing:0.2,
+                              fontFamily: 'OpenSans-SemiBold',
+                              letterSpacing: 0.2,
                               fontSize: 12,
                             }}>
                             {i.message ? i.message : 'No message'}
@@ -523,51 +622,64 @@ this.props.navigation.reset({
             <Tab
               heading="Notification"
               color="black"
-              textStyle={{color: 'black'}}
-              activeTextStyle={{color: 'black'}}
+              textStyle={{color: '#a6a6a6', fontFamily: 'Poppins-SemiBold'}}
+              activeTextStyle={{color: 'black', fontFamily: 'Poppins-SemiBold'}}
               tabContainerStyle={{backgroundColor: 'white'}}
               tabStyle={{backgroundColor: 'white'}}
               activeTabStyle={{backgroundColor: 'white'}}>
               <Content>
-                {/* <List>
-                  {model.alluser.map((i: alluser) => (
-                    <TouchableOpacity onPress={() => this.NextPage(i)}>
+              <List>
+                  {model.AllNotification.map((i: alluser) => (
+                    <TouchableOpacity onPress={() => this.NotificationDetalis(i)}>
                       <ListItem avatar>
                         <Left>
-                          <Badge
-                            style={{
-                              backgroundColor: '#E9E9E9',
-                              width: 50,
-                              height: 50,
-                              borderRadius: 25,
-                              justifyContent: 'center',
-                              alignItems: 'center',
-                            }}>
+                          <View>
+                            <Badge
+                              style={{
+                                backgroundColor: '#E9E9E9',
+                                width: 50,
+                                height: 50,
+                                borderRadius: 25,
+                                justifyContent: 'center',
+                                alignItems: 'center',
+                              }}>
+                              <Text
+                                style={{
+                                  color: 'black',
+                                  fontSize: 22,
+                                  fontWeight: '400',
+                                  fontFamily: 'OpenSans-Regular',
+                                }}>
+                                {i.userFullName.toLocaleUpperCase().charAt(0)}
+                              </Text>
+                            </Badge>
+                            {i?.isUserLive ? (
+                              <View style={styles.circle}></View>
+                            ) : (
+                              <View style={styles.circle2}></View>
+                            )}
+                          </View>
+                        </Left>
+                        <Body>
+                          <View style={{flexDirection: 'row'}}>
                             <Text
                               style={{
                                 color: 'black',
-                                fontSize: 22,
-                                fontWeight: '400',
+                                fontWeight: '600',
+                                fontFamily: 'OpenSans-SemiBold',
+                                marginBottom: 5,
+                                fontSize: 14.5,
+                                // letterSpacing:0.5
                               }}>
-                              {i.userFullName.charAt(0)}
+                              {i.userFullName}
                             </Text>
-                          </Badge>
-                        </Left>
-                        <Body>
-                          <Text
-                            style={{
-                              color: 'black',
-                              fontWeight: '600',
-                              fontFamily: 'OpenSans-VariableFont_wdth,wght',
-                              marginBottom: 5,
-                            }}>
-                            {i.userFullName}
-                          </Text>
+                          </View>
                           <Text
                             style={{
                               color: i.status ? '#0383FA' : '#a6a6a6',
                               fontWeight: '200',
-                              fontFamily: 'OpenSans-VariableFont_wdth,wght',
+                              fontFamily: 'OpenSans-SemiBold',
+                              letterSpacing: 0.2,
                               fontSize: 12,
                             }}>
                             {i.message ? i.message : 'No message'}
@@ -577,7 +689,7 @@ this.props.navigation.reset({
                       </ListItem>
                     </TouchableOpacity>
                   ))}
-                </List> */}
+                </List>
               </Content>
             </Tab>
           </Tabs>
@@ -597,10 +709,17 @@ const styles = StyleSheet.create({
     fontFamily: 'Poppins-Regular',
     color: 'black', // Darker blue title
   },
+  divider: {
+    height: 1,
+    backgroundColor: 'gray',
+    marginHorizontal: 20,
+    marginTop:12,
+    opacity:0.5
+  },
   dropdownContainer: {
     position: 'absolute',
     top: 60,
-    right: 10,
+    right: 20,
     // Set a height for the container
     height: 'auto',
     width: 200,

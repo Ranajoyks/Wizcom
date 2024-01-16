@@ -11,6 +11,10 @@ export class BranchViewModel {
   BranchList: any[] = [];
   BranchName: string = '';
   UserName: string = '';
+  IsShow: boolean = false;
+  ConnectionCode: any;
+  AppVersion: string = '1.0.0';
+  IsOpen: boolean = false;
 }
 export default class Branchpage extends BaseComponent<any, BranchViewModel> {
   constructor(props: any) {
@@ -20,7 +24,12 @@ export default class Branchpage extends BaseComponent<any, BranchViewModel> {
     this.state.Model.UserName = props.route.params.UserName;
     // console.log(this.state.Model.BranchList);
   }
-
+  async componentDidMount(): Promise<void> {
+    var Model = this.state.Model
+  var ConnectionCode = await SessionHelper.GetCompanyIDSession()
+    Model.ConnectionCode = ConnectionCode
+    this.UpdateViewModel()
+}
   SetCompany = (event: any) => {
     var Model = this.state.Model;
     console.log(Model.BranchList);
@@ -33,9 +42,27 @@ export default class Branchpage extends BaseComponent<any, BranchViewModel> {
     this.SetModelValue(event.name, event.value);
     this.props.navigation.navigate('Singlechatpage', {
       BranchName: Branch.sName,
-      UserName:Model.UserName
+      UserName: Model.UserName,
+      BranchID: Branch.lId,
     });
     SessionHelper.SetBranchIdSession(event.value);
+  };
+  Logout = () => {
+    SessionHelper.SetBranchIdSession(null);
+    SessionHelper.SetDeviceIdSession(null);
+    SessionHelper.SetSenderIdSession(null);
+    SessionHelper.SetURLSession(null);
+    SessionHelper.SetUserDetailsSession(null);
+    SessionHelper.SetUserNameSession(null);
+    this.props.navigation.reset({
+      index: 0,
+      routes: [{name: 'Loginpage'}],
+    });
+  };
+  DropDowmOpen = async () => {
+    var Model = this.state.Model;
+    Model.IsOpen = !Model.IsOpen;
+    this.UpdateViewModel();
   };
   render() {
     var model = this.state.Model;
@@ -57,7 +84,7 @@ export default class Branchpage extends BaseComponent<any, BranchViewModel> {
           <Text style={styles.title}>Branch</Text>
           <TouchableOpacity
             onPress={() => {
-              /* Right icon action */
+              this.DropDowmOpen();
             }}>
             <Badge
               style={{
@@ -75,13 +102,123 @@ export default class Branchpage extends BaseComponent<any, BranchViewModel> {
                   color: 'black',
                   fontSize: 22,
                   fontWeight: '400',
+                  fontFamily: 'OpenSans-Regular',
                 }}>
-                {model.UserName.charAt(0)}
+                {model.UserName.toLocaleUpperCase().charAt(0)}
               </Text>
             </Badge>
           </TouchableOpacity>
         </View>
         <View style={styles.body}>
+        {model.IsOpen == true && (
+            <View style={styles.dropdownContainer}>
+              <View style={styles.dropdown}>
+                <View>
+                  <View style={{}}>
+                    <Text
+                      style={{
+                        fontFamily: 'OpenSans-SemiBold',
+                        marginTop: 15,
+                        paddingLeft: 20,
+                        color: '#0383FA',
+                        alignSelf: 'left',
+                        fontSize: 12,
+                      }}>
+                      User:
+                    </Text>
+                    <Text
+                      style={{
+                        paddingLeft: 20,
+                        color: 'black',
+                        alignSelf: 'left',
+                        fontSize: 12,
+                        fontFamily: 'OpenSans-SemiBold',
+                      }}>
+                      {model.UserName}
+                    </Text>
+                  </View>
+                  <View style={styles.divider}></View>
+                  <View style={{}}>
+                    <Text
+                      style={{
+                        fontFamily: 'OpenSans-SemiBold',
+                        marginTop: 15,
+                        paddingLeft: 20,
+                        color: '#0383FA',
+                        alignSelf: 'left',
+                        fontSize: 12,
+                      }}>
+                      Designation:
+                    </Text>
+                  </View>
+                  <View style={styles.divider}></View>
+                  <View style={{}}>
+                    <Text
+                      style={{
+                        fontFamily: 'OpenSans-SemiBold',
+                        marginTop: 15,
+                        paddingLeft: 20,
+                        color: '#0383FA',
+                        alignSelf: 'left',
+                        fontSize: 12,
+                      }}>
+                      Connection Code:
+                    </Text>
+                    <Text
+                      style={{
+                        paddingLeft: 20,
+                        color: 'black',
+                        alignSelf: 'left',
+                        fontSize: 12,
+                        fontFamily: 'OpenSans-SemiBold',
+                      }}>
+                      {model.ConnectionCode}
+                    </Text>
+                  </View>
+                  <View style={styles.divider}></View>
+
+                  <View style={{}}>
+                    <Text
+                      style={{
+                        fontFamily: 'OpenSans-SemiBold',
+                        marginTop: 15,
+                        paddingLeft: 20,
+                        color: '#0383FA',
+                        alignSelf: 'left',
+                        fontSize: 12,
+                      }}>
+                      Version:
+                    </Text>
+                    <Text
+                      style={{
+                        paddingLeft: 20,
+                        color: 'black',
+                        alignSelf: 'left',
+                        fontSize: 12,
+                        fontFamily: 'OpenSans-SemiBold',
+                      }}>
+                      {model.AppVersion}
+                    </Text>
+                  </View>
+                  <View style={styles.divider}></View>
+                  <TouchableOpacity onPress={() => this.Logout()}>
+                    <Text
+                      style={{
+                        fontFamily: 'OpenSans-SemiBold',
+                        marginTop: 15,
+                        paddingLeft: 20,
+                        color: '#0383FA',
+                        alignSelf: 'left',
+                        fontSize: 12,
+                        marginBottom: 20,
+                      }}>
+                      Logout
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </View>
+          )}
           <Text style={styles.text}>Please select your branch</Text>
           {/* <Text style={styles.text2}>Select Company</Text> */}
           <CustomPicker
@@ -123,6 +260,31 @@ const styles = StyleSheet.create({
   },
   body: {
     padding: 20,
+  },
+  divider: {
+    height: 1,
+    backgroundColor: 'gray',
+    marginHorizontal: 20,
+    marginTop: 12,
+    opacity: 0.5,
+  },
+  dropdownContainer: {
+    position: 'absolute',
+    top: -10,
+    right: 20,
+    // Set a height for the container
+    height: 'auto',
+    width: 200,
+    zIndex: 1000,
+  },
+  dropdown: {
+    backgroundColor: '#f1f1f1',
+    color: 'black',
+    borderRadius: 10,
+    textAlign: 'center',
+    display: 'flex',
+    justifyContent: 'center',
+    zIndex:1000
   },
   text: {
     fontSize: 16,

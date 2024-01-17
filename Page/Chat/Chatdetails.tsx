@@ -556,6 +556,7 @@ export default class Chatdetails extends BaseComponent<
     this.UpdateViewModel();
   };
   Logout = () => {
+    SessionHelper.SetSession(null)
     SessionHelper.SetBranchIdSession(null);
     SessionHelper.SetDeviceIdSession(null);
     SessionHelper.SetSenderIdSession(null);

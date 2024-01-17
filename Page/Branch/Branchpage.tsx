@@ -6,6 +6,7 @@ import CustomPicker from '../../Control/CustomPicker';
 import {Badge, Picker} from 'native-base';
 import SessionHelper from '../../Core/SessionHelper';
 import {Branch} from '../../Entity/Branch';
+import axios from 'axios';
 export class BranchViewModel {
   BranchId: string = '';
   BranchList: any[] = [];
@@ -21,33 +22,58 @@ export default class Branchpage extends BaseComponent<any, BranchViewModel> {
     super(props);
     this.state = new BaseState(new BranchViewModel());
     this.state.Model.BranchList = props.route.params.BranchList;
-    this.state.Model.UserName = props.route.params.UserName;
+    // this.state.Model.UserName = props.route.params.UserName;
     // console.log(this.state.Model.BranchList);
   }
   async componentDidMount(): Promise<void> {
-    var Model = this.state.Model
-  var ConnectionCode = await SessionHelper.GetCompanyIDSession()
-    Model.ConnectionCode = ConnectionCode
-    this.UpdateViewModel()
-}
-  SetCompany = (event: any) => {
     var Model = this.state.Model;
+    var ConnectionCode = await SessionHelper.GetCompanyIDSession();
+    var UserName = await SessionHelper.GetUserNameSession();
+    Model.UserName = UserName;
+    Model.ConnectionCode = ConnectionCode;
+    this.UpdateViewModel();
+  }
+  SetCompany = async (event: any) => {
+    var Model = this.state.Model;
+    var value = await SessionHelper.GetSession();
+    console.log('SessionValue: ', `ASP.NET_SessionId=${value}`);
+    const headers = {
+      'Content-Type': 'application/json',
+      Cookie: `ASP.NET_SessionId=${value}`,
+    };
+    const CompanyCredential = {
+      lCompId: event.value,
+      lOffSet: '',
+    };
+    axios
+      .post(
+        `http://eiplutm.eresourceerp.com/AzaaleaR/API/Sys/Sys.aspx/JOpnCmpny`,
+        CompanyCredential,
+        {headers: headers},
+      )
+      .then(res => {
+        console.log('CompanyResponse: ', res.data.d);
+      })
+      .catch(err => {
+        console.log('CompanyError: ', err);
+      });
     console.log(Model.BranchList);
     console.log(event.value);
     var Branch: Branch = Model.BranchList.find(
       (i: Branch) => i?.lId === event.value,
     );
     console.log('BranchName', Branch);
-
+    SessionHelper.SetBranchNameSession(Branch.sName);
     this.SetModelValue(event.name, event.value);
     this.props.navigation.navigate('Singlechatpage', {
-      BranchName: Branch.sName,
-      UserName: Model.UserName,
-      BranchID: Branch.lId,
+      // BranchName: Branch.sName,
+      // UserName: Model.UserName,
+      // BranchID: Branch.lId,
     });
     SessionHelper.SetBranchIdSession(event.value);
   };
   Logout = () => {
+    SessionHelper.SetSession(null)
     SessionHelper.SetBranchIdSession(null);
     SessionHelper.SetDeviceIdSession(null);
     SessionHelper.SetSenderIdSession(null);
@@ -110,7 +136,7 @@ export default class Branchpage extends BaseComponent<any, BranchViewModel> {
           </TouchableOpacity>
         </View>
         <View style={styles.body}>
-        {model.IsOpen == true && (
+          {model.IsOpen == true && (
             <View style={styles.dropdownContainer}>
               <View style={styles.dropdown}>
                 <View>
@@ -284,7 +310,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     display: 'flex',
     justifyContent: 'center',
-    zIndex:1000
+    zIndex: 1000,
   },
   text: {
     fontSize: 16,

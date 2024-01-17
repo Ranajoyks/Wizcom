@@ -36,6 +36,10 @@ export default class Loginpage extends BaseComponent<any, LoginViewModel> {
   // }
   async componentDidMount() {
     var Model = this.state.Model;
+    var value = await SessionHelper.GetSession();
+    console.log("SessionValue: ",`ASP.NET_SessionId=${value}`);
+    
+
     // const deviceId = DeviceInfo.getDeviceId();
     const checkPermission = await this.checkNotificationPermission();
     console.log("checkPermission: ",checkPermission);
@@ -48,6 +52,7 @@ export default class Loginpage extends BaseComponent<any, LoginViewModel> {
         }
     }
     this.FirebaseSetup()
+   
   }
    requestNotificationPermission = async () => {
     const result = await request(PERMISSIONS.ANDROID.POST_NOTIFICATIONS);
@@ -85,21 +90,19 @@ export default class Loginpage extends BaseComponent<any, LoginViewModel> {
   };
   Login = async () => {
     var Model = this.state.Model;
-    var value = await SessionHelper.GetSession();
     SessionHelper.SetUserNameSession(Model.UserName);
     SessionHelper.SetDeviceIdSession(Model.DeviceId);
+    var value = await SessionHelper.GetSession();
     const headers = {
       'Content-Type': 'application/json',
       Cookie: `ASP.NET_SessionId=${value}`,
     };
-    // console.log('headersList', headers);
     const LoginCredential = {
       objUsr: {
         sName: Model.UserName,
         sCode: Model.Password,
       },
     };
-    // console.log(LoginCredential);
     axios
       .post(
         `http://eiplutm.eresourceerp.com/AzaaleaR/API/Sys/Sys.aspx/JValidate`,
@@ -107,7 +110,7 @@ export default class Loginpage extends BaseComponent<any, LoginViewModel> {
         {headers: headers},
       )
       .then(response => {
-        // console.log('response3`', response.data.d.data.ado);
+        console.log('response3`', response.data.d);
         if (!response.data.d.bStatus) {
           Model.showMessage = true;
           this.UpdateViewModel();
@@ -118,15 +121,16 @@ export default class Loginpage extends BaseComponent<any, LoginViewModel> {
           this.UpdateViewModel();
           this.props.navigation.navigate('Branchpage', {
             BranchList: response.data.d.data.ado,
-            UserName: Model.UserName,
+            // UserName: Model.UserName,
           });
           axios
             .get(
               `https://wemessanger.azurewebsites.net/api/user?sname=${Model.UserName}&deviceId=${Model.DeviceId}`,
             )
             .then(response => {
-              console.log('data', response.data);
+              console.log('LogIndata', response.data);
               SessionHelper.SetUserDetailsSession(response.data[0]);
+              SessionHelper.SetUserIDSession(response.data[0].lId);
               var Connection = new signalR.HubConnectionBuilder()
               .withUrl(`https://wemessanger.azurewebsites.net/chatHub?UserId=u_${response.data[0].lId.toString()}`)
               .build();

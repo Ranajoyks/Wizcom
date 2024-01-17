@@ -8,6 +8,8 @@ import {
   Dimensions,
   Image,
   TextInput,
+  AppState,
+  ActivityIndicator
 } from 'react-native';
 import {
   Badge,
@@ -49,8 +51,10 @@ export class SinglechatpageViewModel {
   FCMToken: string = '';
   SenderID: string = '';
   BranchID: number = 1;
-  ConnectionCode:any
+  ConnectionCode: any;
   AllNotification: alluser[] = [];
+  OnlineUserLength: number = 0;
+  AppStatus: any = AppState.currentState;
 }
 
 export default class Singlechatpage extends BaseComponent<
@@ -60,28 +64,45 @@ export default class Singlechatpage extends BaseComponent<
   constructor(props: any) {
     super(props);
     this.state = new BaseState(new SinglechatpageViewModel());
-    this.state.Model.BranchName = props.route.params.BranchName;
-    this.state.Model.UserName = props.route.params.UserName;
-    this.state.Model.BranchID = props.route.params.BranchID;
-    console.log('Branch', this.state.Model.BranchName);
-    console.log('BranchID', this.state.Model.BranchID);
+    // this.state.Model.BranchName = props.route.params.BranchName;
+    // this.state.Model.UserName = props.route.params.UserName;
+    // this.state.Model.BranchID = props.route.params.BranchID;
+    // console.log('Branch', this.state.Model.BranchName);
+    // console.log('BranchID', this.state.Model.BranchID);
   }
   async componentDidMount() {
     var Model = this.state.Model;
+    console.log('Appstate: ', AppState.currentState);
+    const appStateListener = AppState.addEventListener(
+      'change',
+      nextAppState => {
+        console.log('Next AppState is: ', nextAppState);
+        Model.AppStatus = nextAppState;
+        this.UpdateViewModel();
+      },
+    );
     const deviceId = DeviceInfo.getDeviceId();
     Model.DeviceId = deviceId;
     this.UpdateViewModel();
     console.log('deviceId: ', deviceId);
     var User = await SessionHelper.GetUserDetailsSession();
     var FCMToken = await SessionHelper.GetFCMTokenSession();
-    var ConnectionCode = await SessionHelper.GetCompanyIDSession()
-    Model.ConnectionCode = ConnectionCode
+    var ConnectionCode = await SessionHelper.GetCompanyIDSession();
+    var BranchName = await SessionHelper.GetBranchNameSession();
+    var UserName = await SessionHelper.GetUserNameSession();
+    var BranchID = await SessionHelper.GetBranchIdSession();
+    Model.BranchID = BranchID;
+    Model.UserName = UserName;
+    Model.BranchName = BranchName;
+    Model.ConnectionCode = ConnectionCode;
     Model.FCMToken = FCMToken;
+    this.UpdateViewModel();
     console.log('User: ', User);
     console.log('User: ', Model.UserName);
     this.Fetchmessage();
-    this.GetAllNotification()
+    this.GetAllNotification();
     setInterval(this.Fetchmessage, 120000);
+    console.log('Next AppState', Model.AppStatus);
   }
   Search = async () => {
     var Model = this.state.Model;
@@ -110,47 +131,61 @@ export default class Singlechatpage extends BaseComponent<
     var UserDetails = await SessionHelper.GetUserDetailsSession();
     var myId = `u_${UserDetails.lId}`;
     model.SenderID = myId;
-    
     this.UpdateViewModel();
-    console.log("MYID: ",model.SenderID);
+    console.log('MYID: ', model.SenderID);
     const deviceId = DeviceInfo.getDeviceId();
+
     var Connection = new signalR.HubConnectionBuilder()
       .withUrl(
         `https://wemessanger.azurewebsites.net/chatHub?UserId=u_${UserDetails.lId.toString()}`,
       )
       .build();
-    Connection.start().then(() => {
-      console.log('SignalR connected');
+    if (model.AppStatus == 'active') {
+      Connection.start().then(() => {
+        console.log('SignalR connected');
+        var UserList = Connection.invoke('GetAllUser', myId, 0)
+          .then(user => {
+            // console.log("GetallUser: ",user);
+            model.alluser = user;
+            var UserOnline = user.filter((i: alluser) => i.isUserLive == true);
+            model.FilterUser = model.alluser;
+            model.OnlineUserLength = UserOnline.length;
+            this.UpdateViewModel();
+            console.log('UserOnline', UserOnline.length);
 
-      var UserList = Connection.invoke('GetAllUser', myId, 0)
-        .then(user => {
-          // console.log("GetallUser: ",user);
-          model.alluser = user;
-          model.FilterUser = model.alluser;
-          this.UpdateViewModel();
-          Connection.invoke(
-            'IsUserConnected',
-            `u_${UserDetails.lId.toString()}`,
-          )
-            .then(isConnected => {
-              console.log('Connection', isConnected);
+            Connection.invoke(
+              'IsUserConnected',
+              `u_${UserDetails.lId.toString()}`,
+            )
+              .then(isConnected => {
+                console.log('Connection', isConnected);
 
-              if (isConnected) {
-                console.log(`User - u_${UserDetails.lId.toString()} is live`);
-              } else {
-                console.log(
-                  `User - u_${UserDetails.lId.toString()} is not live`,
-                );
-              }
-            })
-            .catch(error => {
-              console.log(error);
-            });
+                if (isConnected) {
+                  console.log(`User - u_${UserDetails.lId.toString()} is live`);
+                } else {
+                  console.log(
+                    `User - u_${UserDetails.lId.toString()} is not live`,
+                  );
+                }
+              })
+              .catch(error => {
+                console.log(error);
+              });
+          })
+          .catch((err: any) => {
+            console.log('Error to invoke: ', err);
+          });
+      });
+    }
+    if (model.AppStatus == 'background') {
+      Connection.invoke('DisconnectUser', myId)
+        .then(res => {
+          console.log(res);
         })
-        .catch((err: any) => {
+        .catch(err => {
           console.log('Error to invoke: ', err);
         });
-    });
+    }
   };
   NextPage = (user: alluser) => {
     var Model = this.state.Model;
@@ -158,11 +193,15 @@ export default class Singlechatpage extends BaseComponent<
     console.log('SenderID', Model.SenderID);
     console.log('ReceiverId', `u_${user.lId}`);
     const headers = {
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/json',
     };
-    var Data = JSON.stringify({"companyid":Model.BranchID,"senderId":Model.SenderID,"receiverId":`u_${user.lId}`});
+    var Data = JSON.stringify({
+      companyid: Model.BranchID,
+      senderId: Model.SenderID,
+      receiverId: `u_${user.lId}`,
+    });
     axios
-      .put(`https://wemessanger.azurewebsites.net/api/user`,Data,{headers})
+      .put(`https://wemessanger.azurewebsites.net/api/user`, Data, {headers})
       .then((res: any) => {
         console.log('ReadMSg: ', res.data);
       })
@@ -178,17 +217,21 @@ export default class Singlechatpage extends BaseComponent<
     });
     // console.log("ModelSenderID: ",Model.SenderId,);
   };
-  NotificationDetalis=(user: alluser)=>{
+  NotificationDetalis = (user: alluser) => {
     var Model = this.state.Model;
     console.log('Branch: ', Model.BranchID);
     console.log('SenderID', Model.SenderID);
     console.log('ReceiverId', `u_${user.lId}`);
     const headers = {
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/json',
     };
-    var Data = JSON.stringify({"companyid":Model.BranchID,"senderId":Model.SenderID,"receiverId":`u_${user.lId}`});
+    var Data = JSON.stringify({
+      companyid: Model.BranchID,
+      senderId: Model.SenderID,
+      receiverId: `u_${user.lId}`,
+    });
     axios
-      .put(`https://wemessanger.azurewebsites.net/api/user`,Data,{headers})
+      .put(`https://wemessanger.azurewebsites.net/api/user`, Data, {headers})
       .then((res: any) => {
         console.log('ReadMSg: ', res.data);
       })
@@ -203,7 +246,7 @@ export default class Singlechatpage extends BaseComponent<
       // SenderID: Model.SenderId,
     });
     // console.log("ModelSenderID: ",Model.SenderId,);
-  }
+  };
   UserOnline = () => {
     var Model = this.state.Model;
     console.log(Model.alluser);
@@ -249,6 +292,7 @@ export default class Singlechatpage extends BaseComponent<
     }
   };
   Logout = () => {
+    SessionHelper.SetSession(null)
     SessionHelper.SetBranchIdSession(null);
     SessionHelper.SetDeviceIdSession(null);
     SessionHelper.SetSenderIdSession(null);
@@ -260,32 +304,35 @@ export default class Singlechatpage extends BaseComponent<
       routes: [{name: 'Loginpage'}],
     });
   };
-  GetAllNotification =async()=>{
-    console.log("GetNotification");
+  GetAllNotification = async () => {
+    console.log('GetNotification');
     var UserDetails = await SessionHelper.GetUserDetailsSession();
     var myId = `u_${UserDetails.lId}`;
-    var Model = this.state.Model
-    console.log("MYID: ", Model.SenderID);
-    console.log("CompanyID: ", Model.BranchID);
-    
+    var Model = this.state.Model;
+    console.log('MYID: ', Model.SenderID);
+    console.log('CompanyID: ', Model.BranchID);
+
     const headers = {
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/json',
     };
     await axios
-      .get(`https://wemessanger.azurewebsites.net/api/user/getnotification?companyId=${Model.BranchID}&userId=${myId}`)
+      .get(
+        `https://wemessanger.azurewebsites.net/api/user/getnotification?companyId=${Model.BranchID}&userId=${myId}`,
+      )
       .then((res: any) => {
         console.log('Notification: ', res.data);
-        Model.AllNotification = res.data
+        Model.AllNotification = res.data;
       })
       .catch((err: any) => {
         console.log('NotificationERror: ', err);
       });
-  }
+  };
 
   initialLayout = {width: Dimensions.get('window').width};
   render() {
     var model = this.state.Model;
     // console.log('FilterUser: ', model.FilterUser);
+    console.log('Appstatus: ', model.AppStatus);
 
     return (
       <Container>
@@ -402,17 +449,16 @@ export default class Singlechatpage extends BaseComponent<
                       style={{
                         fontFamily: 'OpenSans-SemiBold',
                         marginTop: 15,
-                        paddingLeft:20,
+                        paddingLeft: 20,
                         color: '#0383FA',
                         alignSelf: 'left',
                         fontSize: 12,
-                        
                       }}>
                       User:
                     </Text>
                     <Text
                       style={{
-                        paddingLeft:20,
+                        paddingLeft: 20,
                         color: 'black',
                         alignSelf: 'left',
                         fontSize: 12,
@@ -427,7 +473,7 @@ export default class Singlechatpage extends BaseComponent<
                       style={{
                         fontFamily: 'OpenSans-SemiBold',
                         marginTop: 15,
-                        paddingLeft:20,
+                        paddingLeft: 20,
                         color: '#0383FA',
                         alignSelf: 'left',
                         fontSize: 12,
@@ -441,7 +487,7 @@ export default class Singlechatpage extends BaseComponent<
                       style={{
                         fontFamily: 'OpenSans-SemiBold',
                         marginTop: 15,
-                        paddingLeft:20,
+                        paddingLeft: 20,
                         color: '#0383FA',
                         alignSelf: 'left',
                         fontSize: 12,
@@ -450,7 +496,7 @@ export default class Singlechatpage extends BaseComponent<
                     </Text>
                     <Text
                       style={{
-                        paddingLeft:20,
+                        paddingLeft: 20,
                         color: 'black',
                         alignSelf: 'left',
                         fontSize: 12,
@@ -466,7 +512,7 @@ export default class Singlechatpage extends BaseComponent<
                       style={{
                         fontFamily: 'OpenSans-SemiBold',
                         marginTop: 15,
-                        paddingLeft:20,
+                        paddingLeft: 20,
                         color: '#0383FA',
                         alignSelf: 'left',
                         fontSize: 12,
@@ -475,7 +521,7 @@ export default class Singlechatpage extends BaseComponent<
                     </Text>
                     <Text
                       style={{
-                        paddingLeft:20,
+                        paddingLeft: 20,
                         color: 'black',
                         alignSelf: 'left',
                         fontSize: 12,
@@ -487,33 +533,57 @@ export default class Singlechatpage extends BaseComponent<
                   <View style={styles.divider}></View>
 
                   {model.OnlineText == 'Online User' ? (
-                    <TouchableOpacity onPress={() => this.UserOnline()}>
+                    <View>
+                      <TouchableOpacity onPress={() => this.UserOnline()}>
+                        <Text
+                          style={{
+                            fontFamily: 'OpenSans-SemiBold',
+                            marginTop: 15,
+                            paddingLeft: 20,
+                            color: '#0383FA',
+                            alignSelf: 'left',
+                            fontSize: 12,
+                          }}>
+                          {model.OnlineText}
+                        </Text>
+                      </TouchableOpacity>
                       <Text
                         style={{
-                          fontFamily: 'OpenSans-SemiBold',
-                          marginTop: 15,
-                          paddingLeft:20,
-                          color: '#0383FA',
+                          paddingLeft: 20,
+                          color: 'black',
                           alignSelf: 'left',
                           fontSize: 12,
+                          fontFamily: 'OpenSans-SemiBold',
                         }}>
-                        {model.OnlineText}
+                        {model.OnlineUserLength}/{model.alluser.length}
                       </Text>
-                    </TouchableOpacity>
+                    </View>
                   ) : (
-                    <TouchableOpacity onPress={() => this.AllUserss()}>
-                      <Text
-                        style={{
-                          fontFamily: 'OpenSans-SemiBold',
-                          marginTop: 15,
-                          paddingLeft:20,
-                          color: '#0383FA',
-                          alignSelf: 'left',
-                          fontSize: 12,
-                        }}>
-                        {model.OnlineText}
-                      </Text>
-                    </TouchableOpacity>
+                    <View>
+                      <TouchableOpacity onPress={() => this.AllUserss()}>
+                        <Text
+                          style={{
+                            fontFamily: 'OpenSans-SemiBold',
+                            marginTop: 15,
+                            paddingLeft: 20,
+                            color: '#0383FA',
+                            alignSelf: 'left',
+                            fontSize: 12,
+                          }}>
+                          {model.OnlineText}
+                        </Text>
+                      </TouchableOpacity>
+                      {/* <Text
+                      style={{
+                        paddingLeft:20,
+                        color: 'black',
+                        alignSelf: 'left',
+                        fontSize: 12,
+                        fontFamily: 'OpenSans-SemiBold',
+                      }}>
+                      {model.alluser.length}/{model.alluser.length}
+                    </Text> */}
+                    </View>
                   )}
                   <View style={styles.divider}></View>
 
@@ -522,11 +592,11 @@ export default class Singlechatpage extends BaseComponent<
                       style={{
                         fontFamily: 'OpenSans-SemiBold',
                         marginTop: 15,
-                        paddingLeft:20,
+                        paddingLeft: 20,
                         color: '#0383FA',
                         alignSelf: 'left',
                         fontSize: 12,
-                        marginBottom:20
+                        marginBottom: 20,
                       }}>
                       Logout
                     </Text>
@@ -534,7 +604,7 @@ export default class Singlechatpage extends BaseComponent<
                 </View>
               </View>
             </View>
-          )} 
+          )}
           <Tabs
             tabBarUnderlineStyle={{
               borderColor: 'white',
@@ -544,7 +614,7 @@ export default class Singlechatpage extends BaseComponent<
             }}
             tabContainerStyle={{
               borderColor: 'white',
-              shadowColor:"white"
+              shadowColor: 'white',
             }}>
             <Tab
               heading="All Messages"
@@ -556,7 +626,9 @@ export default class Singlechatpage extends BaseComponent<
               activeTabStyle={{backgroundColor: 'white', borderColor: 'white'}}>
               <Content>
                 <List>
-                  {model.FilterUser.map((i: alluser) => (
+            {model.FilterUser.length<=0 && <ActivityIndicator size="large" color="#0000ff" />}
+
+                  {model.FilterUser.length>0 && model.FilterUser.map((i: alluser) => (
                     <TouchableOpacity onPress={() => this.NextPage(i)}>
                       <ListItem avatar>
                         <Left>
@@ -603,7 +675,7 @@ export default class Singlechatpage extends BaseComponent<
                           </View>
                           <Text
                             style={{
-                              color: i.status ? '#0383FA' : '#a6a6a6',
+                              color: i.status ? '#a6a6a6' : '#0383FA',
                               fontWeight: '200',
                               fontFamily: 'OpenSans-SemiBold',
                               letterSpacing: 0.2,
@@ -628,9 +700,10 @@ export default class Singlechatpage extends BaseComponent<
               tabStyle={{backgroundColor: 'white'}}
               activeTabStyle={{backgroundColor: 'white'}}>
               <Content>
-              <List>
+                <List>
                   {model.AllNotification.map((i: alluser) => (
-                    <TouchableOpacity onPress={() => this.NotificationDetalis(i)}>
+                    <TouchableOpacity
+                      onPress={() => this.NotificationDetalis(i)}>
                       <ListItem avatar>
                         <Left>
                           <View>
@@ -713,8 +786,8 @@ const styles = StyleSheet.create({
     height: 1,
     backgroundColor: 'gray',
     marginHorizontal: 20,
-    marginTop:12,
-    opacity:0.5
+    marginTop: 12,
+    opacity: 0.5,
   },
   dropdownContainer: {
     position: 'absolute',

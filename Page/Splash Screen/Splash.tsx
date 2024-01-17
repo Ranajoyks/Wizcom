@@ -15,18 +15,57 @@ import {CommonActions} from '@react-navigation/native';
 
 import {Container, Spinner} from 'native-base';
 import axios from 'axios';
+import SessionHelper from '../../Core/SessionHelper';
 
 export default class Splash extends Component<any, any> {
   constructor(props: any) {
     super(props);
-    setTimeout(() => {
+    // setTimeout(() => {
+    //   this.props.navigation.reset({
+    //     index: 0,
+    //     routes: [{ name: 'Selectcompanypage' }],
+    // });
+    // }, 2000);
+  }
+  async componentDidMount() {
+    var value = await SessionHelper.GetSession();
+    console.log("Value: ", value);
+    if(value){
+      this.PageRander()
+    }else{
+      setTimeout(() => {
       this.props.navigation.reset({
         index: 0,
         routes: [{ name: 'Selectcompanypage' }],
     });
     }, 2000);
+    }
+   
   }
-  
+  PageRander=async ()=>{
+    var value = await SessionHelper.GetSession();
+    const headers = {
+      'Content-Type': 'application/json',
+      Cookie: `ASP.NET_SessionId=${value}`,
+    };
+    axios
+      .post(
+        `http://eiplutm.eresourceerp.com/AzaaleaR/API/Sys/Sys.aspx/JCheckSession`,
+        {headers: headers},
+      )
+      .then(res => {
+        console.log('SessionResponse: ', res.data.d);
+        if (res.data.d.bStatus) {
+          this.props.navigation.reset({
+            index: 0,
+            routes: [{name: 'Singlechatpage'}],
+          });
+        }
+      })
+      .catch(err => {
+        console.log('SessionError: ', err);
+      });
+  }
 
   render() {
     return (

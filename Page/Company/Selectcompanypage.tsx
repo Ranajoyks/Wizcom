@@ -30,7 +30,7 @@ export default class Selectcompanypage extends BaseComponent<
   headers = {
     'Content-Type': 'application/json',
   };
-  componentDidMount(): void {
+  async componentDidMount(){
     this.Initializes();
   }
 

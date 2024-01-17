@@ -6,15 +6,15 @@ import AsyncStorage from '@react-native-community/async-storage'
 
 export default class SessionHelper {
 
-    public static SetSession(Customer: string) {
+    public static SetSession(Customer: any) {
         AsyncStorage.setItem('User', JSON.stringify(Customer))
     }
     public static async GetSession() {
         var item = await AsyncStorage.getItem('User');
         if (!item) {
-            return item as unknown as string;
+            return item as unknown as any;
         }
-        return JSON.parse(item) as string;
+        return JSON.parse(item) as any;
     } 
 
     public static SetURLSession(URL: any) {
@@ -77,6 +77,16 @@ export default class SessionHelper {
         }
         return JSON.parse(item) as any;
     }
+    public static SetUserIDSession(UserID: any) {
+        AsyncStorage.setItem('UserID', JSON.stringify(UserID))
+    }
+    public static async GetUserIDSession() {
+        var item = await AsyncStorage.getItem('UserID');
+        if (!item) {
+            return item as unknown as any;
+        }
+        return JSON.parse(item) as any;
+    }
     public static SetFCMTokenSession(FCMToken: any) {
         AsyncStorage.setItem('FCMToken', JSON.stringify(FCMToken))
     }
@@ -92,6 +102,16 @@ export default class SessionHelper {
     }
     public static async GetCompanyIDSession() {
         var item = await AsyncStorage.getItem('CompanyID');
+        if (!item) {
+            return item as unknown as any;
+        }
+        return JSON.parse(item) as any;
+    }
+    public static SetBranchNameSession(BranchName: any) {
+        AsyncStorage.setItem('BranchName', JSON.stringify(BranchName))
+    }
+    public static async GetBranchNameSession() {
+        var item = await AsyncStorage.getItem('BranchName');
         if (!item) {
             return item as unknown as any;
         }

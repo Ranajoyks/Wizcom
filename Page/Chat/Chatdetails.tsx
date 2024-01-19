@@ -14,6 +14,8 @@ import {
   Alert,
   AppState,
   ActivityIndicator,
+  BackHandler,
+  Platform,
 } from 'react-native';
 import {Badge, Button} from 'native-base';
 import BaseComponent from '../../Core/BaseComponent';
@@ -26,6 +28,7 @@ import EntityHelperService from '../Service/EntityHelperService';
 import NetInfo from '@react-native-community/netinfo';
 export class ChatdetailsViewModel {
   Message: string = '';
+  InvokeMessage: string = '';
   senderId: string = '';
   receiverId: string = '';
   companyId: number = 18;
@@ -52,6 +55,7 @@ export class ChatdetailsViewModel {
   NoMoreData: boolean = false;
   Scroll: boolean = true;
   DataLength: number = 0;
+  BranchID: number = 1;
 }
 export class AllChats {
   date: any = new Date();
@@ -76,7 +80,8 @@ export class Chatss {
   sConnId: string = '';
   sMsg: string = '';
 }
-var intervalId: any;
+var intervalId: any = true;
+var MsgCounter = 0;
 export default class Chatdetails extends BaseComponent<
   any,
   ChatdetailsViewModel
@@ -88,15 +93,18 @@ export default class Chatdetails extends BaseComponent<
     // this.state.Model.senderId = props.route.params.SenderID;
   }
 
-  async componentDidMount(): Promise<void> {
+  async componentDidMount() {
     var Model = this.state.Model;
     Model.receiverId = `u_${Model.User.lId.toString()}`;
     this.MakeConnection();
+
     this.ReceiveMsg();
     var User = await SessionHelper.GetUserDetailsSession();
     console.log('user: ', User);
     var FCMToken = await SessionHelper.GetFCMTokenSession();
     var ConnectionCode = await SessionHelper.GetCompanyIDSession();
+    var BranchID = await SessionHelper.GetBranchIdSession();
+    Model.BranchID = BranchID;
     Model.ConnectionCode = ConnectionCode;
     Model.FCMToken = FCMToken;
     Model.sender = User.userName;
@@ -108,6 +116,8 @@ export default class Chatdetails extends BaseComponent<
     console.log('UserDetails.lId', Model.senderId);
     this.UpdateViewModel();
     this.GetAllMsg();
+    this.CheckAppStatus();
+    SessionHelper.SetReceiverIDSession(Model.receiverId);
     // setInterval(this.CheckAppStatus, 2000);
     // setTimeout(() => {this.CheckAppStatus},2000)
 
@@ -116,7 +126,43 @@ export default class Chatdetails extends BaseComponent<
     //   intervalId = setInterval(this.CheckInternetConnetion, 7000);
     // // this.UpdateViewModel()
     // }
+    if (Platform.OS == 'android') {
+      BackHandler.addEventListener('hardwareBackPress', this.handleBackButton);
+    }
+    this.MarkRead();
   }
+  componentWillUnmount() {
+    BackHandler.removeEventListener('hardwareBackPress', this.handleBackButton);
+  }
+  handleBackButton = () => {
+    this.props.navigation.reset({
+      index: 0,
+      routes: [{name: 'Singlechatpage'}],
+    });
+    return true;
+  };
+  MarkRead = () => {
+    var Model = this.state.Model;
+    console.log('Branch: ', Model.BranchID);
+    console.log('SenderID', Model.senderId);
+    console.log('ReceiverId', Model.receiverId);
+    const headers = {
+      'Content-Type': 'application/json',
+    };
+    var Data = JSON.stringify({
+      companyid: Model.BranchID,
+      senderId: Model.senderId,
+      receiverId: Model.receiverId,
+    });
+    axios
+      .put(`https://wemessanger.azurewebsites.net/api/user`, Data, {headers})
+      .then((res: any) => {
+        console.log('ReadMSg: ', res.data);
+      })
+      .catch((err: any) => {
+        console.log('ReadMSgERror: ', err);
+      });
+  };
   // componentWillUnmount() {
   //   var Model = this.state.Model
 
@@ -199,6 +245,7 @@ export default class Chatdetails extends BaseComponent<
         var ReceiveMSg = new Chatss();
 
         if (message) {
+          MsgCounter = MsgCounter + 1;
           var date = new Date();
           ReceiveMSg.sMsg = message;
           ReceiveMSg.lReceiverId = receiver;
@@ -207,7 +254,7 @@ export default class Chatdetails extends BaseComponent<
             date.getTime() - date.getTimezoneOffset() * 60 * 1000,
           );
           var offset = date.getTimezoneOffset() / 60;
-          var hours = date.getHours() + 1;
+          var hours = date.getHours();
           newDate.setHours(hours + offset);
           ReceiveMSg.dtMsg = new Date(newDate).toString();
           var XyzIndex = Model.NewChat.findIndex((i: AllChats) => {
@@ -245,41 +292,48 @@ export default class Chatdetails extends BaseComponent<
           }
           console.log('REceiveMSG: ', ReceiveMSg.sMsg);
           this.UpdateViewModel();
+          this.MarkRead();
         }
       },
     );
   };
-  // CheckAppStatus = async () => {
-  //   var Model = this.state.Model;
-  //   const appStateListener = AppState.addEventListener(
-  //     'change',
-  //     nextAppState => {
-  //       console.log('Next AppState is: ', nextAppState);
-  //       Model.AppStatus = nextAppState;
-  //       this.UpdateViewModel();
-  //       if (nextAppState == 'active') {
-  //         this.MakeConnection();
-  //       }
-  //       if (nextAppState == 'background') {
-  //         var Connection = new signalR.HubConnectionBuilder()
-  //           .withUrl(
-  //             `https://wemessanger.azurewebsites.net/chatHub?UserId=${Model.senderId}`,
-  //           )
-  //           .build();
-  //         Connection.start().then(() => {
-  //           console.log('SignalR connected');
-  //           Connection.invoke('DisconnectUser', Model.senderId)
-  //             .then((res: any) => {
-  //               console.log('resDisconnect: ', res);
-  //             })
-  //             .catch((err: any) => {
-  //               console.log('ErrorDisconnect: ', err);
-  //             });
-  //         });
-  //       }
-  //     },
-  //   );
-  // };
+  CheckAppStatus = async () => {
+    var Model = this.state.Model;
+    const appStateListener = AppState.addEventListener(
+      'change',
+      nextAppState => {
+        console.log('Next AppState is: ', nextAppState);
+        Model.AppStatus = nextAppState;
+        this.UpdateViewModel();
+        if (nextAppState == 'active') {
+          this.MakeConnection();
+          // Model.SignalRConnected == true
+          // this.UpdateViewModel()
+        }
+        if (nextAppState == 'background') {
+          // Model.SignalRConnected = false;
+          // this.UpdateViewModel();
+          var Connection = new signalR.HubConnectionBuilder()
+            .withUrl(
+              `https://wemessanger.azurewebsites.net/chatHub?UserId=${Model.senderId}`,
+            )
+            .build();
+          Connection.start().then(() => {
+            console.log('SignalR connected');
+            Connection.invoke('DisconnectUser', Model.senderId)
+              .then((res: any) => {
+                console.log('resDisconnect: ', res);
+
+                console.log('SignalRConnected: ', Model.SignalRConnected);
+              })
+              .catch((err: any) => {
+                console.log('ErrorDisconnect: ', err);
+              });
+          });
+        }
+      },
+    );
+  };
   // CheckInternetConnetion = () => {
   //   var model = this.state.Model;
   //   NetInfo.addEventListener(state => {
@@ -409,6 +463,7 @@ export default class Chatdetails extends BaseComponent<
   };
   ButtonClick = async () => {
     var model = this.state.Model;
+    MsgCounter = MsgCounter + 1;
     // if (model.SignalRConnected) {
     if (model.Message.trim() === '') {
       return;
@@ -416,6 +471,8 @@ export default class Chatdetails extends BaseComponent<
       var date = new Date();
       // const modifiedDate = new Date(date.getTime() - 19800000);
       console.log('Msg sent:', model.Message);
+      model.InvokeMessage = model.Message;
+      this.UpdateViewModel();
       var XyzIndex = model.NewChat.findIndex((i: AllChats) => {
         const itemDate = new Date();
         const iDate = new Date(i.date);
@@ -442,14 +499,19 @@ export default class Chatdetails extends BaseComponent<
         date.getTime() - date.getTimezoneOffset() * 60 * 1000,
       );
       var offset = date.getTimezoneOffset() / 60;
-      var hours = date.getHours() + 1;
+      var hours = date.getHours();
       newDate.setHours(hours + offset);
+      console.log('NewDate: ', newDate);
+
       sendMsg.dtMsg = new Date(newDate).toString();
       console.log('SendDate', sendMsg.dtMsg);
       console.log('Send MSg: ', sendMsg);
       if (Xyz) {
         console.log('indexavailable', model.NewChat[XyzIndex]);
         model.NewChat[XyzIndex].Chat.push(sendMsg);
+        model.Message = '';
+        this.UpdateViewModel();
+        console.log('newChat: ', model.NewChat);
       } else {
         var NewChatArray = new AllChats();
         var date = new Date();
@@ -460,20 +522,24 @@ export default class Chatdetails extends BaseComponent<
         ) {
           NewChatArray.istoday = true;
         } else {
-          NewChatArray.istoday = false;
+          NewChatArray.istoday = true;
         }
         console.log('sendMsg date', sendMsg.dtMsg);
         NewChatArray.date = sendMsg.dtMsg.toString();
         NewChatArray.Chat.push(sendMsg);
         console.log('indexnotavailable', NewChatArray);
         model.NewChat.push(NewChatArray);
+        console.log('newChat: ', model.NewChat);
+
+        model.Message = '';
+        this.UpdateViewModel();
       }
       await model.Connection.invoke(
         'SendMessage',
         model.companyId,
         model.senderId,
         model.receiverId,
-        model.Message,
+        model.InvokeMessage,
         model.msgflag,
         model.itype,
       )
@@ -719,13 +785,15 @@ export default class Chatdetails extends BaseComponent<
       this.UpdateViewModel();
     }
   };
+  LocationPage = () => {
+    this.props.navigation.navigate('MapPage');
+  };
   render() {
     // const { url } = this.state;
     const prefix = 'https://';
     var Model = this.state.Model;
     // console.log('Appstatus: ', Model.AppStatus);
     // console.log('SignalConnectionR: ', Model.SignalRConnected);
-
     // console.log('Chats:', JSON.stringify(Model.NewChat) );
 
     return (
@@ -734,7 +802,10 @@ export default class Chatdetails extends BaseComponent<
         <View style={styles.header}>
           <TouchableOpacity
             onPress={() => {
-              this.props.navigation.navigate('Singlechatpage');
+              this.props.navigation.reset({
+                index: 0,
+                routes: [{name: 'Singlechatpage'}],
+              });
             }}>
             <Image
               source={require('../../assets/backimg.png')}
@@ -749,15 +820,15 @@ export default class Chatdetails extends BaseComponent<
               <Text style={styles.subtitle2}>Offline</Text>
             )}
           </View>
-          {/* <TouchableOpacity
-              onPress={() => {
-                this.Search();
-              }}>
-              <Image
-                source={require('../../assets/search.png')}
-                style={{height: 30, width: 30, marginRight: 10, marginTop: 5}}
-              />
-            </TouchableOpacity> */}
+          <TouchableOpacity
+            onPress={() => {
+              this.LocationPage();
+            }}>
+            <Image
+              source={require('../../assets/location.png')}
+              style={{height: 35, width: 35, marginRight: 10, marginTop: 10}}
+            />
+          </TouchableOpacity>
           <TouchableOpacity
             onPress={() => {
               this.DropDowmOpen();
@@ -771,7 +842,7 @@ export default class Chatdetails extends BaseComponent<
                 // justifyContent: 'center',
                 alignItems: 'center',
                 display: 'flex',
-                marginTop: -17,
+                marginTop: 10,
               }}>
               <Text
                 style={{
@@ -784,6 +855,16 @@ export default class Chatdetails extends BaseComponent<
               </Text>
             </Badge>
           </TouchableOpacity>
+          {/* <TouchableOpacity
+            style={{width: 25,marginTop: 15, marginHorizontal:5}}
+            onPress={() => {
+              this.LocationPage();
+            }}>
+            <Image
+              source={require('../../assets/location.png')}
+              style={{height: 25, width: 25}}
+            />
+          </TouchableOpacity> */}
         </View>
         <SafeAreaView style={styles.body}>
           {Model.IsOpen == true && (
@@ -922,77 +1003,83 @@ export default class Chatdetails extends BaseComponent<
                 <Text style={{alignSelf: 'center'}}>No More Conversation</Text>
               </View>
             )}
-            {/* {Model.SignalRConnected === false && <ActivityIndicator size="large" color="#0000ff" />} */}
+            {Model.SignalRConnected === false && (
+              <ActivityIndicator size="large" color="#0000ff" />
+            )}
 
-            {/* {Model.SignalRConnected === true && */}
-            {Model.NewChat.map((item: AllChats) => (
-              <View style={{zIndex: 1}}>
-                {item.istoday ? (
-                  <Text style={styles.today}>Today</Text>
-                ) : (
-                  <Text style={styles.today}>
-                    {EntityHelperService.ToDdMmmYyyy(item?.date)}
-                  </Text>
-                )}
+            {Model.SignalRConnected === true &&
+              Model.NewChat.map((item: AllChats) => (
+                <View style={{zIndex: 1}}>
+                  {MsgCounter < 2 ? (
+                    item.istoday ? (
+                      <Text style={styles.today}>Today</Text>
+                    ) : (
+                      <Text style={styles.today}>
+                        {EntityHelperService.ToDdMmmYyyy(item?.date)}
+                      </Text>
+                    )
+                  ) : null}
 
-                {item.Chat.map((i: Chat) =>
-                  'u_' + i.lSenderId == Model.senderId ||
-                  i.lSenderId == Model.senderId ? (
-                    <>
-                      <View style={styles.messageto}>
-                        <View style={styles.messagetomessage}>
-                          <View style={styles.messagetotext}>
-                            <Text style={styles.messagetotextcontent}>
-                              {i?.sMsg}
+                  {item.Chat.map((i: Chat) =>
+                    'u_' + i.lSenderId == Model.senderId ||
+                    i.lSenderId == Model.senderId ? (
+                      <>
+                        <View style={styles.messageto}>
+                          <View style={styles.messagetomessage}>
+                            <View style={styles.messagetotext}>
+                              <Text style={styles.messagetotextcontent}>
+                                {i?.sMsg}
+                              </Text>
+                            </View>
+                          </View>
+                          <View style={styles.messagetotime}>
+                            <Text style={styles.messagefromtimetext}>
+                              {EntityHelperService.convertUTCDateToLocalDate(
+                                new Date(i?.dtMsg),
+                              )}
                             </Text>
+                            <Text>{item?.istoday}</Text>
                           </View>
                         </View>
-                        <View style={styles.messagetotime}>
-                          <Text style={styles.messagefromtimetext}>
-                            {EntityHelperService.convertUTCDateToLocalDate(
-                              new Date(i?.dtMsg),
-                            )}
-                          </Text>
-                        </View>
-                      </View>
-                    </>
-                  ) : (
-                    <>
-                      <View style={styles.messagefrom}>
-                        <View style={styles.messagefrommessage}>
-                          <View style={styles.messagefromicon}>
-                            <Text
-                              style={{
-                                color: '#000',
-                                flex: 1,
-                                fontSize: 15,
-                                textAlign: 'center',
-                              }}>
-                              {Model.User.userFullName
-                                .toLocaleUpperCase()
-                                .charAt(0)}
-                            </Text>
+                      </>
+                    ) : (
+                      <>
+                        <View style={styles.messagefrom}>
+                          <View style={styles.messagefrommessage}>
+                            <View style={styles.messagefromicon}>
+                              <Text
+                                style={{
+                                  color: '#000',
+                                  flex: 1,
+                                  fontSize: 15,
+                                  textAlign: 'center',
+                                }}>
+                                {Model.User.userFullName
+                                  .toLocaleUpperCase()
+                                  .charAt(0)}
+                              </Text>
+                            </View>
+                            <View style={styles.messagefromtext}>
+                              <Text style={styles.messagefromtextcontent}>
+                                {i?.sMsg}
+                              </Text>
+                            </View>
                           </View>
-                          <View style={styles.messagefromtext}>
-                            <Text style={styles.messagefromtextcontent}>
-                              {i?.sMsg}
+                          <View style={styles.messagefromtime}>
+                            <Text style={styles.messagefromtimetext}>
+                              {EntityHelperService.convertUTCDateToLocalDate(
+                                new Date(i?.dtMsg),
+                              )}
                             </Text>
+                            <Text>{item?.istoday}</Text>
                           </View>
                         </View>
-                        <View style={styles.messagefromtime}>
-                          <Text style={styles.messagefromtimetext}>
-                            {EntityHelperService.convertUTCDateToLocalDate(
-                              new Date(i?.dtMsg),
-                            )}
-                          </Text>
-                        </View>
-                      </View>
-                      <View></View>
-                    </>
-                  ),
-                )}
-              </View>
-            ))}
+                        <View></View>
+                      </>
+                    ),
+                  )}
+                </View>
+              ))}
           </ScrollView>
           <View style={{padding: 10}}>
             <View

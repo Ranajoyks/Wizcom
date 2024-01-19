@@ -18,6 +18,7 @@ import * as signalR from '@microsoft/signalr';
 import messaging from '@react-native-firebase/messaging';
 
 import { request, check, PERMISSIONS, RESULTS } from 'react-native-permissions';
+import PermissionHelper from '../../Core/PermissionHelper';
 export class LoginViewModel {
   UserName: string = '';
   Password: string = '';
@@ -52,6 +53,7 @@ export default class Loginpage extends BaseComponent<any, LoginViewModel> {
         }
     }
     this.FirebaseSetup()
+    PermissionHelper.requestLocationPermission();
    
   }
    requestNotificationPermission = async () => {

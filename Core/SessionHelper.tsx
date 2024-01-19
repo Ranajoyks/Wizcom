@@ -117,6 +117,16 @@ export default class SessionHelper {
         }
         return JSON.parse(item) as any;
     }
+    public static SetReceiverIDSession(ReceiverID: any) {
+        AsyncStorage.setItem('ReceiverID', JSON.stringify(ReceiverID))
+    }
+    public static async GetReceiverIDSession() {
+        var item = await AsyncStorage.getItem('ReceiverID');
+        if (!item) {
+            return item as unknown as any;
+        }
+        return JSON.parse(item) as any;
+    }
 
 
      

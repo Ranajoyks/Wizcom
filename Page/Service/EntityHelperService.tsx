@@ -37,7 +37,7 @@ export default class EntityHelperService {
   public static ToDdMmmYyyyHhMmSs(date: any): string {
     if (!date) {
       return '';
-    }
+    } 
     return format(parseISO(date.toString()), 'dd-MMM-yyyy hh:mm:ss a');
   }
   public static convertUTCDateToLocalDate(date: any) {
@@ -46,7 +46,7 @@ export default class EntityHelperService {
     );
 
     var offset = date.getTimezoneOffset() / 60;
-    var hours = date.getHours()+1;
+    var hours = date.getHours();
 
     newDate.setHours(hours - offset);
     // console.log(newDate);

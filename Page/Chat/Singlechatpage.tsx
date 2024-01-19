@@ -35,7 +35,8 @@ import * as signalR from '@microsoft/signalr';
 import alluser from '../../Entity/alluser';
 import {TouchableOpacity} from 'react-native-gesture-handler';
 import axios from 'axios';
-
+import Geolocation from '@react-native-community/geolocation';
+import BackgroundTimer from 'react-native-background-timer';
 export class SinglechatpageViewModel {
   BranchName: string = '';
   UserName: string = '';
@@ -55,6 +56,7 @@ export class SinglechatpageViewModel {
   AllNotification: alluser[] = [];
   OnlineUserLength: number = 0;
   AppStatus: any = AppState.currentState;
+  currentLocation: any;
 }
 export default class Singlechatpage extends BaseComponent<
   any,
@@ -71,6 +73,13 @@ export default class Singlechatpage extends BaseComponent<
   }
   async componentDidMount() {
     var Model = this.state.Model;
+    this.GetLocation();
+    BackgroundTimer.setInterval(() => {
+      // this will be executed every 200 ms
+      // even when app is the the background
+      this.GetLocation();
+      console.log('tic');
+    }, 60000);
     console.log('Appstate: ', AppState.currentState);
     const deviceId = DeviceInfo.getDeviceId();
     Model.DeviceId = deviceId;
@@ -92,11 +101,39 @@ export default class Singlechatpage extends BaseComponent<
     // console.log('User: ', Model.UserName);
     this.Fetchmessage();
     this.GetAllNotification();
-    // this.CheckAppStatus();
-    setInterval(this.Fetchmessage, 120000);
+    this.CheckAppStatus();
+    // setInterval(this.Fetchmessage, 120000);
     // setInterval(this.CheckAppStatus, 2000);
     console.log('Next AppState', Model.AppStatus);
+    // Geolocation.getCurrentPosition(info => console.log("info:", info));
   }
+  GetLocation = () => {
+    var Model = this.state.Model;
+    console.log("senderId: ", Model.SenderID);
+    
+    Geolocation.getCurrentPosition(info => {
+      Model.currentLocation = info;
+      console.log('locationlatitude', Model.currentLocation?.coords?.latitude.toString());
+      console.log('locationLong', Model.currentLocation?.coords?.longitude.toString());
+      this.UpdateViewModel();
+    });
+    const headers = {
+      'Content-Type': 'application/json',
+    };
+    var Data = JSON.stringify({
+      UserId: Model.SenderID.toString(),
+      Lat: Model.currentLocation?.coords?.latitude.toString(),
+      Long: Model.currentLocation?.coords?.longitude.toString(),
+    });
+    axios
+      .post(`https://wemessanger.azurewebsites.net/api/user/location`, Data, {headers})
+      .then((res: any) => {
+        console.log('Location: ', res.data);
+      })
+      .catch((err: any) => {
+        console.log('LocationERror: ', err);
+      });
+  };
   CheckAppStatus = async () => {
     var Model = this.state.Model;
     const appStateListener = AppState.addEventListener(
@@ -363,7 +400,7 @@ export default class Singlechatpage extends BaseComponent<
   initialLayout = {width: Dimensions.get('window').width};
   render() {
     var model = this.state.Model;
-    console.log('FilterUser: ', model.FilterUser);
+    // console.log('FilterUser: ', model.FilterUser);
     // console.log('Appstatus: ', model.AppStatus);
 
     return (
@@ -663,9 +700,9 @@ export default class Singlechatpage extends BaseComponent<
                   )}
 
                   {model.FilterUser.length > 0 &&
-                    model.FilterUser.map((i: alluser) => (
+                    model.FilterUser.map((i: alluser, index) => (
                       <TouchableOpacity onPress={() => this.NextPage(i)}>
-                        <ListItem avatar>
+                        <ListItem avatar key={index}>
                           <Left>
                             <View>
                               <Badge
@@ -713,7 +750,13 @@ export default class Singlechatpage extends BaseComponent<
                               </Text>
                               {i?.mCount > 0 && (
                                 <View style={styles.circle3}>
-                                  <Text style={{textAlign:"center", color:"white"}}>{i?.mCount}</Text>
+                                  <Text
+                                    style={{
+                                      textAlign: 'center',
+                                      color: 'white',
+                                    }}>
+                                    {i?.mCount}
+                                  </Text>
                                 </View>
                               )}
                             </View>
@@ -921,7 +964,7 @@ const styles = StyleSheet.create({
     width: 20,
     height: 20,
     borderRadius: 30,
-    justifyContent:"center",
+    justifyContent: 'center',
     // marginTop: 6,
     backgroundColor: '#0383FA',
     // position: 'absolute',

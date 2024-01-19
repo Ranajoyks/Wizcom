@@ -12,6 +12,7 @@ import {
   ScrollView,
   Dimensions,
   Alert,
+  AppState,
   ActivityIndicator,
 } from 'react-native';
 import {Badge, Button} from 'native-base';
@@ -42,7 +43,15 @@ export class ChatdetailsViewModel {
   InterNetConnection: any;
   SignalRConnected: boolean = false;
   intervalId: any;
-  ConnectionCode:any
+  ConnectionCode: any;
+  AppStatus: any = AppState.currentState;
+  PageNumber: number = 0;
+  isLoading: boolean = false;
+  AllChats: any[] = [];
+  prevScrollY: number = 0;
+  NoMoreData: boolean = false;
+  Scroll: boolean = true;
+  DataLength: number = 0;
 }
 export class AllChats {
   date: any = new Date();
@@ -87,8 +96,8 @@ export default class Chatdetails extends BaseComponent<
     var User = await SessionHelper.GetUserDetailsSession();
     console.log('user: ', User);
     var FCMToken = await SessionHelper.GetFCMTokenSession();
-    var ConnectionCode = await SessionHelper.GetCompanyIDSession()
-    Model.ConnectionCode = ConnectionCode
+    var ConnectionCode = await SessionHelper.GetCompanyIDSession();
+    Model.ConnectionCode = ConnectionCode;
     Model.FCMToken = FCMToken;
     Model.sender = User.userName;
     this.UpdateViewModel();
@@ -99,6 +108,9 @@ export default class Chatdetails extends BaseComponent<
     console.log('UserDetails.lId', Model.senderId);
     this.UpdateViewModel();
     this.GetAllMsg();
+    // setInterval(this.CheckAppStatus, 2000);
+    // setTimeout(() => {this.CheckAppStatus},2000)
+
     // this.CheckInternetConnetion();
     // if(Model.SignalRConnected === false){
     //   intervalId = setInterval(this.CheckInternetConnetion, 7000);
@@ -237,6 +249,37 @@ export default class Chatdetails extends BaseComponent<
       },
     );
   };
+  // CheckAppStatus = async () => {
+  //   var Model = this.state.Model;
+  //   const appStateListener = AppState.addEventListener(
+  //     'change',
+  //     nextAppState => {
+  //       console.log('Next AppState is: ', nextAppState);
+  //       Model.AppStatus = nextAppState;
+  //       this.UpdateViewModel();
+  //       if (nextAppState == 'active') {
+  //         this.MakeConnection();
+  //       }
+  //       if (nextAppState == 'background') {
+  //         var Connection = new signalR.HubConnectionBuilder()
+  //           .withUrl(
+  //             `https://wemessanger.azurewebsites.net/chatHub?UserId=${Model.senderId}`,
+  //           )
+  //           .build();
+  //         Connection.start().then(() => {
+  //           console.log('SignalR connected');
+  //           Connection.invoke('DisconnectUser', Model.senderId)
+  //             .then((res: any) => {
+  //               console.log('resDisconnect: ', res);
+  //             })
+  //             .catch((err: any) => {
+  //               console.log('ErrorDisconnect: ', err);
+  //             });
+  //         });
+  //       }
+  //     },
+  //   );
+  // };
   // CheckInternetConnetion = () => {
   //   var model = this.state.Model;
   //   NetInfo.addEventListener(state => {
@@ -268,12 +311,14 @@ export default class Chatdetails extends BaseComponent<
     console.log(Model.receiverId);
     axios
       .get(
-        `https://wemessanger.azurewebsites.net/api/User/readmessage?companyId=${Model.companyId}&senderId=${Model.senderId}&receiverId=${Model.receiverId}&pageNo=0`,
+        `https://wemessanger.azurewebsites.net/api/User/readmessage?companyId=${Model.companyId}&senderId=${Model.senderId}&receiverId=${Model.receiverId}&pageNo=${Model.PageNumber}`,
       )
       .then(res => {
         console.log('AllChat: ', res.data);
+        Model.AllChats = res.data;
+        this.UpdateViewModel();
 
-        res.data.forEach((item: Chat) => {
+        Model.AllChats.forEach((item: Chat) => {
           var Xyz = Model.NewChat.find((i: AllChats) => {
             // Create new Date objects with only the year, month, and day
             const itemDate = new Date(item.dtMsg);
@@ -556,7 +601,8 @@ export default class Chatdetails extends BaseComponent<
     this.UpdateViewModel();
   };
   Logout = () => {
-    SessionHelper.SetSession(null)
+    var Model = this.state.Model;
+    SessionHelper.SetSession(null);
     SessionHelper.SetBranchIdSession(null);
     SessionHelper.SetDeviceIdSession(null);
     SessionHelper.SetSenderIdSession(null);
@@ -567,11 +613,117 @@ export default class Chatdetails extends BaseComponent<
       index: 0,
       routes: [{name: 'Loginpage'}],
     });
+    var Connection = new signalR.HubConnectionBuilder()
+      .withUrl(
+        `https://wemessanger.azurewebsites.net/chatHub?UserId=${Model.senderId}`,
+      )
+      .build();
+    Connection.start().then(() => {
+      console.log('SignalR connected');
+      Connection.invoke('DisconnectUser', Model.senderId)
+        .then((res: any) => {
+          console.log('resDisconnect: ', res);
+        })
+        .catch((err: any) => {
+          console.log('ErrorDisconnect: ', err);
+        });
+    });
+  };
+  handleScroll = (event: any) => {
+    // console.log("?Hiiii");
+
+    var Model = this.state.Model;
+
+    const {layoutMeasurement, contentOffset, contentSize} = event.nativeEvent;
+    const paddingToBottom = 20;
+
+    // Check if the current scroll position is less than the previous one
+    if (contentOffset.y < Model.prevScrollY) {
+      console.log('hiii');
+      console.log('Scrolled up - Trigger loading more data');
+      Model.PageNumber = Model.PageNumber + 1;
+      Model.Scroll = false;
+      this.UpdateViewModel();
+      // this.loadMoreData();
+      console.log('PageNo:', Model.PageNumber);
+
+      axios
+        .get(
+          `https://wemessanger.azurewebsites.net/api/User/readmessage?companyId=${Model.companyId}&senderId=${Model.senderId}&receiverId=${Model.receiverId}&pageNo=${Model.PageNumber}`,
+        )
+        .then((res: any) => {
+          console.log('AllChat: ', res.data);
+          var ReverseData = res.data.reverse();
+          console.log('ReverseData', ReverseData.length);
+          Model.DataLength = ReverseData.length;
+          this.UpdateViewModel();
+          if (ReverseData.length == 0) {
+            Model.NoMoreData = true;
+            this.MakeConnection();
+          }
+          ReverseData.forEach((item: Chat) => {
+            var Xyz = Model.NewChat.find((i: AllChats) => {
+              // Create new Date objects with only the year, month, and day
+              const itemDate = new Date(item.dtMsg);
+              const iDate = new Date(i.date);
+
+              // Compare only the date part
+              return (
+                itemDate.getFullYear() === iDate.getFullYear() &&
+                itemDate.getMonth() === iDate.getMonth() &&
+                itemDate.getDate() === iDate.getDate()
+              );
+            });
+
+            var XyzIndex = Model.NewChat.findIndex((i: AllChats) => {
+              // Create new Date objects with only the year, month, and day
+              const itemDate = new Date(item.dtMsg);
+              const iDate = new Date(i.date);
+              // Compare only the date part
+              return (
+                itemDate.getFullYear() === iDate.getFullYear() &&
+                itemDate.getMonth() === iDate.getMonth() &&
+                itemDate.getDate() === iDate.getDate()
+              );
+            });
+
+            const itemDate = new Date(item.dtMsg);
+            if (Xyz) {
+              Model.NewChat[XyzIndex].Chat.unshift(item);
+              //    this.UpdateViewModel();
+              // var NewChatArray = new Chatss()
+              // NewChatArray.
+            } else {
+              var NewChatArray = new AllChats();
+              var date = new Date();
+              if (
+                date.getFullYear() === new Date(item.dtMsg).getFullYear() &&
+                date.getMonth() === new Date(item.dtMsg).getMonth() &&
+                date.getDate() === new Date(item.dtMsg).getDate()
+              ) {
+                NewChatArray.istoday = true;
+              } else {
+                NewChatArray.istoday = false;
+              }
+              console.log('new date', item.dtMsg);
+              NewChatArray.date = item.dtMsg.toString();
+              NewChatArray.Chat.unshift(item);
+              Model.NewChat.unshift(NewChatArray);
+            }
+            this.UpdateViewModel();
+          });
+        });
+
+      // Update the previous scroll position
+      // Model.prevScrollY = contentOffset.y;
+      this.UpdateViewModel();
+    }
   };
   render() {
     // const { url } = this.state;
     const prefix = 'https://';
     var Model = this.state.Model;
+    // console.log('Appstatus: ', Model.AppStatus);
     // console.log('SignalConnectionR: ', Model.SignalRConnected);
 
     // console.log('Chats:', JSON.stringify(Model.NewChat) );
@@ -636,118 +788,120 @@ export default class Chatdetails extends BaseComponent<
         <SafeAreaView style={styles.body}>
           {Model.IsOpen == true && (
             <View style={styles.dropdownContainer}>
-            <View style={styles.dropdown}>
-              <View>
-                <View style={{}}>
-                  <Text
-                    style={{
-                      fontFamily: 'OpenSans-SemiBold',
-                      marginTop: 15,
-                      paddingLeft:20,
-                      color: '#0383FA',
-                      alignSelf: 'left',
-                      fontSize: 12,
-                      
-                    }}>
-                    User:
-                  </Text>
-                  <Text
-                    style={{
-                      paddingLeft:20,
-                      color: 'black',
-                      alignSelf: 'left',
-                      fontSize: 12,
-                      fontFamily: 'OpenSans-SemiBold',
-                    }}>
-                    {Model.sender}
-                  </Text>
-                </View>
-                <View style={styles.divider}></View>
+              <View style={styles.dropdown}>
+                <View>
+                  <View style={{}}>
+                    <Text
+                      style={{
+                        fontFamily: 'OpenSans-SemiBold',
+                        marginTop: 15,
+                        paddingLeft: 20,
+                        color: '#0383FA',
+                        alignSelf: 'left',
+                        fontSize: 12,
+                      }}>
+                      User:
+                    </Text>
+                    <Text
+                      style={{
+                        paddingLeft: 20,
+                        color: 'black',
+                        alignSelf: 'left',
+                        fontSize: 12,
+                        fontFamily: 'OpenSans-SemiBold',
+                      }}>
+                      {Model.sender}
+                    </Text>
+                  </View>
+                  <View style={styles.divider}></View>
 
-                <View style={{}}>
-                  <Text
-                    style={{
-                      fontFamily: 'OpenSans-SemiBold',
-                      marginTop: 15,
-                      paddingLeft:20,
-                      color: '#0383FA',
-                      alignSelf: 'left',
-                      fontSize: 12,
-                    }}>
-                    Designation:
-                  </Text>
-                </View>
-                <View style={styles.divider}></View>
+                  <View style={{}}>
+                    <Text
+                      style={{
+                        fontFamily: 'OpenSans-SemiBold',
+                        marginTop: 15,
+                        paddingLeft: 20,
+                        color: '#0383FA',
+                        alignSelf: 'left',
+                        fontSize: 12,
+                      }}>
+                      Designation:
+                    </Text>
+                  </View>
+                  <View style={styles.divider}></View>
 
-                <View style={{}}>
-                  <Text
-                    style={{
-                      fontFamily: 'OpenSans-SemiBold',
-                      marginTop: 15,
-                      paddingLeft:20,
-                      color: '#0383FA',
-                      alignSelf: 'left',
-                      fontSize: 12,
-                    }}>
-                    Connection Code:
-                  </Text>
-                  <Text
-                    style={{
-                      paddingLeft:20,
-                      color: 'black',
-                      alignSelf: 'left',
-                      fontSize: 12,
-                      fontFamily: 'OpenSans-SemiBold',
-                    }}>
-                    {Model.ConnectionCode}
-                  </Text>
-                </View>
-                <View style={styles.divider}></View>
+                  <View style={{}}>
+                    <Text
+                      style={{
+                        fontFamily: 'OpenSans-SemiBold',
+                        marginTop: 15,
+                        paddingLeft: 20,
+                        color: '#0383FA',
+                        alignSelf: 'left',
+                        fontSize: 12,
+                      }}>
+                      Connection Code:
+                    </Text>
+                    <Text
+                      style={{
+                        paddingLeft: 20,
+                        color: 'black',
+                        alignSelf: 'left',
+                        fontSize: 12,
+                        fontFamily: 'OpenSans-SemiBold',
+                      }}>
+                      {Model.ConnectionCode}
+                    </Text>
+                  </View>
+                  <View style={styles.divider}></View>
 
-                <View style={{}}>
-                  <Text
-                    style={{
-                      fontFamily: 'OpenSans-SemiBold',
-                      marginTop: 15,
-                      paddingLeft:20,
-                      color: '#0383FA',
-                      alignSelf: 'left',
-                      fontSize: 12,
-                    }}>
-                    Version:
-                  </Text>
-                  <Text
-                    style={{
-                      paddingLeft:20,
-                      color: 'black',
-                      alignSelf: 'left',
-                      fontSize: 12,
-                      fontFamily: 'OpenSans-SemiBold',
-                    }}>
-                    {Model.AppVersion}
-                  </Text>
-                </View>
-                <View style={styles.divider}></View>
+                  <View style={{}}>
+                    <Text
+                      style={{
+                        fontFamily: 'OpenSans-SemiBold',
+                        marginTop: 15,
+                        paddingLeft: 20,
+                        color: '#0383FA',
+                        alignSelf: 'left',
+                        fontSize: 12,
+                      }}>
+                      Version:
+                    </Text>
+                    <Text
+                      style={{
+                        paddingLeft: 20,
+                        color: 'black',
+                        alignSelf: 'left',
+                        fontSize: 12,
+                        fontFamily: 'OpenSans-SemiBold',
+                      }}>
+                      {Model.AppVersion}
+                    </Text>
+                  </View>
+                  <View style={styles.divider}></View>
 
-                <TouchableOpacity onPress={() => this.Logout()}>
-                  <Text
-                    style={{
-                      fontFamily: 'OpenSans-SemiBold',
-                      marginTop: 15,
-                      paddingLeft:20,
-                      color: '#0383FA',
-                      alignSelf: 'left',
-                      fontSize: 12,
-                      marginBottom:20
-                    }}>
-                    Logout
-                  </Text>
-                </TouchableOpacity>
+                  <TouchableOpacity onPress={() => this.Logout()}>
+                    <Text
+                      style={{
+                        fontFamily: 'OpenSans-SemiBold',
+                        marginTop: 15,
+                        paddingLeft: 20,
+                        color: '#0383FA',
+                        alignSelf: 'left',
+                        fontSize: 12,
+                        marginBottom: 20,
+                      }}>
+                      Logout
+                    </Text>
+                  </TouchableOpacity>
+                </View>
               </View>
             </View>
-          </View>
           )}
+
           <ScrollView
+            onScroll={this.handleScroll}
+            scrollEventThrottle={16}
             style={styles.scrollView}
             contentContainerStyle={{
               // flexGrow: 1,
@@ -755,9 +909,19 @@ export default class Chatdetails extends BaseComponent<
               flexDirection: 'column',
             }}
             ref="scrollView"
-            onContentSizeChange={(width, height) =>
-              this.refs.scrollView.scrollTo({y: height})
-            }>
+            onContentSizeChange={(width, height) => {
+              console.log('Height: ', height);
+
+              const yOffset = (Model.DataLength - 1) * 70;
+              Model.Scroll == true
+                ? this.refs.scrollView.scrollTo({y: height})
+                : this.refs.scrollView.scrollTo({y: yOffset});
+            }}>
+            {Model.NoMoreData && (
+              <View>
+                <Text style={{alignSelf: 'center'}}>No More Conversation</Text>
+              </View>
+            )}
             {/* {Model.SignalRConnected === false && <ActivityIndicator size="large" color="#0000ff" />} */}
 
             {/* {Model.SignalRConnected === true && */}
@@ -793,7 +957,8 @@ export default class Chatdetails extends BaseComponent<
                       </View>
                     </>
                   ) : (
-                      <><View style={styles.messagefrom}>
+                    <>
+                      <View style={styles.messagefrom}>
                         <View style={styles.messagefrommessage}>
                           <View style={styles.messagefromicon}>
                             <Text
@@ -817,12 +982,13 @@ export default class Chatdetails extends BaseComponent<
                         <View style={styles.messagefromtime}>
                           <Text style={styles.messagefromtimetext}>
                             {EntityHelperService.convertUTCDateToLocalDate(
-                              new Date(i?.dtMsg)
+                              new Date(i?.dtMsg),
                             )}
                           </Text>
                         </View>
-                      </View><View>
-                        </View></>
+                      </View>
+                      <View></View>
+                    </>
                   ),
                 )}
               </View>
@@ -884,8 +1050,8 @@ const styles = StyleSheet.create({
     height: 1,
     backgroundColor: 'gray',
     marginHorizontal: 20,
-    marginTop:12,
-    opacity:0.5
+    marginTop: 12,
+    opacity: 0.5,
   },
   icon: {
     color: '#fff', // White icons
@@ -964,7 +1130,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flexDirection: 'row',
   },
-  messagefromtext: {paddingLeft: 10, paddingRight: 30,paddingVertical:0},
+  messagefromtext: {paddingLeft: 10, paddingRight: 30, paddingVertical: 0},
   messagefromtextcontent: {
     paddingVertical: 5,
     paddingHorizontal: 10,

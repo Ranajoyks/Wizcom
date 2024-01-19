@@ -9,7 +9,7 @@ import {
   Image,
   TextInput,
   AppState,
-  ActivityIndicator
+  ActivityIndicator,
 } from 'react-native';
 import {
   Badge,
@@ -56,7 +56,6 @@ export class SinglechatpageViewModel {
   OnlineUserLength: number = 0;
   AppStatus: any = AppState.currentState;
 }
-
 export default class Singlechatpage extends BaseComponent<
   any,
   SinglechatpageViewModel
@@ -73,18 +72,10 @@ export default class Singlechatpage extends BaseComponent<
   async componentDidMount() {
     var Model = this.state.Model;
     console.log('Appstate: ', AppState.currentState);
-    const appStateListener = AppState.addEventListener(
-      'change',
-      nextAppState => {
-        console.log('Next AppState is: ', nextAppState);
-        Model.AppStatus = nextAppState;
-        this.UpdateViewModel();
-      },
-    );
     const deviceId = DeviceInfo.getDeviceId();
     Model.DeviceId = deviceId;
     this.UpdateViewModel();
-    console.log('deviceId: ', deviceId);
+    // console.log('deviceId: ', deviceId);
     var User = await SessionHelper.GetUserDetailsSession();
     var FCMToken = await SessionHelper.GetFCMTokenSession();
     var ConnectionCode = await SessionHelper.GetCompanyIDSession();
@@ -97,13 +88,46 @@ export default class Singlechatpage extends BaseComponent<
     Model.ConnectionCode = ConnectionCode;
     Model.FCMToken = FCMToken;
     this.UpdateViewModel();
-    console.log('User: ', User);
-    console.log('User: ', Model.UserName);
+    // console.log('User: ', User);
+    // console.log('User: ', Model.UserName);
     this.Fetchmessage();
     this.GetAllNotification();
+    // this.CheckAppStatus();
     setInterval(this.Fetchmessage, 120000);
+    // setInterval(this.CheckAppStatus, 2000);
     console.log('Next AppState', Model.AppStatus);
   }
+  CheckAppStatus = async () => {
+    var Model = this.state.Model;
+    const appStateListener = AppState.addEventListener(
+      'change',
+      nextAppState => {
+        console.log('Next AppState is: ', nextAppState);
+        Model.AppStatus = nextAppState;
+        this.UpdateViewModel();
+        if (nextAppState == 'active') {
+          this.Fetchmessage();
+        }
+        if (nextAppState == 'background') {
+          var Connection = new signalR.HubConnectionBuilder()
+            .withUrl(
+              `https://wemessanger.azurewebsites.net/chatHub?UserId=${Model.SenderID}`,
+            )
+            .build();
+          Connection.start().then(() => {
+            console.log('SignalR connected');
+            Connection.invoke('DisconnectUser', Model.SenderID)
+              .then((res: any) => {
+                console.log('resDisconnect: ', res);
+              })
+              .catch((err: any) => {
+                console.log('ErrorDisconnect: ', err);
+              });
+          });
+        }
+      },
+    );
+  };
   Search = async () => {
     var Model = this.state.Model;
     Model.IsShow = !Model.IsShow;
@@ -132,7 +156,7 @@ export default class Singlechatpage extends BaseComponent<
     var myId = `u_${UserDetails.lId}`;
     model.SenderID = myId;
     this.UpdateViewModel();
-    console.log('MYID: ', model.SenderID);
+    // console.log('MYID: ', model.SenderID);
     const deviceId = DeviceInfo.getDeviceId();
 
     var Connection = new signalR.HubConnectionBuilder()
@@ -140,52 +164,44 @@ export default class Singlechatpage extends BaseComponent<
         `https://wemessanger.azurewebsites.net/chatHub?UserId=u_${UserDetails.lId.toString()}`,
       )
       .build();
-    if (model.AppStatus == 'active') {
-      Connection.start().then(() => {
-        console.log('SignalR connected');
-        var UserList = Connection.invoke('GetAllUser', myId, 0)
-          .then(user => {
-            // console.log("GetallUser: ",user);
-            model.alluser = user;
-            var UserOnline = user.filter((i: alluser) => i.isUserLive == true);
-            model.FilterUser = model.alluser;
-            model.OnlineUserLength = UserOnline.length;
-            this.UpdateViewModel();
-            console.log('UserOnline', UserOnline.length);
+    Connection.start().then(() => {
+      console.log('SignalR connected');
+      var UserList = Connection.invoke('GetAllUser', myId, 0)
+        .then(user => {
+          // console.log("GetallUser: ",user);
+          model.alluser = user;
+          var UserOnline = user.filter((i: alluser) => i.isUserLive == true);
+          model.FilterUser = model.alluser;
+          model.OnlineUserLength = UserOnline.length;
+          this.UpdateViewModel();
+          console.log('UserOnline', UserOnline.length);
 
-            Connection.invoke(
-              'IsUserConnected',
-              `u_${UserDetails.lId.toString()}`,
-            )
-              .then(isConnected => {
-                console.log('Connection', isConnected);
+          Connection.invoke(
+            'IsUserConnected',
+            `u_${UserDetails.lId.toString()}`,
+          )
+            .then(isConnected => {
+              console.log('Connection', isConnected);
 
-                if (isConnected) {
-                  console.log(`User - u_${UserDetails.lId.toString()} is live`);
-                } else {
-                  console.log(
-                    `User - u_${UserDetails.lId.toString()} is not live`,
-                  );
-                }
-              })
-              .catch(error => {
-                console.log(error);
-              });
-          })
-          .catch((err: any) => {
-            console.log('Error to invoke: ', err);
-          });
-      });
-    }
-    if (model.AppStatus == 'background') {
-      Connection.invoke('DisconnectUser', myId)
-        .then(res => {
-          console.log(res);
+              if (isConnected) {
+                console.log(`User - u_${UserDetails.lId.toString()} is live`);
+              } else {
+                console.log(
+                  `User - u_${UserDetails.lId.toString()} is not live`,
+                );
+              }
+            })
+            .catch(error => {
+              console.log(error);
+            });
         })
-        .catch(err => {
+        .catch((err: any) => {
+          Connection.start();
           console.log('Error to invoke: ', err);
         });
-    }
+    });
+
+    // this.CheckAppStatus();
   };
   NextPage = (user: alluser) => {
     var Model = this.state.Model;
@@ -292,7 +308,8 @@ export default class Singlechatpage extends BaseComponent<
     }
   };
   Logout = () => {
-    SessionHelper.SetSession(null)
+    var Model = this.state.Model;
+    SessionHelper.SetSession(null);
     SessionHelper.SetBranchIdSession(null);
     SessionHelper.SetDeviceIdSession(null);
     SessionHelper.SetSenderIdSession(null);
@@ -303,14 +320,29 @@ export default class Singlechatpage extends BaseComponent<
       index: 0,
       routes: [{name: 'Loginpage'}],
     });
+    var Connection = new signalR.HubConnectionBuilder()
+      .withUrl(
+        `https://wemessanger.azurewebsites.net/chatHub?UserId=${Model.SenderID}`,
+      )
+      .build();
+    Connection.start().then(() => {
+      console.log('SignalR connected');
+      Connection.invoke('DisconnectUser', Model.SenderID)
+        .then((res: any) => {
+          console.log('resDisconnect: ', res);
+        })
+        .catch((err: any) => {
+          console.log('ErrorDisconnect: ', err);
+        });
+    });
   };
   GetAllNotification = async () => {
-    console.log('GetNotification');
+    // console.log('GetNotification');
     var UserDetails = await SessionHelper.GetUserDetailsSession();
     var myId = `u_${UserDetails.lId}`;
     var Model = this.state.Model;
-    console.log('MYID: ', Model.SenderID);
-    console.log('CompanyID: ', Model.BranchID);
+    // console.log('MYID: ', Model.SenderID);
+    // console.log('CompanyID: ', Model.BranchID);
 
     const headers = {
       'Content-Type': 'application/json',
@@ -320,7 +352,7 @@ export default class Singlechatpage extends BaseComponent<
         `https://wemessanger.azurewebsites.net/api/user/getnotification?companyId=${Model.BranchID}&userId=${myId}`,
       )
       .then((res: any) => {
-        console.log('Notification: ', res.data);
+        // console.log('Notification: ', res.data);
         Model.AllNotification = res.data;
       })
       .catch((err: any) => {
@@ -331,8 +363,8 @@ export default class Singlechatpage extends BaseComponent<
   initialLayout = {width: Dimensions.get('window').width};
   render() {
     var model = this.state.Model;
-    // console.log('FilterUser: ', model.FilterUser);
-    console.log('Appstatus: ', model.AppStatus);
+    console.log('FilterUser: ', model.FilterUser);
+    // console.log('Appstatus: ', model.AppStatus);
 
     return (
       <Container>
@@ -626,68 +658,80 @@ export default class Singlechatpage extends BaseComponent<
               activeTabStyle={{backgroundColor: 'white', borderColor: 'white'}}>
               <Content>
                 <List>
-            {model.FilterUser.length<=0 && <ActivityIndicator size="large" color="#0000ff" />}
+                  {model.FilterUser.length <= 0 && (
+                    <ActivityIndicator size="large" color="#0000ff" />
+                  )}
 
-                  {model.FilterUser.length>0 && model.FilterUser.map((i: alluser) => (
-                    <TouchableOpacity onPress={() => this.NextPage(i)}>
-                      <ListItem avatar>
-                        <Left>
-                          <View>
-                            <Badge
+                  {model.FilterUser.length > 0 &&
+                    model.FilterUser.map((i: alluser) => (
+                      <TouchableOpacity onPress={() => this.NextPage(i)}>
+                        <ListItem avatar>
+                          <Left>
+                            <View>
+                              <Badge
+                                style={{
+                                  backgroundColor: '#E9E9E9',
+                                  width: 50,
+                                  height: 50,
+                                  borderRadius: 25,
+                                  justifyContent: 'center',
+                                  alignItems: 'center',
+                                }}>
+                                <Text
+                                  style={{
+                                    color: 'black',
+                                    fontSize: 22,
+                                    fontWeight: '400',
+                                    fontFamily: 'OpenSans-Regular',
+                                  }}>
+                                  {i.userFullName.toLocaleUpperCase().charAt(0)}
+                                </Text>
+                              </Badge>
+                              {i?.isUserLive ? (
+                                <View style={styles.circle}></View>
+                              ) : (
+                                <View style={styles.circle2}></View>
+                              )}
+                            </View>
+                          </Left>
+                          <Body>
+                            <View
                               style={{
-                                backgroundColor: '#E9E9E9',
-                                width: 50,
-                                height: 50,
-                                borderRadius: 25,
-                                justifyContent: 'center',
-                                alignItems: 'center',
+                                flexDirection: 'row',
+                                justifyContent: 'space-between',
                               }}>
                               <Text
                                 style={{
                                   color: 'black',
-                                  fontSize: 22,
-                                  fontWeight: '400',
-                                  fontFamily: 'OpenSans-Regular',
+                                  fontWeight: '600',
+                                  fontFamily: 'OpenSans-SemiBold',
+                                  marginBottom: 5,
+                                  fontSize: 14.5,
+                                  // letterSpacing:0.5
                                 }}>
-                                {i.userFullName.toLocaleUpperCase().charAt(0)}
+                                {i.userFullName}
                               </Text>
-                            </Badge>
-                            {i?.isUserLive ? (
-                              <View style={styles.circle}></View>
-                            ) : (
-                              <View style={styles.circle2}></View>
-                            )}
-                          </View>
-                        </Left>
-                        <Body>
-                          <View style={{flexDirection: 'row'}}>
+                              {i?.mCount > 0 && (
+                                <View style={styles.circle3}>
+                                  <Text style={{textAlign:"center", color:"white"}}>{i?.mCount}</Text>
+                                </View>
+                              )}
+                            </View>
                             <Text
                               style={{
-                                color: 'black',
-                                fontWeight: '600',
+                                color: i.status ? '#a6a6a6' : '#0383FA',
+                                fontWeight: '200',
                                 fontFamily: 'OpenSans-SemiBold',
-                                marginBottom: 5,
-                                fontSize: 14.5,
-                                // letterSpacing:0.5
+                                letterSpacing: 0.2,
+                                fontSize: 12,
                               }}>
-                              {i.userFullName}
+                              {i.message ? i.message : 'No message'}
                             </Text>
-                          </View>
-                          <Text
-                            style={{
-                              color: i.status ? '#a6a6a6' : '#0383FA',
-                              fontWeight: '200',
-                              fontFamily: 'OpenSans-SemiBold',
-                              letterSpacing: 0.2,
-                              fontSize: 12,
-                            }}>
-                            {i.message ? i.message : 'No message'}
-                          </Text>
-                        </Body>
-                        <Right></Right>
-                      </ListItem>
-                    </TouchableOpacity>
-                  ))}
+                          </Body>
+                          <Right></Right>
+                        </ListItem>
+                      </TouchableOpacity>
+                    ))}
                 </List>
               </Content>
             </Tab>
@@ -749,7 +793,7 @@ export default class Singlechatpage extends BaseComponent<
                           </View>
                           <Text
                             style={{
-                              color: i.status ? '#0383FA' : '#a6a6a6',
+                              color: i.status ? '#a6a6a6' : '#0383FA',
                               fontWeight: '200',
                               fontFamily: 'OpenSans-SemiBold',
                               letterSpacing: 0.2,
@@ -872,5 +916,18 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 5,
     right: 1,
+  },
+  circle3: {
+    width: 20,
+    height: 20,
+    borderRadius: 30,
+    justifyContent:"center",
+    // marginTop: 6,
+    backgroundColor: '#0383FA',
+    // position: 'absolute',
+    // bottom: 5,
+    // right: 1,
+    color: 'white',
+    // paddingRight: 1,
   },
 });

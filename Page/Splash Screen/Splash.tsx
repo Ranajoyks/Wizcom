@@ -61,9 +61,19 @@ export default class Splash extends Component<any, any> {
             routes: [{name: 'Singlechatpage'}],
           });
         }
+        if (!res.data.d.bStatus) {
+          this.props.navigation.reset({
+            index: 0,
+            routes: [{name: 'Selectcompanypage'}],
+          });
+        }
       })
       .catch(err => {
         console.log('SessionError: ', err);
+        this.props.navigation.reset({
+          index: 0,
+          routes: [{name: 'Selectcompanypage'}],
+        });
       });
   }
 

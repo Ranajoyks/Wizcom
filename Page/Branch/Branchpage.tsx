@@ -7,6 +7,7 @@ import {Badge, Picker} from 'native-base';
 import SessionHelper from '../../Core/SessionHelper';
 import {Branch} from '../../Entity/Branch';
 import axios from 'axios';
+import * as signalR from '@microsoft/signalr';
 export class BranchViewModel {
   BranchId: string = '';
   BranchList: any[] = [];
@@ -16,6 +17,7 @@ export class BranchViewModel {
   ConnectionCode: any;
   AppVersion: string = '1.0.0';
   IsOpen: boolean = false;
+  SenderID:any
 }
 export default class Branchpage extends BaseComponent<any, BranchViewModel> {
   constructor(props: any) {
@@ -32,6 +34,9 @@ export default class Branchpage extends BaseComponent<any, BranchViewModel> {
     Model.UserName = UserName;
     Model.ConnectionCode = ConnectionCode;
     this.UpdateViewModel();
+    var UserDetails = await SessionHelper.GetUserDetailsSession();
+    var myId = `u_${UserDetails.lId}`;
+    Model.SenderID = myId;
   }
   SetCompany = async (event: any) => {
     var Model = this.state.Model;
@@ -73,6 +78,7 @@ export default class Branchpage extends BaseComponent<any, BranchViewModel> {
     SessionHelper.SetBranchIdSession(event.value);
   };
   Logout = () => {
+    var Model = this.state.Model;
     SessionHelper.SetSession(null)
     SessionHelper.SetBranchIdSession(null);
     SessionHelper.SetDeviceIdSession(null);
@@ -83,6 +89,21 @@ export default class Branchpage extends BaseComponent<any, BranchViewModel> {
     this.props.navigation.reset({
       index: 0,
       routes: [{name: 'Loginpage'}],
+    });
+    var Connection = new signalR.HubConnectionBuilder()
+      .withUrl(
+        `https://wemessanger.azurewebsites.net/chatHub?UserId=${Model.SenderID}`,
+      )
+      .build();
+    Connection.start().then(() => {
+      console.log('SignalR connected');
+      Connection.invoke('DisconnectUser', Model.SenderID)
+        .then((res: any) => {
+          console.log('resDisconnect: ', res);
+        })
+        .catch((err: any) => {
+          console.log('ErrorDisconnect: ', err);
+        });
     });
   };
   DropDowmOpen = async () => {

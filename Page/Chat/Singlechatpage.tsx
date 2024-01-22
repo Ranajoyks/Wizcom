@@ -78,7 +78,7 @@ export default class Singlechatpage extends BaseComponent<
       // this will be executed every 200 ms
       // even when app is the the background
       this.GetLocation();
-      console.log('tic');
+      // console.log('tic');
     }, 60000);
     console.log('Appstate: ', AppState.currentState);
     const deviceId = DeviceInfo.getDeviceId();
@@ -102,7 +102,7 @@ export default class Singlechatpage extends BaseComponent<
     this.Fetchmessage();
     this.GetAllNotification();
     this.CheckAppStatus();
-    // setInterval(this.Fetchmessage, 120000);
+    // setInterval(this.Fetchmessage, 1000);
     // setInterval(this.CheckAppStatus, 2000);
     console.log('Next AppState', Model.AppStatus);
     // Geolocation.getCurrentPosition(info => console.log("info:", info));
@@ -113,8 +113,8 @@ export default class Singlechatpage extends BaseComponent<
     
     Geolocation.getCurrentPosition(info => {
       Model.currentLocation = info;
-      console.log('locationlatitude', Model.currentLocation?.coords?.latitude.toString());
-      console.log('locationLong', Model.currentLocation?.coords?.longitude.toString());
+      // console.log('locationlatitude', Model.currentLocation?.coords?.latitude.toString());
+      // console.log('locationLong', Model.currentLocation?.coords?.longitude.toString());
       this.UpdateViewModel();
     });
     const headers = {

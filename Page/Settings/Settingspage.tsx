@@ -12,21 +12,40 @@ import Icon from 'react-native-vector-icons/FontAwesome'; // Replace with your i
 import AppIconImage from '../../assets/AppIconImage';
 import DropDownPicker from 'react-native-dropdown-picker';
 import {Button} from 'native-base';
+import BaseComponent from '../../Core/BaseComponent';
+import BaseState from '../../Core/BaseState';
+import SessionHelper from '../../Core/SessionHelper';
 
-export default class Settingspage extends Component {
+export class SettingsViewModel {
+  URL: string = 'eiplutm.eresourceerp.com/AzaaleaR';
+}
+export default class Selectcompanypage extends BaseComponent<
+  any,
+  SettingsViewModel
+> {
   constructor(props: any) {
     super(props);
-    this.state = {
-      url: '',
-    };
+    this.state = new BaseState(new SettingsViewModel());
   }
-
+  componentDidMount(){
+    // var Model = this.state.Model;
+    // SessionHelper.SetURLSession(Model.URL);
+  }
   handleSetUrl = () => {
+    var Model = this.state.Model;
+    console.log('URL: ', Model.URL);
+    SessionHelper.SetURLSession(Model.URL);
+    this.props.navigation.push('Selectcompanypage',{
+      // index: 0,
+      URL: Model.URL
+    });
+
     // Handle setting the URL here, e.g., store it in a state or send it to a server
   };
   render() {
-    const {url} = this.state;
-    const prefix = 'https://';
+    var Model = this.state.Model;
+    // const {url} = this.state;
+    const prefix = 'http://';
     return (
       <View style={styles.container}>
         <View style={styles.header}>
@@ -61,33 +80,25 @@ export default class Settingspage extends Component {
           <TextInput
             style={styles.input}
             placeholder="ENTER URL"
-            value={url.startsWith(prefix) ? url : prefix + url} // Concatenate prefix with the value
-            onChangeText={text => {
-              if (!text.startsWith(prefix)) {
-                // If the input does not start with the prefix, set the state directly
-                this.setState({url: text});
-              } else if (text.startsWith(prefix) && !url.startsWith(prefix)) {
-                // If backspacing and removing the prefix, update the state without the prefix
-                this.setState({url: text.substring(prefix.length)});
-              } else {
-                // In other cases, set the state directly
-                this.setState({url: text});
-              }
+            value={Model.URL} // Concatenate prefix with the value
+            onChangeText={(text) => {
+            Model.URL = text
+            this.UpdateViewModel()
             }}
           />
-          
+
           {/* <Button textStyl="Set URL"  onPress={this.handleSetUrl}   /> */}
         </View>
         <Button onPress={this.handleSetUrl} style={styles.buttontest}>
-            <Text
-              style={{
-                color: 'white',
-                fontWeight: '800',
-                fontFamily: 'Poppins-Regular',
-              }}>
-              Set URL
-            </Text>
-          </Button>
+          <Text
+            style={{
+              color: 'white',
+              fontWeight: '800',
+              fontFamily: 'Poppins-Regular',
+            }}>
+            Set URL
+          </Text>
+        </Button>
       </View>
     );
   }
@@ -139,8 +150,12 @@ const styles = StyleSheet.create({
     padding: 10,
     borderWidth: 1,
     borderColor: '#F1F1F1',
-    marginBottom: 10,
+    // marginTop:10,
+    // marginBottom: 5,
     borderRadius: 7,
+    justifyContent: 'center',
+    textAlign: 'center',
+    fontFamily:"OpenSans-Regular",
   },
   buttontest: {
     alignSelf: 'center',

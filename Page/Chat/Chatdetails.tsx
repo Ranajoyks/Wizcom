@@ -98,7 +98,7 @@ export default class Chatdetails extends BaseComponent<
     Model.receiverId = `u_${Model.User.lId.toString()}`;
     this.MakeConnection();
 
-    this.ReceiveMsg();
+    // this.ReceiveMsg();
     var User = await SessionHelper.GetUserDetailsSession();
     console.log('user: ', User);
     var FCMToken = await SessionHelper.GetFCMTokenSession();
@@ -257,6 +257,8 @@ export default class Chatdetails extends BaseComponent<
           var hours = date.getHours();
           newDate.setHours(hours + offset);
           ReceiveMSg.dtMsg = new Date(newDate).toString();
+          console.log(' ReceiveMSg.dtMsg: ', ReceiveMSg.dtMsg);
+
           var XyzIndex = Model.NewChat.findIndex((i: AllChats) => {
             // Create new Date objects with only the year, month, and day
             const itemDate = new Date();
@@ -273,6 +275,7 @@ export default class Chatdetails extends BaseComponent<
           if (XyzIndex) {
             // await Model.Chats.push(ReceiveMSg);
             await Model.NewChat[XyzIndex].Chat.push(ReceiveMSg);
+            console.log('newChatreceive: ', JSON.stringify(Model.NewChat));
           } else {
             var NewChatArray = new AllChats();
             var date = new Date();
@@ -289,6 +292,7 @@ export default class Chatdetails extends BaseComponent<
             NewChatArray.date = ReceiveMSg.dtMsg.toString();
             NewChatArray.Chat.push(ReceiveMSg);
             Model.NewChat.push(NewChatArray);
+            console.log('newChatreceive: ', JSON.stringify(Model.NewChat));
           }
           console.log('REceiveMSG: ', ReceiveMSg.sMsg);
           this.UpdateViewModel();
@@ -463,6 +467,8 @@ export default class Chatdetails extends BaseComponent<
   };
   ButtonClick = async () => {
     var model = this.state.Model;
+    model.Scroll = true;
+    this.UpdateViewModel();
     MsgCounter = MsgCounter + 1;
     // if (model.SignalRConnected) {
     if (model.Message.trim() === '') {
@@ -505,13 +511,13 @@ export default class Chatdetails extends BaseComponent<
 
       sendMsg.dtMsg = new Date(newDate).toString();
       console.log('SendDate', sendMsg.dtMsg);
-      console.log('Send MSg: ', sendMsg);
+      // console.log('Send MSg: ', sendMsg);
       if (Xyz) {
-        console.log('indexavailable', model.NewChat[XyzIndex]);
+        // console.log('indexavailable', model.NewChat[XyzIndex]);
         model.NewChat[XyzIndex].Chat.push(sendMsg);
         model.Message = '';
         this.UpdateViewModel();
-        console.log('newChat: ', model.NewChat);
+        console.log('newChatsend: ', JSON.stringify(model.NewChat));
       } else {
         var NewChatArray = new AllChats();
         var date = new Date();
@@ -522,7 +528,7 @@ export default class Chatdetails extends BaseComponent<
         ) {
           NewChatArray.istoday = true;
         } else {
-          NewChatArray.istoday = true;
+          NewChatArray.istoday = false;
         }
         console.log('sendMsg date', sendMsg.dtMsg);
         NewChatArray.date = sendMsg.dtMsg.toString();
@@ -809,7 +815,7 @@ export default class Chatdetails extends BaseComponent<
             }}>
             <Image
               source={require('../../assets/backimg.png')}
-              style={{height: 30, width: 30, marginLeft: 10}}
+              style={{height: 20, width: 20, marginLeft: 10}}
             />
           </TouchableOpacity>
           <View style={{flex: 1}}>
@@ -826,7 +832,7 @@ export default class Chatdetails extends BaseComponent<
             }}>
             <Image
               source={require('../../assets/location.png')}
-              style={{height: 35, width: 35, marginRight: 10, marginTop: 10}}
+              style={{height: 30, width: 30, marginRight: 10}}
             />
           </TouchableOpacity>
           <TouchableOpacity
@@ -842,7 +848,7 @@ export default class Chatdetails extends BaseComponent<
                 // justifyContent: 'center',
                 alignItems: 'center',
                 display: 'flex',
-                marginTop: 10,
+                // marginTop: 10,
               }}>
               <Text
                 style={{
@@ -1074,7 +1080,6 @@ export default class Chatdetails extends BaseComponent<
                             <Text>{item?.istoday}</Text>
                           </View>
                         </View>
-                        <View></View>
                       </>
                     ),
                   )}
@@ -1095,6 +1100,12 @@ export default class Chatdetails extends BaseComponent<
                 onChangeText={text => {
                   Model.Message = text;
                   this.UpdateViewModel();
+                }}
+                onPressIn={() => {
+                  var Model = this.state.Model;
+                  Model.Scroll = true;
+                  this.UpdateViewModel();
+                  console.log('Hi');
                 }}
                 style={
                   (styles.input,
@@ -1162,6 +1173,7 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
   title: {
+    lineHeight: 20,
     fontSize: 18,
     // fontWeight: '700',
     fontFamily: 'Poppins-SemiBold',
@@ -1172,6 +1184,7 @@ const styles = StyleSheet.create({
     // fontWeight: '700',
     fontFamily: 'OpenSans-Regular',
     color: '#0383FA',
+    lineHeight: 13,
     // color: '#2196f3', // Darker blue title
   },
   subtitle2: {
@@ -1179,6 +1192,7 @@ const styles = StyleSheet.create({
     // fontWeight: '700',
     fontFamily: 'OpenSans-Regular',
     color: '#E4B27E',
+    lineHeight: 13,
     // color: '#2196f3', // Darker blue title
   },
   online: {color: '#0383FA'},

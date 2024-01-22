@@ -11,6 +11,8 @@ import SessionHelper from '../../Core/SessionHelper';
 export class CompanyViewModel {
   CityId: string = '';
   CityList: any[] = [];
+  URL: string = 'eiplutm.eresourceerp.com/AzaaleaR';
+  Offset:any
 }
 
 export default class Selectcompanypage extends BaseComponent<
@@ -20,28 +22,71 @@ export default class Selectcompanypage extends BaseComponent<
   constructor(props: any) {
     super(props);
     this.state = new BaseState(new CompanyViewModel());
+    if (this.props.route.params?.URL) {
+      this.state.Model.URL = this.props.route.params.URL;
+    }
+  }
+  async componentDidMount() {
+    var Model = this.state.Model;
+    console.log('Company Url: ', Model.URL);
+    var date = new Date();
+    console.log(date.getTimezoneOffset());
+    Model.Offset = date.getTimezoneOffset()
+    this.UpdateViewModel();
+    this.Initializes();
+
   }
   SetCompany = (event: any) => {
+    var Model = this.state.Model
     this.SetModelValue(event.name, event.value);
+    console.log("event: ", event.value);
+    
+    const headers = {
+      'Content-Type': 'application/json',
+    };
+    const postData = {
+      sCode: event.value,
+      dtOffSet: Model.Offset,
+      cPlatForm: 'M',
+    };
+    axios
+      .post(`http://${Model.URL}/API/Sys/Sys.aspx/JConnect`, postData, {
+        headers: headers,
+      })
+      .then(res => {
+        // console.log("status",res.data.d.bStatus);
+        // console.log('postData: ', postData);
+        if (res.data.d.bStatus) {
+          SessionHelper.SetCompanyIDSession(event.value);
+          this.props.navigation.navigate({
+            name: 'Loginpage',
+          });
+          // console.log(res.data.d.cError);
+          SessionHelper.SetSession(res.data.d.cError);
+        }
+      })
+      .catch(err => {
+        // console.log(err);
+      });
     this.props.navigation.navigate({
       name: 'Loginpage',
     });
   };
-  headers = {
-    'Content-Type': 'application/json',
-  };
-  async componentDidMount(){
-    this.Initializes();
-  }
 
   Initializes = () => {
+    var Model = this.state.Model;
+    console.log('MOdelURl: ', Model.URL);
+
+    const headers = {
+      'Content-Type': 'application/json',
+    };
+    var Model = this.state.Model;
     axios
-      .post(
-        `http://eiplutm.eresourceerp.com/AzaaleaR/API/Sys/Sys.aspx/JInitialize`,
-        {headers: this.headers},
-      )
+      .post(`http://${Model.URL}/API/Sys/Sys.aspx/JInitialize`, {
+        headers: headers,
+      })
       .then(res => {
-        // console.log('Response: ', res.data.d.data.ado);
+        console.log('Response: ', res.data.d.data.ado);
         var CompanyArray = res.data.d.data.ado;
         if (res.data.d.bStatus) {
           var model = this.state.Model;
@@ -57,22 +102,18 @@ export default class Selectcompanypage extends BaseComponent<
           // setLoading(false);
           const postData = {
             sCode: CompanyArray[0].CODE,
-            dtOffSet: 330,
+            dtOffSet: Model.Offset,
             cPlatForm: 'M',
           };
           axios
-            .post(
-              `http://eiplutm.eresourceerp.com/AzaaleaR/API/Sys/Sys.aspx/JConnect`,
-              postData,
-              {
-                headers: this.headers,
-              },
-            )
+            .post(`http://${Model.URL}/API/Sys/Sys.aspx/JConnect`, postData, {
+              headers: headers,
+            })
             .then(res => {
               // console.log("status",res.data.d.bStatus);
               // console.log('postData: ', postData);
               if (res.data.d.bStatus) {
-                SessionHelper.SetCompanyIDSession(CompanyArray[0].CODE)
+                SessionHelper.SetCompanyIDSession(CompanyArray[0].CODE);
                 this.props.navigation.navigate({
                   name: 'Loginpage',
                 });

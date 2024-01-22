@@ -127,6 +127,16 @@ export default class SessionHelper {
         }
         return JSON.parse(item) as any;
     }
+    public static SetSetURLSession(SetURL: any) {
+        AsyncStorage.setItem('SetURL', JSON.stringify(SetURL))
+    }
+    public static async GetSetURLSession() {
+        var item = await AsyncStorage.getItem('SetURL');
+        if (!item) {
+            return item as unknown as any;
+        }
+        return JSON.parse(item) as any;
+    }
 
 
      

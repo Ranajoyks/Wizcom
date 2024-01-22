@@ -16,10 +16,16 @@ import {CommonActions} from '@react-navigation/native';
 import {Container, Spinner} from 'native-base';
 import axios from 'axios';
 import SessionHelper from '../../Core/SessionHelper';
-
-export default class Splash extends Component<any, any> {
+import BaseComponent from '../../Core/BaseComponent';
+import BaseState from '../../Core/BaseState';
+export class SpalshViewModel {
+  URL: string = 'eiplutm.eresourceerp.com/AzaaleaR';
+  UserID: string = '';
+}
+export default class Splash extends BaseComponent<any, SpalshViewModel> {
   constructor(props: any) {
     super(props);
+    this.state = new BaseState(new SpalshViewModel());
     // setTimeout(() => {
     //   this.props.navigation.reset({
     //     index: 0,
@@ -28,54 +34,86 @@ export default class Splash extends Component<any, any> {
     // }, 2000);
   }
   async componentDidMount() {
+    var Model = this.state.Model;
+    console.log('MODELURL : ', Model.URL);
+
     var value = await SessionHelper.GetSession();
-    console.log("Value: ", value);
-    if(value){
-      this.PageRander()
-    }else{
-      setTimeout(() => {
-      this.props.navigation.reset({
-        index: 0,
-        routes: [{ name: 'Selectcompanypage' }],
-    });
-    }, 2000);
+    var URL = await SessionHelper.GetURLSession();
+    var UserID = await SessionHelper.GetUserIDSession();
+    if (URL) {
+      Model.URL = URL;
+      this.UpdateViewModel();
     }
-   
+    if (UserID) {
+      Model.UserID = UserID;
+      this.UpdateViewModel();
+    }
+    console.log('URL: ', URL);
+    console.log('UserID: ', UserID);
+    console.log('Value: ', value);
+    if (value) {
+      this.PageRander();
+    } else {
+      setTimeout(() => {
+        this.props.navigation.reset({
+          index: 0,
+          routes: [{name: 'Selectcompanypage'}],
+        });
+      }, 2000);
+    }
   }
-  PageRander=async ()=>{
+  PageRander = async () => {
+    var Model = this.state.Model;
     var value = await SessionHelper.GetSession();
     const headers = {
       'Content-Type': 'application/json',
       Cookie: `ASP.NET_SessionId=${value}`,
     };
+    const Data = JSON.stringify({
+      userId: `u_${Model.UserID}`,
+      url: `http://${Model.URL}`,
+      session: value,
+    });
     axios
-      .post(
-        `http://eiplutm.eresourceerp.com/AzaaleaR/API/Sys/Sys.aspx/JCheckSession`,
-        {headers: headers},
-      )
-      .then(res => {
-        console.log('SessionResponse: ', res.data.d);
-        if (res.data.d.bStatus) {
-          this.props.navigation.reset({
-            index: 0,
-            routes: [{name: 'Singlechatpage'}],
-          });
-        }
-        if (!res.data.d.bStatus) {
-          this.props.navigation.reset({
-            index: 0,
-            routes: [{name: 'Selectcompanypage'}],
-          });
+      .post(`https://wemessanger.azurewebsites.net/api/user/set`, Data, {
+        headers: headers,
+      })
+      .then((res: any) => {
+        console.log('resdata: ', res.data);
+        if (res.data) {
+          axios
+            .post(
+              `http://eiplutm.eresourceerp.com/AzaaleaR/API/Sys/Sys.aspx/JCheckSession`,
+              {headers: headers},
+            )
+            .then(res => {
+              console.log('SessionResponse: ', res.data.d);
+              if (res.data.d.bStatus) {
+                this.props.navigation.reset({
+                  index: 0,
+                  routes: [{name: 'Singlechatpage'}],
+                });
+              }
+              if (!res.data.d.bStatus) {
+                this.props.navigation.reset({
+                  index: 0,
+                  routes: [{name: 'Selectcompanypage'}],
+                });
+              }
+            })
+            .catch(err => {
+              console.log('SessionError: ', err);
+              this.props.navigation.reset({
+                index: 0,
+                routes: [{name: 'Selectcompanypage'}],
+              });
+            });
         }
       })
-      .catch(err => {
-        console.log('SessionError: ', err);
-        this.props.navigation.reset({
-          index: 0,
-          routes: [{name: 'Selectcompanypage'}],
-        });
+      .catch((err: any) => {
+        console.log('Err: ', err);
       });
-  }
+  };
 
   render() {
     return (

@@ -17,7 +17,8 @@ export class BranchViewModel {
   ConnectionCode: any;
   AppVersion: string = '1.0.0';
   IsOpen: boolean = false;
-  SenderID:any
+  SenderID: any;
+  URL: string = 'eiplutm.eresourceerp.com/AzaaleaR';
 }
 export default class Branchpage extends BaseComponent<any, BranchViewModel> {
   constructor(props: any) {
@@ -58,6 +59,30 @@ export default class Branchpage extends BaseComponent<any, BranchViewModel> {
       )
       .then(res => {
         console.log('CompanyResponse: ', res.data.d);
+        if (res.data.d.bStatus) {
+          const Data = JSON.stringify({
+            userId: `u_${res.data.d.bStatus}`,
+            url: `http://${Model.URL}`,
+            session: value,
+          });
+          axios
+            .post(`https://wemessanger.azurewebsites.net/api/user/set`, Data, {
+              headers: headers,
+            })
+            .then((res: any) => {
+              console.log('resdata: ', res.data);
+              if (res.data) {
+                this.props.navigation.navigate('Singlechatpage', {
+                  // BranchName: Branch.sName,
+                  // UserName: Model.UserName,
+                  // BranchID: Branch.lId,
+                });
+              }
+            })
+            .catch((err: any) => {
+              console.log('Err: ', err);
+            });
+        }
       })
       .catch(err => {
         console.log('CompanyError: ', err);
@@ -70,16 +95,16 @@ export default class Branchpage extends BaseComponent<any, BranchViewModel> {
     console.log('BranchName', Branch);
     SessionHelper.SetBranchNameSession(Branch.sName);
     this.SetModelValue(event.name, event.value);
-    this.props.navigation.navigate('Singlechatpage', {
-      // BranchName: Branch.sName,
-      // UserName: Model.UserName,
-      // BranchID: Branch.lId,
-    });
+    // this.props.navigation.navigate('Singlechatpage', {
+    //   // BranchName: Branch.sName,
+    //   // UserName: Model.UserName,
+    //   // BranchID: Branch.lId,
+    // });
     SessionHelper.SetBranchIdSession(event.value);
   };
   Logout = () => {
     var Model = this.state.Model;
-    SessionHelper.SetSession(null)
+    SessionHelper.SetSession(null);
     SessionHelper.SetBranchIdSession(null);
     SessionHelper.SetDeviceIdSession(null);
     SessionHelper.SetSenderIdSession(null);

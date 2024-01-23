@@ -42,8 +42,8 @@ export class ChatdetailsViewModel {
   InterNetConnection: any;
   SignalRConnected: boolean = false;
   intervalId: any;
-  ConnectionCode:any
-  AllNotifiCationChat:any[]=[]
+  ConnectionCode: any;
+  AllNotifiCationChat: any[] = [];
 }
 export class AllChats {
   date: any = new Date();
@@ -82,20 +82,21 @@ export default class Chatdetails extends BaseComponent<
 
   async componentDidMount(): Promise<void> {
     var Model = this.state.Model;
-    Model.receiverId = `u_${Model.User.lId.toString()}`;
+    var ConnectionCode = await SessionHelper.GetCompanyIDSession();
+    Model.receiverId = `${ConnectionCode}_${Model.User.lId.toString()}`;
     this.MakeConnection();
     this.ReceiveMsg();
     var User = await SessionHelper.GetUserDetailsSession();
     console.log('user: ', User);
     var FCMToken = await SessionHelper.GetFCMTokenSession();
-    var ConnectionCode = await SessionHelper.GetCompanyIDSession()
-    Model.ConnectionCode = ConnectionCode
+    var ConnectionCode = await SessionHelper.GetCompanyIDSession();
+    Model.ConnectionCode = ConnectionCode;
     Model.FCMToken = FCMToken;
     Model.sender = User.userName;
     this.UpdateViewModel();
     console.log('@Receiver', this.props.route.params.User);
     var UserDetails = await SessionHelper.GetUserDetailsSession();
-    Model.senderId = `u_${UserDetails.lId.toString()}`;
+    Model.senderId = `${Model.ConnectionCode}_${UserDetails.lId.toString()}`;
     console.log('UserDetails.lId', UserDetails);
     console.log('UserDetails.lId', Model.senderId);
     this.UpdateViewModel();
@@ -273,11 +274,10 @@ export default class Chatdetails extends BaseComponent<
       )
       .then(res => {
         console.log('AllChat: ', res.data);
-        var Notification = res.data.filter((i:any)=>i.cMsgFlg ==="F")
-        console.log("Notification: ",Notification);
-        Model.AllNotifiCationChat = Notification
-        this.UpdateViewModel()
-        
+        var Notification = res.data.filter((i: any) => i.cMsgFlg === 'F');
+        console.log('Notification: ', Notification);
+        Model.AllNotifiCationChat = Notification;
+        this.UpdateViewModel();
 
         Model.AllNotifiCationChat.forEach((item: Chat) => {
           var Xyz = Model.NewChat.find((i: AllChats) => {
@@ -562,7 +562,7 @@ export default class Chatdetails extends BaseComponent<
     this.UpdateViewModel();
   };
   Logout = () => {
-    SessionHelper.SetSession(null)
+    SessionHelper.SetSession(null);
     SessionHelper.SetBranchIdSession(null);
     SessionHelper.SetDeviceIdSession(null);
     SessionHelper.SetSenderIdSession(null);
@@ -571,7 +571,7 @@ export default class Chatdetails extends BaseComponent<
     SessionHelper.SetUserNameSession(null);
     this.props.navigation.reset({
       index: 0,
-      routes: [{name: 'Loginpage'}],
+      routes: [{name: 'Selectcompanypage'}],
     });
   };
   render() {
@@ -642,116 +642,115 @@ export default class Chatdetails extends BaseComponent<
         <SafeAreaView style={styles.body}>
           {Model.IsOpen == true && (
             <View style={styles.dropdownContainer}>
-            <View style={styles.dropdown}>
-              <View>
-                <View style={{}}>
-                  <Text
-                    style={{
-                      fontFamily: 'OpenSans-SemiBold',
-                      marginTop: 15,
-                      paddingLeft:20,
-                      color: '#0383FA',
-                      alignSelf: 'left',
-                      fontSize: 12,
-                      
-                    }}>
-                    User:
-                  </Text>
-                  <Text
-                    style={{
-                      paddingLeft:20,
-                      color: 'black',
-                      alignSelf: 'left',
-                      fontSize: 12,
-                      fontFamily: 'OpenSans-SemiBold',
-                    }}>
-                    {Model.sender}
-                  </Text>
-                </View>
-                <View style={styles.divider}></View>
+              <View style={styles.dropdown}>
+                <View>
+                  <View style={{}}>
+                    <Text
+                      style={{
+                        fontFamily: 'OpenSans-SemiBold',
+                        marginTop: 15,
+                        paddingLeft: 20,
+                        color: '#0383FA',
+                        alignSelf: 'left',
+                        fontSize: 12,
+                      }}>
+                      User:
+                    </Text>
+                    <Text
+                      style={{
+                        paddingLeft: 20,
+                        color: 'black',
+                        alignSelf: 'left',
+                        fontSize: 12,
+                        fontFamily: 'OpenSans-SemiBold',
+                      }}>
+                      {Model.sender}
+                    </Text>
+                  </View>
+                  <View style={styles.divider}></View>
 
-                <View style={{}}>
-                  <Text
-                    style={{
-                      fontFamily: 'OpenSans-SemiBold',
-                      marginTop: 15,
-                      paddingLeft:20,
-                      color: '#0383FA',
-                      alignSelf: 'left',
-                      fontSize: 12,
-                    }}>
-                    Designation:
-                  </Text>
-                </View>
-                <View style={styles.divider}></View>
+                  <View style={{}}>
+                    <Text
+                      style={{
+                        fontFamily: 'OpenSans-SemiBold',
+                        marginTop: 15,
+                        paddingLeft: 20,
+                        color: '#0383FA',
+                        alignSelf: 'left',
+                        fontSize: 12,
+                      }}>
+                      Designation:
+                    </Text>
+                  </View>
+                  <View style={styles.divider}></View>
 
-                <View style={{}}>
-                  <Text
-                    style={{
-                      fontFamily: 'OpenSans-SemiBold',
-                      marginTop: 15,
-                      paddingLeft:20,
-                      color: '#0383FA',
-                      alignSelf: 'left',
-                      fontSize: 12,
-                    }}>
-                    Connection Code:
-                  </Text>
-                  <Text
-                    style={{
-                      paddingLeft:20,
-                      color: 'black',
-                      alignSelf: 'left',
-                      fontSize: 12,
-                      fontFamily: 'OpenSans-SemiBold',
-                    }}>
-                    {Model.ConnectionCode}
-                  </Text>
-                </View>
-                <View style={styles.divider}></View>
+                  <View style={{}}>
+                    <Text
+                      style={{
+                        fontFamily: 'OpenSans-SemiBold',
+                        marginTop: 15,
+                        paddingLeft: 20,
+                        color: '#0383FA',
+                        alignSelf: 'left',
+                        fontSize: 12,
+                      }}>
+                      Connection Code:
+                    </Text>
+                    <Text
+                      style={{
+                        paddingLeft: 20,
+                        color: 'black',
+                        alignSelf: 'left',
+                        fontSize: 12,
+                        fontFamily: 'OpenSans-SemiBold',
+                      }}>
+                      {Model.ConnectionCode}
+                    </Text>
+                  </View>
+                  <View style={styles.divider}></View>
 
-                <View style={{}}>
-                  <Text
-                    style={{
-                      fontFamily: 'OpenSans-SemiBold',
-                      marginTop: 15,
-                      paddingLeft:20,
-                      color: '#0383FA',
-                      alignSelf: 'left',
-                      fontSize: 12,
-                    }}>
-                    Version:
-                  </Text>
-                  <Text
-                    style={{
-                      paddingLeft:20,
-                      color: 'black',
-                      alignSelf: 'left',
-                      fontSize: 12,
-                      fontFamily: 'OpenSans-SemiBold',
-                    }}>
-                    {Model.AppVersion}
-                  </Text>
-                </View>
-                <View style={styles.divider}></View>
+                  <View style={{}}>
+                    <Text
+                      style={{
+                        fontFamily: 'OpenSans-SemiBold',
+                        marginTop: 15,
+                        paddingLeft: 20,
+                        color: '#0383FA',
+                        alignSelf: 'left',
+                        fontSize: 12,
+                      }}>
+                      Version:
+                    </Text>
+                    <Text
+                      style={{
+                        paddingLeft: 20,
+                        color: 'black',
+                        alignSelf: 'left',
+                        fontSize: 12,
+                        fontFamily: 'OpenSans-SemiBold',
+                      }}>
+                      {Model.AppVersion}
+                    </Text>
+                  </View>
+                  <View style={styles.divider}></View>
 
-                <TouchableOpacity onPress={() => this.Logout()}>
-                  <Text
-                    style={{
-                      fontFamily: 'OpenSans-SemiBold',
-                      marginTop: 15,
-                      paddingLeft:20,
-                      color: '#0383FA',
-                      alignSelf: 'left',
-                      fontSize: 12,
-                      marginBottom:20
-                    }}>
-                    Logout
-                  </Text>
-                </TouchableOpacity>
+                  <TouchableOpacity onPress={() => this.Logout()}>
+                    <Text
+                      style={{
+                        fontFamily: 'OpenSans-SemiBold',
+                        marginTop: 15,
+                        paddingLeft: 20,
+                        color: '#0383FA',
+                        alignSelf: 'left',
+                        fontSize: 12,
+                        marginBottom: 20,
+                      }}>
+                      Logout
+                    </Text>
+                  </TouchableOpacity>
+                </View>
               </View>
             </View>
-          </View>
           )}
           <ScrollView
             style={styles.scrollView}
@@ -778,7 +777,7 @@ export default class Chatdetails extends BaseComponent<
                 )}
 
                 {item.Chat.map((i: Chat) =>
-                  'u_' + i.lSenderId == Model.senderId ||
+                  `${Model.ConnectionCode}_${i.lSenderId}` == Model.senderId ||
                   i.lSenderId == Model.senderId ? (
                     <>
                       <View style={styles.messageto}>
@@ -799,7 +798,8 @@ export default class Chatdetails extends BaseComponent<
                       </View>
                     </>
                   ) : (
-                      <><View style={styles.messagefrom}>
+                    <>
+                      <View style={styles.messagefrom}>
                         <View style={styles.messagefrommessage}>
                           <View style={styles.messagefromicon}>
                             <Text
@@ -823,12 +823,13 @@ export default class Chatdetails extends BaseComponent<
                         <View style={styles.messagefromtime}>
                           <Text style={styles.messagefromtimetext}>
                             {EntityHelperService.convertUTCDateToLocalDate(
-                              new Date(i?.dtMsg)
+                              new Date(i?.dtMsg),
                             )}
                           </Text>
                         </View>
-                      </View><View>
-                        </View></>
+                      </View>
+                      <View></View>
+                    </>
                   ),
                 )}
               </View>
@@ -890,8 +891,8 @@ const styles = StyleSheet.create({
     height: 1,
     backgroundColor: 'gray',
     marginHorizontal: 20,
-    marginTop:12,
-    opacity:0.5
+    marginTop: 12,
+    opacity: 0.5,
   },
   icon: {
     color: '#fff', // White icons
@@ -970,7 +971,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flexDirection: 'row',
   },
-  messagefromtext: {paddingLeft: 10, paddingRight: 30,paddingVertical:0},
+  messagefromtext: {paddingLeft: 10, paddingRight: 30, paddingVertical: 0},
   messagefromtextcontent: {
     paddingVertical: 5,
     paddingHorizontal: 10,

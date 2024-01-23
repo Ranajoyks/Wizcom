@@ -25,6 +25,7 @@ export class LoginViewModel {
   BranchList: [] = [];
   showMessage: boolean = false;
   DeviceId: string = '';
+  CompanyId:string=''
 }
 export default class Loginpage extends BaseComponent<any, LoginViewModel> {
   constructor(props: any) {
@@ -39,6 +40,10 @@ export default class Loginpage extends BaseComponent<any, LoginViewModel> {
     var Model = this.state.Model;
     var value = await SessionHelper.GetSession();
     console.log("SessionValue: ",`ASP.NET_SessionId=${value}`);
+    var companyID = await SessionHelper.GetCompanyIDSession()
+    console.log("companyID: ", companyID);
+    Model.CompanyId = companyID
+    this.UpdateViewModel()
     
 
     // const deviceId = DeviceInfo.getDeviceId();
@@ -112,7 +117,7 @@ export default class Loginpage extends BaseComponent<any, LoginViewModel> {
         {headers: headers},
       )
       .then(response => {
-        console.log('response3`', response.data.d);
+        console.log('response3`', response.data.d.data.ado);
         if (!response.data.d.bStatus) {
           Model.showMessage = true;
           this.UpdateViewModel();
@@ -125,46 +130,46 @@ export default class Loginpage extends BaseComponent<any, LoginViewModel> {
             BranchList: response.data.d.data.ado,
             // UserName: Model.UserName,
           });
-          axios
-            .get(
-              `https://wemessanger.azurewebsites.net/api/user?sname=${Model.UserName}&deviceId=${Model.DeviceId}`,
-            )
-            .then(response => {
-              console.log('LogIndata', response.data);
-              SessionHelper.SetUserDetailsSession(response.data[0]);
-              SessionHelper.SetUserIDSession(response.data[0].lId);
-              var Connection = new signalR.HubConnectionBuilder()
-              .withUrl(`https://wemessanger.azurewebsites.net/chatHub?UserId=u_${response.data[0].lId.toString()}`)
-              .build();
-              Connection.start().then(() => {
-                console.log('SignalR connected');
-                console.log('----',response.data[0].lId.toString());
-                Connection.invoke(
-                  'JoinChat',
-                  'u_'+response.data[0].lId.toString(),
-                ).then(res => {
-                  Connection.invoke(
-                    'IsUserConnected',
-                    'u_'+response.data[0].lId.toString(),
-                  )
-                    .then(isConnected => {
-                      console.log('Connection', isConnected);
+          // axios
+          //   .get(
+          //     `https://wemessanger.azurewebsites.net/api/user?userId=${Model.UserName}&deviceId=${Model.DeviceId}`,
+          //   )
+          //   .then(response => {
+          //     console.log('LogIndata', response.data);
+          //     SessionHelper.SetUserDetailsSession(response.data[0]);
+          //     SessionHelper.SetUserIDSession(response.data[0].lId);
+          //     var Connection = new signalR.HubConnectionBuilder()
+          //     .withUrl(`https://wemessanger.azurewebsites.net/chatHub?UserId=${Model.CompanyId}_${response.data[0].lId.toString()}`)
+          //     .build();
+          //     Connection.start().then(() => {
+          //       console.log('SignalR connected');
+          //       console.log('----',response.data[0].lId.toString());
+          //       Connection.invoke(
+          //         'JoinChat',
+          //         `${Model.CompanyId}_${response.data[0].lId.toString()}`,
+          //       ).then(res => {
+          //         Connection.invoke(
+          //           'IsUserConnected',
+          //           `${Model.CompanyId}_${response.data[0].lId.toString()}`,
+          //         )
+          //           .then(isConnected => {
+          //             console.log('Connection', isConnected);
 
-                      if (isConnected) {
-                        console.log(`User: u_${response.data[0].lId} is live`);
-                      } else {
-                        console.log(`User:  u_${response.data[0].lId} is not live`);
-                      }
-                    })
-                    .catch(error => {
-                      console.log(error);
-                    });
-                });
-              });
-            })
-            .catch(error => {
-              console.error('Error fetching data:', error);
-            });
+          //             if (isConnected) {
+          //               console.log(`User: ${Model.CompanyId}_${response.data[0].lId.toString()} is live`);
+          //             } else {
+          //               console.log(`User:   ${Model.CompanyId}_${response.data[0].lId.toString()} is not live`);
+          //             }
+          //           })
+          //           .catch(error => {
+          //             console.log(error);
+          //           });
+          //       });
+          //     });
+          //   })
+          //   .catch(error => {
+          //     console.error('Error fetching data:', error);
+          //   });
         }
       })
       .catch(error => {

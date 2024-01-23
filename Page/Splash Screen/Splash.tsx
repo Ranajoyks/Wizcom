@@ -65,14 +65,18 @@ export default class Splash extends BaseComponent<any, SpalshViewModel> {
   PageRander = async () => {
     var Model = this.state.Model;
     var value = await SessionHelper.GetSession();
+    var companyID = await SessionHelper.GetCompanyIDSession();
+    console.log('companyID: ', companyID);
+
     const headers = {
       'Content-Type': 'application/json',
       Cookie: `ASP.NET_SessionId=${value}`,
     };
     const Data = JSON.stringify({
-      userId: `u_${Model.UserID}`,
+      userId: `${companyID}_${Model.UserID}`,
       url: `http://${Model.URL}`,
       session: value,
+      code: companyID,
     });
     axios
       .post(`https://wemessanger.azurewebsites.net/api/user/set`, Data, {

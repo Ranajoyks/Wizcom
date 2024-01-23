@@ -19,6 +19,7 @@ export class BranchViewModel {
   IsOpen: boolean = false;
   SenderID: any;
   URL: string = 'eiplutm.eresourceerp.com/AzaaleaR';
+  FCMToken: string = '';
 }
 export default class Branchpage extends BaseComponent<any, BranchViewModel> {
   constructor(props: any) {
@@ -32,12 +33,17 @@ export default class Branchpage extends BaseComponent<any, BranchViewModel> {
     var Model = this.state.Model;
     var ConnectionCode = await SessionHelper.GetCompanyIDSession();
     var UserName = await SessionHelper.GetUserNameSession();
+    var FCMTOKEN = await SessionHelper.GetFCMTokenSession();
+    console.log('TokenFCM; ', FCMTOKEN);
+
     Model.UserName = UserName;
     Model.ConnectionCode = ConnectionCode;
     this.UpdateViewModel();
     var UserDetails = await SessionHelper.GetUserDetailsSession();
-    var myId = `u_${UserDetails.lId}`;
+    var myId = `${ConnectionCode}_${UserDetails.lId}`;
     Model.SenderID = myId;
+    console.log("SenderID: ", myId);
+    
   }
   SetCompany = async (event: any) => {
     var Model = this.state.Model;
@@ -59,24 +65,113 @@ export default class Branchpage extends BaseComponent<any, BranchViewModel> {
       )
       .then(res => {
         console.log('CompanyResponse: ', res.data.d);
+        console.log(
+          `ConnectionUser: ${Model.ConnectionCode}_${res.data.d.obj.lUsrId}`,
+        );
         if (res.data.d.bStatus) {
           const Data = JSON.stringify({
-            userId: `u_${res.data.d.bStatus}`,
+            userId: `${Model.ConnectionCode}_${res.data.d.obj.lUsrId}`,
             url: `http://${Model.URL}`,
             session: value,
+            code: Model.ConnectionCode,
           });
+          console.log("UserSetData:",Data);
+          
           axios
             .post(`https://wemessanger.azurewebsites.net/api/user/set`, Data, {
               headers: headers,
             })
-            .then((res: any) => {
-              console.log('resdata: ', res.data);
-              if (res.data) {
-                this.props.navigation.navigate('Singlechatpage', {
-                  // BranchName: Branch.sName,
-                  // UserName: Model.UserName,
-                  // BranchID: Branch.lId,
-                });
+            .then((setres: any) => {
+              console.log('setresdata: ', setres.data);
+              console.log(
+                `ConnectionUser: ${Model.ConnectionCode}_${res.data.d.obj.lUsrId}`,
+              );
+              if (setres.data) {
+                axios
+                  .get(
+                    `https://wemessanger.azurewebsites.net/api/user?userId=${Model.ConnectionCode}_${res.data.d.obj.lUsrId}`,
+                  )
+                  .then(response => {
+                    console.log('LogIndata', response.data);
+                    SessionHelper.SetUserDetailsSession(response.data[0]);
+                    SessionHelper.SetUserIDSession(response.data[0].lId);
+                    var Connection = new signalR.HubConnectionBuilder()
+                      .withUrl(
+                        `https://wemessanger.azurewebsites.net/chatHub?UserId=${
+                          Model.ConnectionCode
+                        }_${response.data[0].lId.toString()}`,
+                      )
+                      .build();
+                    Connection.start().then(() => {
+                      console.log('SignalR connected');
+                      console.log('----', response.data[0].lId.toString());
+                      Connection.invoke(
+                        'JoinChat',
+                        `${
+                          Model.ConnectionCode
+                        }_${response.data[0].lId.toString()}`,
+                      ).then(res => {
+                        Connection.invoke(
+                          'IsUserConnected',
+                          `${
+                            Model.ConnectionCode
+                          }_${response.data[0].lId.toString()}`,
+                        )
+                          .then(isConnected => {
+                            console.log('Connection', isConnected);
+
+                            if (isConnected) {
+                              console.log(
+                                `User: ${
+                                  Model.ConnectionCode
+                                }_${response.data[0].lId.toString()} is live`,
+                              );
+                            } else {
+                              console.log(
+                                `User:   ${
+                                  Model.ConnectionCode
+                                }_${response.data[0].lId.toString()} is not live`,
+                              );
+                            }
+                          })
+                          .catch(error => {
+                            console.log(error);
+                          });
+                      });
+                    });
+                    if (response.data[0].lId) {
+                      const SaveUserDevice = JSON.stringify({
+                        userId: `${Model.ConnectionCode}_${response.data[0].lId}`,
+                        deviceId: Model.FCMToken,
+                      });
+                      axios
+                        .post(
+                          `https://wemessanger.azurewebsites.net/api/user/device`,
+                          SaveUserDevice,
+                          {headers: headers},
+                        )
+                        .then(DeviceResponse => {
+                          console.log('DeviceResponse: ', DeviceResponse.data);
+                          if (DeviceResponse.data) {
+                            this.props.navigation.navigate(
+                              'Singlechatpage',
+                              {},
+                            );
+                          }
+                        })
+                        .catch(err => {
+                          console.log('DeviceResponseError: ', err);
+                        });
+                    }
+                  })
+                  .catch(err => {
+                    console.log('UserError: ', err);
+                  });
+                //   this.props.navigation.navigate('Singlechatpage', {
+                //     // BranchName: Branch.sName,
+                //     // UserName: Model.UserName,
+                //     // BranchID: Branch.lId,
+                //   });
               }
             })
             .catch((err: any) => {
@@ -113,7 +208,7 @@ export default class Branchpage extends BaseComponent<any, BranchViewModel> {
     SessionHelper.SetUserNameSession(null);
     this.props.navigation.reset({
       index: 0,
-      routes: [{name: 'Loginpage'}],
+      routes: [{name: 'Selectcompanypage'}],
     });
     var Connection = new signalR.HubConnectionBuilder()
       .withUrl(

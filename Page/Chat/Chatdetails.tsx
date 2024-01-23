@@ -29,7 +29,7 @@ import NetInfo from '@react-native-community/netinfo';
 export class ChatdetailsViewModel {
   Message: string = '';
   InvokeMessage: string = '';
-  senderId: string = '';
+  senderId: any;
   receiverId: string = '';
   companyId: number = 18;
   itype: number = 0;
@@ -95,28 +95,29 @@ export default class Chatdetails extends BaseComponent<
 
   async componentDidMount() {
     var Model = this.state.Model;
-    Model.receiverId = `u_${Model.User.lId.toString()}`;
+    var ConnectionCode = await SessionHelper.GetCompanyIDSession();
+    Model.receiverId = `${ConnectionCode}_${Model.User.lId.toString()}`;
     this.MakeConnection();
 
     // this.ReceiveMsg();
     var User = await SessionHelper.GetUserDetailsSession();
-    console.log('user: ', User);
     var FCMToken = await SessionHelper.GetFCMTokenSession();
     var ConnectionCode = await SessionHelper.GetCompanyIDSession();
     var BranchID = await SessionHelper.GetBranchIdSession();
+    var UserDetails = await SessionHelper.GetUserDetailsSession();
+    console.log('user: ', User);
     Model.BranchID = BranchID;
     Model.ConnectionCode = ConnectionCode;
     Model.FCMToken = FCMToken;
     Model.sender = User.userName;
     this.UpdateViewModel();
     console.log('@Receiver', this.props.route.params.User);
-    var UserDetails = await SessionHelper.GetUserDetailsSession();
-    Model.senderId = `u_${UserDetails.lId.toString()}`;
+    Model.senderId = `${ConnectionCode}_${UserDetails.lId.toString()}`;
     console.log('UserDetails.lId', UserDetails);
     console.log('UserDetails.lId', Model.senderId);
     this.UpdateViewModel();
     this.GetAllMsg();
-    this.CheckAppStatus();
+    // this.CheckAppStatus();
     SessionHelper.SetReceiverIDSession(Model.receiverId);
     // setInterval(this.CheckAppStatus, 2000);
     // setTimeout(() => {this.CheckAppStatus},2000)
@@ -243,60 +244,45 @@ export default class Chatdetails extends BaseComponent<
         const encodedReUser = receiver;
         const encodedMsg = message;
         var ReceiveMSg = new Chatss();
-
         if (message) {
+          Model.Scroll = true;
           MsgCounter = MsgCounter + 1;
           var date = new Date();
           ReceiveMSg.sMsg = message;
           ReceiveMSg.lReceiverId = receiver;
           ReceiveMSg.lSenderId = sender;
           var newDate = new Date(
-            date.getTime() - date.getTimezoneOffset() * 60 * 1000,
+             date.getTime() - date.getTimezoneOffset() * 60 * 1000,
           );
           var offset = date.getTimezoneOffset() / 60;
           var hours = date.getHours();
           newDate.setHours(hours + offset);
-          ReceiveMSg.dtMsg = new Date(newDate).toString();
+          var dt = new Date(newDate);
+
+          ReceiveMSg.dtMsg =
+            dt.getFullYear().toString() +
+            '-' +
+            ('0' + (dt.getMonth() + 1)).slice(-2).toString() +
+            '-' +
+            ('0' + dt.getDate()).slice(-2).toString() +
+            'T' +
+            ('0' + dt.getHours()).slice(-2).toString() +
+            ':' +
+            ('0' + dt.getMinutes()).slice(-2).toString() +
+            ':' +
+            ('0' + dt.getSeconds()).slice(-2).toString() +
+            '.000';
           console.log(' ReceiveMSg.dtMsg: ', ReceiveMSg.dtMsg);
-
-          var XyzIndex = Model.NewChat.findIndex((i: AllChats) => {
-            // Create new Date objects with only the year, month, and day
-            const itemDate = new Date();
-            const iDate = new Date(i.date);
-
-            // Compare only the date part
-            return (
-              itemDate.getFullYear() === iDate.getFullYear() &&
-              itemDate.getMonth() === iDate.getMonth() &&
-              itemDate.getDate() === iDate.getDate()
-            );
-          });
-          // ReceiveMSg.dtMsg = new Date().toString()
-          if (XyzIndex) {
-            // await Model.Chats.push(ReceiveMSg);
-            await Model.NewChat[XyzIndex].Chat.push(ReceiveMSg);
-            console.log('newChatreceive: ', JSON.stringify(Model.NewChat));
-          } else {
-            var NewChatArray = new AllChats();
-            var date = new Date();
-            if (
-              date.getFullYear() === new Date(ReceiveMSg.dtMsg).getFullYear() &&
-              date.getMonth() === new Date(ReceiveMSg.dtMsg).getMonth() &&
-              date.getDate() === new Date(ReceiveMSg.dtMsg).getDate()
-            ) {
-              NewChatArray.istoday = true;
-            } else {
-              NewChatArray.istoday = false;
-            }
-            console.log('sendMsg date', ReceiveMSg.dtMsg);
-            NewChatArray.date = ReceiveMSg.dtMsg.toString();
-            NewChatArray.Chat.push(ReceiveMSg);
-            Model.NewChat.push(NewChatArray);
-            console.log('newChatreceive: ', JSON.stringify(Model.NewChat));
-          }
+          var NewChatArray = new AllChats();
+          console.log('ArrayPush:___ ');
+          NewChatArray.Chat.push(ReceiveMSg);
+          Model.NewChat.push(NewChatArray);
+          // console.log('newChatreceive: ', JSON.stringify(Model.NewChat));
+          // }
           console.log('REceiveMSG: ', ReceiveMSg.sMsg);
           this.UpdateViewModel();
           this.MarkRead();
+          return;
         }
       },
     );
@@ -311,12 +297,8 @@ export default class Chatdetails extends BaseComponent<
         this.UpdateViewModel();
         if (nextAppState == 'active') {
           this.MakeConnection();
-          // Model.SignalRConnected == true
-          // this.UpdateViewModel()
         }
         if (nextAppState == 'background') {
-          // Model.SignalRConnected = false;
-          // this.UpdateViewModel();
           var Connection = new signalR.HubConnectionBuilder()
             .withUrl(
               `https://wemessanger.azurewebsites.net/chatHub?UserId=${Model.senderId}`,
@@ -435,36 +417,6 @@ export default class Chatdetails extends BaseComponent<
         console.log(err);
       });
   };
-  ReceiveMsg = async () => {
-    var model = this.state.Model;
-    var ReceiveMSg = new Chatss();
-
-    await model.Connection.on(
-      'ReceiveMessage',
-      async (sender: any, receiver: any, message: any) => {
-        const encodedUser = sender;
-        const encodedReUser = receiver;
-        const encodedMsg = message;
-
-        console.log('rrrr: ', encodedUser);
-        console.log(encodedReUser);
-        console.log(encodedMsg);
-        // console.log('message: ', sender, receiver, message);
-
-        // if (message) {
-        //   ReceiveMSg.sMsg = message;
-        //   ReceiveMSg.lReceiverId = receiver;
-        //   ReceiveMSg.lSenderId = sender;
-        //   await model.Chats.push(ReceiveMSg);
-        //   console.log('REceiveMSG: ', ReceiveMSg.sMsg);
-
-        //   this.UpdateViewModel();
-        // }
-      },
-    ).catch((error: any) => {
-      console.error('Error subscribing to ReceiveMessage:', error);
-    });
-  };
   ButtonClick = async () => {
     var model = this.state.Model;
     model.Scroll = true;
@@ -502,44 +454,60 @@ export default class Chatdetails extends BaseComponent<
       sendMsg.sMsg = model.Message;
       sendMsg.lSenderId = model.senderId;
       var newDate = new Date(
-        date.getTime() - date.getTimezoneOffset() * 60 * 1000,
+         date.getTime() - date.getTimezoneOffset() * 60 * 1000,
       );
+      console.log("getTime: ",newDate);
+      
       var offset = date.getTimezoneOffset() / 60;
       var hours = date.getHours();
       newDate.setHours(hours + offset);
       console.log('NewDate: ', newDate);
 
-      sendMsg.dtMsg = new Date(newDate).toString();
-      console.log('SendDate', sendMsg.dtMsg);
-      // console.log('Send MSg: ', sendMsg);
-      if (Xyz) {
-        // console.log('indexavailable', model.NewChat[XyzIndex]);
-        model.NewChat[XyzIndex].Chat.push(sendMsg);
-        model.Message = '';
-        this.UpdateViewModel();
-        console.log('newChatsend: ', JSON.stringify(model.NewChat));
-      } else {
-        var NewChatArray = new AllChats();
-        var date = new Date();
-        if (
-          date.getFullYear() === new Date(sendMsg.dtMsg).getFullYear() &&
-          date.getMonth() === new Date(sendMsg.dtMsg).getMonth() &&
-          date.getDate() === new Date(sendMsg.dtMsg).getDate()
-        ) {
-          NewChatArray.istoday = true;
-        } else {
-          NewChatArray.istoday = false;
-        }
-        console.log('sendMsg date', sendMsg.dtMsg);
-        NewChatArray.date = sendMsg.dtMsg.toString();
-        NewChatArray.Chat.push(sendMsg);
-        console.log('indexnotavailable', NewChatArray);
-        model.NewChat.push(NewChatArray);
-        console.log('newChat: ', model.NewChat);
+      var dt = new Date(newDate);
 
-        model.Message = '';
-        this.UpdateViewModel();
+      sendMsg.dtMsg =
+        dt.getFullYear().toString() +
+        '-' +
+        ('0' + (dt.getMonth() + 1)).slice(-2).toString() +
+        '-' +
+        ('0' + dt.getDate()).slice(-2).toString() +
+        'T' +
+        ('0' + dt.getHours()).slice(-2).toString() +
+        ':' +
+        ('0' + dt.getMinutes()).slice(-2).toString() +
+        ':' +
+        ('0' + dt.getSeconds()).slice(-2).toString() +
+        '.000';
+      console.log('SendDate', sendMsg.dtMsg);
+      var NewChatArray = new AllChats();
+      console.log('Send MSg: ', sendMsg);
+      // if (Xyz) {
+      //   // console.log('indexavailable', model.NewChat[XyzIndex]);
+      //   model.NewChat[XyzIndex].Chat.push(sendMsg);
+      //   model.Message = '';
+      //   this.UpdateViewModel();
+      //   console.log('newChatsend: ', JSON.stringify(model.NewChat));
+      // } else {
+      var NewChatArray = new AllChats();
+      var date = new Date();
+      if (
+        date.getFullYear() === new Date(sendMsg.dtMsg).getFullYear() &&
+        date.getMonth() === new Date(sendMsg.dtMsg).getMonth() &&
+        date.getDate() === new Date(sendMsg.dtMsg).getDate()
+      ) {
+        NewChatArray.istoday = true;
+      } else {
+        NewChatArray.istoday = false;
       }
+      console.log('sendMsg date', sendMsg.dtMsg);
+      NewChatArray.date = sendMsg.dtMsg.toString();
+      console.log('indexnotavailable', NewChatArray);
+      NewChatArray.Chat.push(sendMsg);
+      model.NewChat.push(NewChatArray);
+      console.log('newChat: ', JSON.stringify(model.NewChat));
+      model.Message = '';
+      this.UpdateViewModel();
+      // }
       await model.Connection.invoke(
         'SendMessage',
         model.companyId,
@@ -683,7 +651,7 @@ export default class Chatdetails extends BaseComponent<
     SessionHelper.SetUserNameSession(null);
     this.props.navigation.reset({
       index: 0,
-      routes: [{name: 'Loginpage'}],
+      routes: [{name: 'Selectcompanypage'}],
     });
     var Connection = new signalR.HubConnectionBuilder()
       .withUrl(
@@ -1021,14 +989,15 @@ export default class Chatdetails extends BaseComponent<
                       <Text style={styles.today}>Today</Text>
                     ) : (
                       <Text style={styles.today}>
-                        {EntityHelperService.ToDdMmmYyyy(item?.date)}
+
+                        {`${(item?.date.slice(8,10))}-${(item?.date.slice(5,7))}-${(item?.date.slice(0,4))}`}
                       </Text>
                     )
                   ) : null}
 
                   {item.Chat.map((i: Chat) =>
-                    'u_' + i.lSenderId == Model.senderId ||
-                    i.lSenderId == Model.senderId ? (
+                    `${Model.ConnectionCode}_${i.lSenderId}` ==
+                      Model.senderId || i.lSenderId == Model.senderId ? (
                       <>
                         <View style={styles.messageto}>
                           <View style={styles.messagetomessage}>

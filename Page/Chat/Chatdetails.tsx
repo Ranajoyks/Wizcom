@@ -82,6 +82,11 @@ export class Chatss {
 }
 var intervalId: any = true;
 var MsgCounter = 0;
+var CurDate;
+var PntDate = '';
+var TodayDate = '';
+var prdt = false;
+var ButtonVar = "<Button><Text>Login</Text></Button>"
 export default class Chatdetails extends BaseComponent<
   any,
   ChatdetailsViewModel
@@ -252,7 +257,7 @@ export default class Chatdetails extends BaseComponent<
           ReceiveMSg.lReceiverId = receiver;
           ReceiveMSg.lSenderId = sender;
           var newDate = new Date(
-             date.getTime() - date.getTimezoneOffset() * 60 * 1000,
+            date.getTime() - date.getTimezoneOffset() * 60 * 1000,
           );
           var offset = date.getTimezoneOffset() / 60;
           var hours = date.getHours();
@@ -277,9 +282,27 @@ export default class Chatdetails extends BaseComponent<
           console.log('ArrayPush:___ ');
           NewChatArray.Chat.push(ReceiveMSg);
           Model.NewChat.push(NewChatArray);
-          // console.log('newChatreceive: ', JSON.stringify(Model.NewChat));
-          // }
+          TodayDate =
+            new Date().getFullYear() +
+            '-' +
+            ('0' + (dt.getMonth() + 1)).slice(-2) +
+            '-' +
+            new Date().getDate();
+          console.log('Today Date: ', TodayDate);
+
+          var date = new Date();
+          if (
+            date.getFullYear() === new Date(ReceiveMSg.dtMsg).getFullYear() &&
+            date.getMonth() === new Date(ReceiveMSg.dtMsg).getMonth() &&
+            date.getDate() === new Date(ReceiveMSg.dtMsg).getDate()
+          ) {
+            NewChatArray.istoday = true;
+          } else {
+            NewChatArray.istoday = false;
+          }
+          console.log('newChatreceive: ', JSON.stringify(Model.NewChat));
           console.log('REceiveMSG: ', ReceiveMSg.sMsg);
+          MsgCounter = 0;
           this.UpdateViewModel();
           this.MarkRead();
           return;
@@ -346,6 +369,14 @@ export default class Chatdetails extends BaseComponent<
   // };
   GetAllMsg = async () => {
     var Model = this.state.Model;
+    PntDate = '';
+    TodayDate =
+      new Date().getFullYear() +
+      '-' +
+      ('0' + (new Date().getMonth() + 1)).slice(-2) +
+      '-' +
+      new Date().getDate();
+    console.log('Today Date: ', TodayDate);
     console.log(Model.companyId);
     console.log(Model.senderId);
     console.log(Model.receiverId);
@@ -454,10 +485,10 @@ export default class Chatdetails extends BaseComponent<
       sendMsg.sMsg = model.Message;
       sendMsg.lSenderId = model.senderId;
       var newDate = new Date(
-         date.getTime() - date.getTimezoneOffset() * 60 * 1000,
+        date.getTime() - date.getTimezoneOffset() * 60 * 1000,
       );
-      console.log("getTime: ",newDate);
-      
+      console.log('getTime: ', newDate);
+
       var offset = date.getTimezoneOffset() / 60;
       var hours = date.getHours();
       newDate.setHours(hours + offset);
@@ -479,6 +510,13 @@ export default class Chatdetails extends BaseComponent<
         ('0' + dt.getSeconds()).slice(-2).toString() +
         '.000';
       console.log('SendDate', sendMsg.dtMsg);
+      TodayDate =
+        new Date().getFullYear() +
+        '-' +
+        ('0' + (new Date().getMonth() + 1)).slice(-2) +
+        '-' +
+        new Date().getDate();
+      console.log('Today Date: ', TodayDate);
       var NewChatArray = new AllChats();
       console.log('Send MSg: ', sendMsg);
       // if (Xyz) {
@@ -504,6 +542,7 @@ export default class Chatdetails extends BaseComponent<
       console.log('indexnotavailable', NewChatArray);
       NewChatArray.Chat.push(sendMsg);
       model.NewChat.push(NewChatArray);
+      MsgCounter = 0;
       console.log('newChat: ', JSON.stringify(model.NewChat));
       model.Message = '';
       this.UpdateViewModel();
@@ -982,78 +1021,130 @@ export default class Chatdetails extends BaseComponent<
             )}
 
             {Model.SignalRConnected === true &&
-              Model.NewChat.map((item: AllChats) => (
-                <View style={{zIndex: 1}}>
-                  {MsgCounter < 2 ? (
-                    item.istoday ? (
-                      <Text style={styles.today}>Today</Text>
-                    ) : (
-                      <Text style={styles.today}>
+              Model.NewChat.map((item: AllChats) => {
+                var pdate = false;
+                var showdate = '';
 
-                        {`${(item?.date.slice(8,10))}-${(item?.date.slice(5,7))}-${(item?.date.slice(0,4))}`}
-                      </Text>
-                    )
-                  ) : null}
+                // console.log(typeof item?.date, );
 
-                  {item.Chat.map((i: Chat) =>
-                    `${Model.ConnectionCode}_${i.lSenderId}` ==
-                      Model.senderId || i.lSenderId == Model.senderId ? (
-                      <>
-                        <View style={styles.messageto}>
-                          <View style={styles.messagetomessage}>
-                            <View style={styles.messagetotext}>
-                              <Text style={styles.messagetotextcontent}>
-                                {i?.sMsg}
+                var doDate = typeof item?.date;
+                if (doDate == 'string') {
+                  CurDate = item?.date.toString().slice(0, 10);
+                } else {
+                  CurDate =
+                    item?.date.getFullYear() +
+                    '-' +
+                    ('0' + (item?.date.getMonth() + 1)).slice(-2) +
+                    '-' +
+                    item?.date.getDate();
+                }
+                console.log('PntDate: ', PntDate);
+                console.log('CurDate: ', CurDate);
+
+                if (CurDate != PntDate) {
+                  pdate = true;
+                  PntDate = CurDate;
+                  if (PntDate == TodayDate) {
+                    showdate = 'Today';
+                  } else {
+                    showdate =
+                      PntDate.slice(8, 10) +
+                      '-' +
+                      PntDate.slice(5, 7) +
+                      '-' +
+                      PntDate.slice(0, 4);
+                  }
+                } else {
+                  pdate = false;
+                }
+                return (
+                  <View style={{zIndex: 1}}>
+                    {/* {item.istoday ? (
+                    <Text style={styles.today}>Today</Text>
+                  ) : (
+                    <Text style={styles.today}>
+                      {`${item?.date.slice(8, 10)}-${item?.date.slice(5,7)}-${item?.date.slice(0, 4)}`}
+                    </Text>
+                  )} */}
+                    {pdate ? (
+                      <Text style={styles.today}>{showdate}</Text>
+                    ) : null}
+
+                    {item.Chat.map((i: Chat) =>{
+                      return(
+                      `${Model.ConnectionCode}_${i.lSenderId}` ==
+                        Model.senderId || i.lSenderId == Model.senderId ? (
+                        <>
+                          <View style={styles.messageto}>
+                            <View style={styles.messagetomessage}>
+                              <View style={styles.messagetotext}>
+                                <Text style={styles.messagetotextcontent}>
+                                  {i?.sMsg}
+                                </Text>
+                                {/* <View>{ButtonVar}</View> */}
+                              </View>
+                            </View>
+                            <View style={styles.messagetotime}>
+                              <Text style={styles.messagefromtimetext}>
+                                {EntityHelperService.convertUTCDateToLocalDate(
+                                  new Date(i?.dtMsg),
+                                )}
                               </Text>
+                              <Text>{item?.istoday}</Text>
                             </View>
                           </View>
-                          <View style={styles.messagetotime}>
-                            <Text style={styles.messagefromtimetext}>
-                              {EntityHelperService.convertUTCDateToLocalDate(
-                                new Date(i?.dtMsg),
-                              )}
-                            </Text>
-                            <Text>{item?.istoday}</Text>
-                          </View>
-                        </View>
-                      </>
-                    ) : (
-                      <>
-                        <View style={styles.messagefrom}>
-                          <View style={styles.messagefrommessage}>
-                            <View style={styles.messagefromicon}>
-                              <Text
-                                style={{
-                                  color: '#000',
-                                  flex: 1,
-                                  fontSize: 15,
-                                  textAlign: 'center',
-                                }}>
-                                {Model.User.userFullName
-                                  .toLocaleUpperCase()
-                                  .charAt(0)}
-                              </Text>
+                        </>
+                      ) : (
+                        <>
+                          <View style={styles.messagefrom}>
+                            <View style={styles.messagefrommessage}>
+                              <View style={styles.messagefromicon}>
+                                <Text
+                                  style={{
+                                    color: '#000',
+                                    flex: 1,
+                                    fontSize: 15,
+                                    textAlign: 'center',
+                                  }}>
+                                  {Model.User.userFullName
+                                    .toLocaleUpperCase()
+                                    .charAt(0)}
+                                </Text>
+                              </View>
+                              <View style={styles.messagefromtext}>
+                                <Text style={styles.messagefromtextcontent}>
+                                  {i?.sMsg}
+                                </Text>
+                                {/* <Button
+                                  // onPress={this.Login}
+                                  // style={styles.buttontest}
+                                  >
+                                  <Text
+                                    style={{
+                                      color: 'white',
+                                      // fontWeight: '800',
+                                      fontFamily: 'Poppins-Bold',
+                                    }}>
+                                    Login
+                                  </Text>
+                                </Button> */}
+                              </View>
                             </View>
-                            <View style={styles.messagefromtext}>
-                              <Text style={styles.messagefromtextcontent}>
-                                {i?.sMsg}
+                            <View style={styles.messagefromtime}>
+                              <Text style={styles.messagefromtimetext}>
+                                {EntityHelperService.convertUTCDateToLocalDate(
+                                  new Date(i?.dtMsg),
+                                )}
                               </Text>
+                              <Text>{item?.istoday}</Text>
                             </View>
                           </View>
-                          <View style={styles.messagefromtime}>
-                            <Text style={styles.messagefromtimetext}>
-                              {EntityHelperService.convertUTCDateToLocalDate(
-                                new Date(i?.dtMsg),
-                              )}
-                            </Text>
-                            <Text>{item?.istoday}</Text>
-                          </View>
-                        </View>
-                      </>
-                    ),
-                  )}
-                </View>
-              ))}
+                        </>
+                      ))
+                                })}
+                  </View>
+                );
+              })}
           </ScrollView>
           <View style={{padding: 10}}>
             <View

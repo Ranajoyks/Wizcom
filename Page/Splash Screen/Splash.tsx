@@ -38,8 +38,8 @@ export default class Splash extends BaseComponent<any, SpalshViewModel> {
     console.log('MODELURL : ', Model.URL);
 
     var value = await SessionHelper.GetSession();
-    var URL = await SessionHelper.GetURLSession();
     var UserID = await SessionHelper.GetUserIDSession();
+    var URL = await SessionHelper.GetURLSession();
     if (URL) {
       Model.URL = URL;
       this.UpdateViewModel();

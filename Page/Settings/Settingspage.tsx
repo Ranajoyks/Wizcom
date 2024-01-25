@@ -27,9 +27,13 @@ export default class Selectcompanypage extends BaseComponent<
     super(props);
     this.state = new BaseState(new SettingsViewModel());
   }
-  componentDidMount(){
-    // var Model = this.state.Model;
-    // SessionHelper.SetURLSession(Model.URL);
+  async componentDidMount(){
+    var Model = this.state.Model;
+    var URL = await SessionHelper.GetURLSession();
+    if (URL) {
+      Model.URL = URL;
+      this.UpdateViewModel();
+    }
   }
   handleSetUrl = () => {
     var Model = this.state.Model;

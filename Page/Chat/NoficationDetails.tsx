@@ -12,7 +12,10 @@ import {
   ScrollView,
   Dimensions,
   Alert,
+  AppState,
   ActivityIndicator,
+  BackHandler,
+  Platform,
 } from 'react-native';
 import {Badge, Button} from 'native-base';
 import BaseComponent from '../../Core/BaseComponent';
@@ -23,9 +26,11 @@ import axios from 'axios';
 import {Chat} from '../../Entity/Chat';
 import EntityHelperService from '../Service/EntityHelperService';
 import NetInfo from '@react-native-community/netinfo';
-export class ChatdetailsViewModel {
+import RenderHtml from 'react-native-render-html';
+export class NotificationDetailsViewModel {
   Message: string = '';
-  senderId: string = '';
+  InvokeMessage: string = '';
+  senderId: any;
   receiverId: string = '';
   companyId: number = 18;
   itype: number = 0;
@@ -43,6 +48,16 @@ export class ChatdetailsViewModel {
   SignalRConnected: boolean = false;
   intervalId: any;
   ConnectionCode: any;
+  AppStatus: any = AppState.currentState;
+  PageNumber: number = 0;
+  isLoading: boolean = false;
+  AllChats: any[] = [];
+  prevScrollY: number = 0;
+  NoMoreData: boolean = false;
+  Scroll: boolean = true;
+  DataLength: number = 0;
+  BranchID: number = 1;
+  URL: string = 'eiplutm.eresourceerp.com/AzaaleaR';
   AllNotifiCationChat: any[] = [];
 }
 export class AllChats {
@@ -68,45 +83,99 @@ export class Chatss {
   sConnId: string = '';
   sMsg: string = '';
 }
-var intervalId: any;
-export default class Chatdetails extends BaseComponent<
+var intervalId: any = true;
+var MsgCounter = 0;
+var CurDate;
+var PntDate = '';
+var TodayDate = '';
+var prdt = false;
+export default class NotificationDetails extends BaseComponent<
   any,
-  ChatdetailsViewModel
+  NotificationDetailsViewModel
 > {
   constructor(props: any) {
     super(props);
-    this.state = new BaseState(new ChatdetailsViewModel());
+    this.state = new BaseState(new NotificationDetailsViewModel());
     this.state.Model.User = props.route.params.User;
     // this.state.Model.senderId = props.route.params.SenderID;
   }
 
-  async componentDidMount(): Promise<void> {
+  async componentDidMount() {
     var Model = this.state.Model;
     var ConnectionCode = await SessionHelper.GetCompanyIDSession();
     Model.receiverId = `${ConnectionCode}_${Model.User.lId.toString()}`;
+    var URL = await SessionHelper.GetURLSession();
+    if (URL) {
+      Model.URL = URL;
+      this.UpdateViewModel();
+    }
     this.MakeConnection();
-    this.ReceiveMsg();
+
+    // this.ReceiveMsg();
     var User = await SessionHelper.GetUserDetailsSession();
-    console.log('user: ', User);
     var FCMToken = await SessionHelper.GetFCMTokenSession();
     var ConnectionCode = await SessionHelper.GetCompanyIDSession();
+    var BranchID = await SessionHelper.GetBranchIdSession();
+    var UserDetails = await SessionHelper.GetUserDetailsSession();
+    console.log('user: ', User);
+    Model.BranchID = BranchID;
     Model.ConnectionCode = ConnectionCode;
     Model.FCMToken = FCMToken;
     Model.sender = User.userName;
     this.UpdateViewModel();
     console.log('@Receiver', this.props.route.params.User);
-    var UserDetails = await SessionHelper.GetUserDetailsSession();
-    Model.senderId = `${Model.ConnectionCode}_${UserDetails.lId.toString()}`;
+    Model.senderId = `${ConnectionCode}_${UserDetails.lId.toString()}`;
     console.log('UserDetails.lId', UserDetails);
     console.log('UserDetails.lId', Model.senderId);
     this.UpdateViewModel();
     this.GetAllMsg();
+    // this.CheckAppStatus();
+    SessionHelper.SetReceiverIDSession(Model.receiverId);
+    // setInterval(this.CheckAppStatus, 2000);
+    // setTimeout(() => {this.CheckAppStatus},2000)
+
     // this.CheckInternetConnetion();
     // if(Model.SignalRConnected === false){
     //   intervalId = setInterval(this.CheckInternetConnetion, 7000);
     // // this.UpdateViewModel()
     // }
+    if (Platform.OS == 'android') {
+      BackHandler.addEventListener('hardwareBackPress', this.handleBackButton);
+    }
+    this.MarkRead();
   }
+  componentWillUnmount() {
+    BackHandler.removeEventListener('hardwareBackPress', this.handleBackButton);
+  }
+  handleBackButton = () => {
+    this.props.navigation.reset({
+      index: 0,
+      routes: [{name: 'Singlechatpage'}],
+    });
+    return true;
+  };
+  MarkRead = () => {
+    var Model = this.state.Model;
+    console.log('Branch: ', Model.BranchID);
+    console.log('SenderID', Model.senderId);
+    console.log('ReceiverId', Model.receiverId);
+    const headers = {
+      'Content-Type': 'application/json',
+    };
+    var Data = JSON.stringify({
+      companyid: Model.BranchID,
+      senderId: Model.senderId,
+      receiverId: Model.receiverId,
+    });
+    axios
+      .put(`https://wemessanger.azurewebsites.net/api/user`, Data, {headers})
+      .then((res: any) => {
+        console.log('ReadMSg: ', res.data);
+      })
+      .catch((err: any) => {
+        console.log('ReadMSgERror: ', err);
+      });
+  };
   // componentWillUnmount() {
   //   var Model = this.state.Model
 
@@ -187,8 +256,9 @@ export default class Chatdetails extends BaseComponent<
         const encodedReUser = receiver;
         const encodedMsg = message;
         var ReceiveMSg = new Chatss();
-
         if (message) {
+          Model.Scroll = true;
+          MsgCounter = MsgCounter + 1;
           var date = new Date();
           ReceiveMSg.sMsg = message;
           ReceiveMSg.lReceiverId = receiver;
@@ -197,44 +267,85 @@ export default class Chatdetails extends BaseComponent<
             date.getTime() - date.getTimezoneOffset() * 60 * 1000,
           );
           var offset = date.getTimezoneOffset() / 60;
-          var hours = date.getHours() + 1;
+          var hours = date.getHours();
           newDate.setHours(hours + offset);
-          ReceiveMSg.dtMsg = new Date(newDate).toString();
-          var XyzIndex = Model.NewChat.findIndex((i: AllChats) => {
-            // Create new Date objects with only the year, month, and day
-            const itemDate = new Date();
-            const iDate = new Date(i.date);
+          var dt = new Date(newDate);
 
-            // Compare only the date part
-            return (
-              itemDate.getFullYear() === iDate.getFullYear() &&
-              itemDate.getMonth() === iDate.getMonth() &&
-              itemDate.getDate() === iDate.getDate()
-            );
-          });
-          // ReceiveMSg.dtMsg = new Date().toString()
-          if (XyzIndex) {
-            // await Model.Chats.push(ReceiveMSg);
-            await Model.NewChat[XyzIndex].Chat.push(ReceiveMSg);
+          ReceiveMSg.dtMsg =
+            dt.getFullYear().toString() +
+            '-' +
+            ('0' + (dt.getMonth() + 1)).slice(-2).toString() +
+            '-' +
+            ('0' + dt.getDate()).slice(-2).toString() +
+            'T' +
+            ('0' + dt.getHours()).slice(-2).toString() +
+            ':' +
+            ('0' + dt.getMinutes()).slice(-2).toString() +
+            ':' +
+            ('0' + dt.getSeconds()).slice(-2).toString() +
+            '.000';
+          console.log(' ReceiveMSg.dtMsg: ', ReceiveMSg.dtMsg);
+          var NewChatArray = new AllChats();
+          console.log('ArrayPush:___ ');
+          NewChatArray.Chat.push(ReceiveMSg);
+          Model.NewChat.push(NewChatArray);
+          TodayDate =
+            new Date().getFullYear() +
+            '-' +
+            ('0' + (dt.getMonth() + 1)).slice(-2) +
+            '-' +
+            new Date().getDate();
+          console.log('Today Date: ', TodayDate);
+
+          var date = new Date();
+          if (
+            date.getFullYear() === new Date(ReceiveMSg.dtMsg).getFullYear() &&
+            date.getMonth() === new Date(ReceiveMSg.dtMsg).getMonth() &&
+            date.getDate() === new Date(ReceiveMSg.dtMsg).getDate()
+          ) {
+            NewChatArray.istoday = true;
           } else {
-            var NewChatArray = new AllChats();
-            var date = new Date();
-            if (
-              date.getFullYear() === new Date(ReceiveMSg.dtMsg).getFullYear() &&
-              date.getMonth() === new Date(ReceiveMSg.dtMsg).getMonth() &&
-              date.getDate() === new Date(ReceiveMSg.dtMsg).getDate()
-            ) {
-              NewChatArray.istoday = true;
-            } else {
-              NewChatArray.istoday = false;
-            }
-            console.log('sendMsg date', ReceiveMSg.dtMsg);
-            NewChatArray.date = ReceiveMSg.dtMsg.toString();
-            NewChatArray.Chat.push(ReceiveMSg);
-            Model.NewChat.push(NewChatArray);
+            NewChatArray.istoday = false;
           }
+          console.log('newChatreceive: ', JSON.stringify(Model.NewChat));
           console.log('REceiveMSG: ', ReceiveMSg.sMsg);
+          MsgCounter = 0;
           this.UpdateViewModel();
+          this.MarkRead();
+          return;
+        }
+      },
+    );
+  };
+  CheckAppStatus = async () => {
+    var Model = this.state.Model;
+    const appStateListener = AppState.addEventListener(
+      'change',
+      nextAppState => {
+        console.log('Next AppState is: ', nextAppState);
+        Model.AppStatus = nextAppState;
+        this.UpdateViewModel();
+        if (nextAppState == 'active') {
+          this.MakeConnection();
+        }
+        if (nextAppState == 'background') {
+          var Connection = new signalR.HubConnectionBuilder()
+            .withUrl(
+              `https://wemessanger.azurewebsites.net/chatHub?UserId=${Model.senderId}`,
+            )
+            .build();
+          Connection.start().then(() => {
+            console.log('SignalR connected');
+            Connection.invoke('DisconnectUser', Model.senderId)
+              .then((res: any) => {
+                console.log('resDisconnect: ', res);
+
+                console.log('SignalRConnected: ', Model.SignalRConnected);
+              })
+              .catch((err: any) => {
+                console.log('ErrorDisconnect: ', err);
+              });
+          });
         }
       },
     );
@@ -265,12 +376,20 @@ export default class Chatdetails extends BaseComponent<
   // };
   GetAllMsg = async () => {
     var Model = this.state.Model;
+    PntDate = '';
+    TodayDate =
+      new Date().getFullYear() +
+      '-' +
+      ('0' + (new Date().getMonth() + 1)).slice(-2) +
+      '-' +
+      new Date().getDate();
+    console.log('Today Date: ', TodayDate);
     console.log(Model.companyId);
     console.log(Model.senderId);
     console.log(Model.receiverId);
     axios
       .get(
-        `https://wemessanger.azurewebsites.net/api/User/readmessage?companyId=${Model.companyId}&senderId=${Model.senderId}&receiverId=${Model.receiverId}&pageNo=0`,
+        `https://wemessanger.azurewebsites.net/api/User/readmessage?companyId=${Model.companyId}&senderId=${Model.senderId}&receiverId=${Model.receiverId}&pageNo=${Model.PageNumber}`,
       )
       .then(res => {
         console.log('AllChat: ', res.data);
@@ -278,6 +397,7 @@ export default class Chatdetails extends BaseComponent<
         console.log('Notification: ', Notification);
         Model.AllNotifiCationChat = Notification;
         this.UpdateViewModel();
+
 
         Model.AllNotifiCationChat.forEach((item: Chat) => {
           var Xyz = Model.NewChat.find((i: AllChats) => {
@@ -338,38 +458,11 @@ export default class Chatdetails extends BaseComponent<
         console.log(err);
       });
   };
-  ReceiveMsg = async () => {
-    var model = this.state.Model;
-    var ReceiveMSg = new Chatss();
-
-    await model.Connection.on(
-      'ReceiveMessage',
-      async (sender: any, receiver: any, message: any) => {
-        const encodedUser = sender;
-        const encodedReUser = receiver;
-        const encodedMsg = message;
-
-        console.log('rrrr: ', encodedUser);
-        console.log(encodedReUser);
-        console.log(encodedMsg);
-        // console.log('message: ', sender, receiver, message);
-
-        // if (message) {
-        //   ReceiveMSg.sMsg = message;
-        //   ReceiveMSg.lReceiverId = receiver;
-        //   ReceiveMSg.lSenderId = sender;
-        //   await model.Chats.push(ReceiveMSg);
-        //   console.log('REceiveMSG: ', ReceiveMSg.sMsg);
-
-        //   this.UpdateViewModel();
-        // }
-      },
-    ).catch((error: any) => {
-      console.error('Error subscribing to ReceiveMessage:', error);
-    });
-  };
   ButtonClick = async () => {
     var model = this.state.Model;
+    model.Scroll = true;
+    this.UpdateViewModel();
+    MsgCounter = MsgCounter + 1;
     // if (model.SignalRConnected) {
     if (model.Message.trim() === '') {
       return;
@@ -377,6 +470,8 @@ export default class Chatdetails extends BaseComponent<
       var date = new Date();
       // const modifiedDate = new Date(date.getTime() - 19800000);
       console.log('Msg sent:', model.Message);
+      model.InvokeMessage = model.Message;
+      this.UpdateViewModel();
       var XyzIndex = model.NewChat.findIndex((i: AllChats) => {
         const itemDate = new Date();
         const iDate = new Date(i.date);
@@ -402,39 +497,72 @@ export default class Chatdetails extends BaseComponent<
       var newDate = new Date(
         date.getTime() - date.getTimezoneOffset() * 60 * 1000,
       );
+      console.log('getTime: ', newDate);
+
       var offset = date.getTimezoneOffset() / 60;
-      var hours = date.getHours() + 1;
+      var hours = date.getHours();
       newDate.setHours(hours + offset);
-      sendMsg.dtMsg = new Date(newDate).toString();
+      console.log('NewDate: ', newDate);
+
+      var dt = new Date(newDate);
+
+      sendMsg.dtMsg =
+        dt.getFullYear().toString() +
+        '-' +
+        ('0' + (dt.getMonth() + 1)).slice(-2).toString() +
+        '-' +
+        ('0' + dt.getDate()).slice(-2).toString() +
+        'T' +
+        ('0' + dt.getHours()).slice(-2).toString() +
+        ':' +
+        ('0' + dt.getMinutes()).slice(-2).toString() +
+        ':' +
+        ('0' + dt.getSeconds()).slice(-2).toString() +
+        '.000';
       console.log('SendDate', sendMsg.dtMsg);
+      TodayDate =
+        new Date().getFullYear() +
+        '-' +
+        ('0' + (new Date().getMonth() + 1)).slice(-2) +
+        '-' +
+        new Date().getDate();
+      console.log('Today Date: ', TodayDate);
+      var NewChatArray = new AllChats();
       console.log('Send MSg: ', sendMsg);
-      if (Xyz) {
-        console.log('indexavailable', model.NewChat[XyzIndex]);
-        model.NewChat[XyzIndex].Chat.push(sendMsg);
+      // if (Xyz) {
+      //   // console.log('indexavailable', model.NewChat[XyzIndex]);
+      //   model.NewChat[XyzIndex].Chat.push(sendMsg);
+      //   model.Message = '';
+      //   this.UpdateViewModel();
+      //   console.log('newChatsend: ', JSON.stringify(model.NewChat));
+      // } else {
+      var NewChatArray = new AllChats();
+      var date = new Date();
+      if (
+        date.getFullYear() === new Date(sendMsg.dtMsg).getFullYear() &&
+        date.getMonth() === new Date(sendMsg.dtMsg).getMonth() &&
+        date.getDate() === new Date(sendMsg.dtMsg).getDate()
+      ) {
+        NewChatArray.istoday = true;
       } else {
-        var NewChatArray = new AllChats();
-        var date = new Date();
-        if (
-          date.getFullYear() === new Date(sendMsg.dtMsg).getFullYear() &&
-          date.getMonth() === new Date(sendMsg.dtMsg).getMonth() &&
-          date.getDate() === new Date(sendMsg.dtMsg).getDate()
-        ) {
-          NewChatArray.istoday = true;
-        } else {
-          NewChatArray.istoday = false;
-        }
-        console.log('sendMsg date', sendMsg.dtMsg);
-        NewChatArray.date = sendMsg.dtMsg.toString();
-        NewChatArray.Chat.push(sendMsg);
-        console.log('indexnotavailable', NewChatArray);
-        model.NewChat.push(NewChatArray);
+        NewChatArray.istoday = false;
       }
+      console.log('sendMsg date', sendMsg.dtMsg);
+      NewChatArray.date = sendMsg.dtMsg.toString();
+      console.log('indexnotavailable', NewChatArray);
+      NewChatArray.Chat.push(sendMsg);
+      model.NewChat.push(NewChatArray);
+      MsgCounter = 0;
+      console.log('newChat: ', JSON.stringify(model.NewChat));
+      model.Message = '';
+      this.UpdateViewModel();
+      // }
       await model.Connection.invoke(
         'SendMessage',
         model.companyId,
         model.senderId,
         model.receiverId,
-        model.Message,
+        model.InvokeMessage,
         model.msgflag,
         model.itype,
       )
@@ -562,6 +690,7 @@ export default class Chatdetails extends BaseComponent<
     this.UpdateViewModel();
   };
   Logout = () => {
+    var Model = this.state.Model;
     SessionHelper.SetSession(null);
     SessionHelper.SetBranchIdSession(null);
     SessionHelper.SetDeviceIdSession(null);
@@ -573,13 +702,138 @@ export default class Chatdetails extends BaseComponent<
       index: 0,
       routes: [{name: 'Selectcompanypage'}],
     });
+    var Connection = new signalR.HubConnectionBuilder()
+      .withUrl(
+        `https://wemessanger.azurewebsites.net/chatHub?UserId=${Model.senderId}`,
+      )
+      .build();
+    Connection.start().then(() => {
+      console.log('SignalR connected');
+      Connection.invoke('DisconnectUser', Model.senderId)
+        .then((res: any) => {
+          console.log('resDisconnect: ', res);
+        })
+        .catch((err: any) => {
+          console.log('ErrorDisconnect: ', err);
+        });
+    });
+  };
+  handleScroll = (event: any) => {
+    // console.log("?Hiiii");
+
+    var Model = this.state.Model;
+
+    const {layoutMeasurement, contentOffset, contentSize} = event.nativeEvent;
+    const paddingToBottom = 20;
+
+    // Check if the current scroll position is less than the previous one
+    if (contentOffset.y < Model.prevScrollY) {
+      console.log('hiii');
+      console.log('Scrolled up - Trigger loading more data');
+      Model.PageNumber = Model.PageNumber + 1;
+      Model.Scroll = false;
+      this.UpdateViewModel();
+      // this.loadMoreData();
+      console.log('PageNo:', Model.PageNumber);
+
+      axios
+        .get(
+          `https://wemessanger.azurewebsites.net/api/User/readmessage?companyId=${Model.companyId}&senderId=${Model.senderId}&receiverId=${Model.receiverId}&pageNo=${Model.PageNumber}`,
+        )
+        .then((res: any) => {
+          console.log('AllChat: ', res.data);
+          var ReverseData = res.data.reverse();
+          console.log('ReverseData', ReverseData.length);
+          Model.DataLength = ReverseData.length;
+          this.UpdateViewModel();
+          if (ReverseData.length == 0) {
+            Model.NoMoreData = true;
+            this.MakeConnection();
+          }
+          ReverseData.forEach((item: Chat) => {
+            var Xyz = Model.NewChat.find((i: AllChats) => {
+              // Create new Date objects with only the year, month, and day
+              const itemDate = new Date(item.dtMsg);
+              const iDate = new Date(i.date);
+
+              // Compare only the date part
+              return (
+                itemDate.getFullYear() === iDate.getFullYear() &&
+                itemDate.getMonth() === iDate.getMonth() &&
+                itemDate.getDate() === iDate.getDate()
+              );
+            });
+
+            var XyzIndex = Model.NewChat.findIndex((i: AllChats) => {
+              // Create new Date objects with only the year, month, and day
+              const itemDate = new Date(item.dtMsg);
+              const iDate = new Date(i.date);
+              // Compare only the date part
+              return (
+                itemDate.getFullYear() === iDate.getFullYear() &&
+                itemDate.getMonth() === iDate.getMonth() &&
+                itemDate.getDate() === iDate.getDate()
+              );
+            });
+
+            const itemDate = new Date(item.dtMsg);
+            if (Xyz) {
+              Model.NewChat[XyzIndex].Chat.unshift(item);
+              //    this.UpdateViewModel();
+              // var NewChatArray = new Chatss()
+              // NewChatArray.
+            } else {
+              var NewChatArray = new AllChats();
+              var date = new Date();
+              if (
+                date.getFullYear() === new Date(item.dtMsg).getFullYear() &&
+                date.getMonth() === new Date(item.dtMsg).getMonth() &&
+                date.getDate() === new Date(item.dtMsg).getDate()
+              ) {
+                NewChatArray.istoday = true;
+              } else {
+                NewChatArray.istoday = false;
+              }
+              console.log('new date', item.dtMsg);
+              NewChatArray.date = item.dtMsg.toString();
+              NewChatArray.Chat.unshift(item);
+              Model.NewChat.unshift(NewChatArray);
+            }
+            this.UpdateViewModel();
+          });
+        });
+
+      // Update the previous scroll position
+      // Model.prevScrollY = contentOffset.y;
+      this.UpdateViewModel();
+    }
+  };
+  LocationPage = () => {
+    this.props.navigation.navigate('MapPage');
+  };
+  Approve = async(text: string) => {
+    var value = await SessionHelper.GetSession();
+    const headers = {
+      'Content-Type': 'application/json',
+      Cookie: `ASP.NET_SessionId=${value}`,
+    };
+    var Model = this.state.Model
+    console.log('Approve: ', text);
+    axios.get(`http://${Model.URL}/${text}`,{headers:headers}).then((res)=>{
+      console.log(res.data);
+      Alert.alert(JSON.stringify(res.data))
+      
+    }).catch((err)=>{
+      console.log(err);
+      
+    })
   };
   render() {
     // const { url } = this.state;
     const prefix = 'https://';
     var Model = this.state.Model;
+    // console.log('Appstatus: ', Model.AppStatus);
     // console.log('SignalConnectionR: ', Model.SignalRConnected);
-
     // console.log('Chats:', JSON.stringify(Model.NewChat) );
 
     return (
@@ -588,11 +842,14 @@ export default class Chatdetails extends BaseComponent<
         <View style={styles.header}>
           <TouchableOpacity
             onPress={() => {
-              this.props.navigation.navigate('Singlechatpage');
+              this.props.navigation.reset({
+                index: 0,
+                routes: [{name: 'Singlechatpage'}],
+              });
             }}>
             <Image
               source={require('../../assets/backimg.png')}
-              style={{height: 30, width: 30, marginLeft: 10}}
+              style={{height: 20, width: 20, marginLeft: 10}}
             />
           </TouchableOpacity>
           <View style={{flex: 1}}>
@@ -603,15 +860,15 @@ export default class Chatdetails extends BaseComponent<
               <Text style={styles.subtitle2}>Offline</Text>
             )}
           </View>
-          {/* <TouchableOpacity
-              onPress={() => {
-                this.Search();
-              }}>
-              <Image
-                source={require('../../assets/search.png')}
-                style={{height: 30, width: 30, marginRight: 10, marginTop: 5}}
-              />
-            </TouchableOpacity> */}
+          <TouchableOpacity
+            onPress={() => {
+              this.LocationPage();
+            }}>
+            <Image
+              source={require('../../assets/location.png')}
+              style={{height: 30, width: 30, marginRight: 10}}
+            />
+          </TouchableOpacity>
           <TouchableOpacity
             onPress={() => {
               this.DropDowmOpen();
@@ -625,7 +882,7 @@ export default class Chatdetails extends BaseComponent<
                 // justifyContent: 'center',
                 alignItems: 'center',
                 display: 'flex',
-                marginTop: -17,
+                // marginTop: 10,
               }}>
               <Text
                 style={{
@@ -638,6 +895,16 @@ export default class Chatdetails extends BaseComponent<
               </Text>
             </Badge>
           </TouchableOpacity>
+          {/* <TouchableOpacity
+            style={{width: 25,marginTop: 15, marginHorizontal:5}}
+            onPress={() => {
+              this.LocationPage();
+            }}>
+            <Image
+              source={require('../../assets/location.png')}
+              style={{height: 25, width: 25}}
+            />
+          </TouchableOpacity> */}
         </View>
         <SafeAreaView style={styles.body}>
           {Model.IsOpen == true && (
@@ -752,7 +1019,10 @@ export default class Chatdetails extends BaseComponent<
               </View>
             </View>
           )}
+
           <ScrollView
+            onScroll={this.handleScroll}
+            scrollEventThrottle={16}
             style={styles.scrollView}
             contentContainerStyle={{
               // flexGrow: 1,
@@ -760,80 +1030,181 @@ export default class Chatdetails extends BaseComponent<
               flexDirection: 'column',
             }}
             ref="scrollView"
-            onContentSizeChange={(width, height) =>
-              this.refs.scrollView.scrollTo({y: height})
-            }>
-            {/* {Model.SignalRConnected === false && <ActivityIndicator size="large" color="#0000ff" />} */}
+            onContentSizeChange={(width, height) => {
+              console.log('Height: ', height);
 
-            {/* {Model.SignalRConnected === true && */}
-            {Model.NewChat.map((item: AllChats) => (
-              <View style={{zIndex: 1}}>
-                {item.istoday ? (
-                  <Text style={styles.today}>Today</Text>
-                ) : (
-                  <Text style={styles.today}>
-                    {EntityHelperService.ToDdMmmYyyy(item?.date)}
-                  </Text>
-                )}
-
-                {item.Chat.map((i: Chat) =>
-                  `${Model.ConnectionCode}_${i.lSenderId}` == Model.senderId ||
-                  i.lSenderId == Model.senderId ? (
-                    <>
-                      <View style={styles.messageto}>
-                        <View style={styles.messagetomessage}>
-                          <View style={styles.messagetotext}>
-                            <Text style={styles.messagetotextcontent}>
-                              {i?.sMsg}
-                            </Text>
-                          </View>
-                        </View>
-                        <View style={styles.messagetotime}>
-                          <Text style={styles.messagefromtimetext}>
-                            {EntityHelperService.convertUTCDateToLocalDate(
-                              new Date(i?.dtMsg),
-                            )}
-                          </Text>
-                        </View>
-                      </View>
-                    </>
-                  ) : (
-                    <>
-                      <View style={styles.messagefrom}>
-                        <View style={styles.messagefrommessage}>
-                          <View style={styles.messagefromicon}>
-                            <Text
-                              style={{
-                                color: '#000',
-                                flex: 1,
-                                fontSize: 15,
-                                textAlign: 'center',
-                              }}>
-                              {Model.User.userFullName
-                                .toLocaleUpperCase()
-                                .charAt(0)}
-                            </Text>
-                          </View>
-                          <View style={styles.messagefromtext}>
-                            <Text style={styles.messagefromtextcontent}>
-                              {i?.sMsg}
-                            </Text>
-                          </View>
-                        </View>
-                        <View style={styles.messagefromtime}>
-                          <Text style={styles.messagefromtimetext}>
-                            {EntityHelperService.convertUTCDateToLocalDate(
-                              new Date(i?.dtMsg),
-                            )}
-                          </Text>
-                        </View>
-                      </View>
-                      <View></View>
-                    </>
-                  ),
-                )}
+              const yOffset = (Model.DataLength - 1) * 70;
+              Model.Scroll == true
+                ? this.refs.scrollView.scrollTo({y: height})
+                : this.refs.scrollView.scrollTo({y: yOffset});
+            }}>
+            {Model.NoMoreData && (
+              <View>
+                <Text style={{alignSelf: 'center'}}>No More Conversation</Text>
               </View>
-            ))}
+            )}
+            {Model.SignalRConnected === false && (
+              <ActivityIndicator size="large" color="#0000ff" />
+            )}
+
+            {Model.SignalRConnected === true &&
+              Model.NewChat.map((item: AllChats) => {
+                var pdate = false;
+                var showdate = '';
+
+                // console.log(typeof item?.date, );
+
+                var doDate = typeof item?.date;
+                if (doDate == 'string') {
+                  CurDate = item?.date.toString().slice(0, 10);
+                } else {
+                  CurDate =
+                    item?.date.getFullYear() +
+                    '-' +
+                    ('0' + (item?.date.getMonth() + 1)).slice(-2) +
+                    '-' +
+                    item?.date.getDate();
+                }
+                console.log('PntDate: ', PntDate);
+                console.log('CurDate: ', CurDate);
+
+                if (CurDate != PntDate) {
+                  pdate = true;
+                  PntDate = CurDate;
+                  if (PntDate == TodayDate) {
+                    showdate = 'Today';
+                  } else {
+                    showdate =
+                      PntDate.slice(8, 10) +
+                      '-' +
+                      PntDate.slice(5, 7) +
+                      '-' +
+                      PntDate.slice(0, 4);
+                  }
+                } else {
+                  pdate = false;
+                }
+                return (
+                  <View style={{zIndex: 1}}>
+                    {/* {item.istoday ? (
+                    <Text style={styles.today}>Today</Text>
+                  ) : (
+                    <Text style={styles.today}>
+                      {`${item?.date.slice(8, 10)}-${item?.date.slice(5,7)}-${item?.date.slice(0, 4)}`}
+                    </Text>
+                  )} */}
+                    {pdate ? (
+                      <Text style={styles.today}>{showdate}</Text>
+                    ) : null}
+
+                    {item.Chat.map((i: Chat) => {
+                      var MsgSplit = i.sMsg.split('||');
+                      console.log('MsgSplitlength: ', MsgSplit.length);
+
+                      return `${Model.ConnectionCode}_${i.lSenderId}` ==
+                        Model.senderId || i.lSenderId == Model.senderId ? (
+                        <>
+                          <View style={styles.messageto}>
+                            <View style={styles.messagetomessage}>
+                              <View style={styles.messagetotext}>
+                                {MsgSplit.length == 2 ? (
+                                  <><View style={{ flexDirection: 'row',gap:5 }}><Button
+                                      onPress={() => this.Approve(MsgSplit[0])}
+                                      style={styles.buttontest}>
+                                      <Text
+                                        style={{
+                                          color: 'white',
+                                          // fontWeight: '800',
+                                          fontFamily: 'Poppins-Regular',
+                                          fontSize: 12,
+                                          margin:0
+                                        }}>
+                                        Approve
+                                      </Text>
+                                    </Button>
+                                    <Button
+                                      onPress={() => this.Approve(MsgSplit[1])}
+                                      style={styles.rejectbuttontest}>
+                                      <Text
+                                        style={{
+                                          color: 'white',
+                                          // fontWeight: '800',
+                                          fontFamily: 'Poppins-Regular',
+                                          fontSize: 12,
+                                        }}>
+                                        Reject
+                                      </Text>
+                                    </Button>
+                                    </View>
+                                    </>
+                                ) : (
+                                  <Text style={styles.messagetotextcontent}>
+                                    {i?.sMsg}
+                                  </Text>
+                                )}
+                              </View>
+                            </View>
+                            <View style={styles.messagetotime}>
+                              <Text style={styles.messagefromtimetext}>
+                                {EntityHelperService.convertUTCDateToLocalDate(
+                                  new Date(i?.dtMsg),
+                                )}
+                              </Text>
+                              <Text>{item?.istoday}</Text>
+                            </View>
+                          </View>
+                        </>
+                      ) : (
+                        <>
+                          <View style={styles.messagefrom}>
+                            <View style={styles.messagefrommessage}>
+                              <View style={styles.messagefromicon}>
+                                <Text
+                                  style={{
+                                    color: '#000',
+                                    flex: 1,
+                                    fontSize: 15,
+                                    textAlign: 'center',
+                                  }}>
+                                  {Model.User.userFullName
+                                    .toLocaleUpperCase()
+                                    .charAt(0)}
+                                </Text>
+                              </View>
+                              <View style={styles.messagefromtext}>
+                                <Text style={styles.messagefromtextcontent}>
+                                  {i?.sMsg}
+                                </Text>
+                                {/* <Button
+                                  // onPress={this.Login}
+                                  // style={styles.buttontest}
+                                  >
+                                  <Text
+                                    style={{
+                                      color: 'white',
+                                      // fontWeight: '800',
+                                      fontFamily: 'Poppins-Bold',
+                                    }}>
+                                    Login
+                                  </Text>
+                                </Button> */}
+                              </View>
+                            </View>
+                            <View style={styles.messagefromtime}>
+                              <Text style={styles.messagefromtimetext}>
+                                {EntityHelperService.convertUTCDateToLocalDate(
+                                  new Date(i?.dtMsg),
+                                )}
+                              </Text>
+                              <Text>{item?.istoday}</Text>
+                            </View>
+                          </View>
+                        </>
+                      );
+                    })}
+                  </View>
+                );
+              })}
           </ScrollView>
           <View style={{padding: 10}}>
             <View
@@ -849,6 +1220,12 @@ export default class Chatdetails extends BaseComponent<
                 onChangeText={text => {
                   Model.Message = text;
                   this.UpdateViewModel();
+                }}
+                onPressIn={() => {
+                  var Model = this.state.Model;
+                  Model.Scroll = true;
+                  this.UpdateViewModel();
+                  console.log('Hi');
                 }}
                 style={
                   (styles.input,
@@ -916,6 +1293,7 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
   title: {
+    lineHeight: 20,
     fontSize: 18,
     // fontWeight: '700',
     fontFamily: 'Poppins-SemiBold',
@@ -926,6 +1304,7 @@ const styles = StyleSheet.create({
     // fontWeight: '700',
     fontFamily: 'OpenSans-Regular',
     color: '#0383FA',
+    lineHeight: 13,
     // color: '#2196f3', // Darker blue title
   },
   subtitle2: {
@@ -933,6 +1312,7 @@ const styles = StyleSheet.create({
     // fontWeight: '700',
     fontFamily: 'OpenSans-Regular',
     color: '#E4B27E',
+    lineHeight: 13,
     // color: '#2196f3', // Darker blue title
   },
   online: {color: '#0383FA'},
@@ -1030,15 +1410,31 @@ const styles = StyleSheet.create({
   },
   buttontest: {
     alignSelf: 'center',
-    marginTop: '90%',
-    height: 50,
-    textAlign: 'center',
-    justifyContent: 'center',
+    // marginTop: '90%',
+    height: 34,
+    // textAlign: 'center',
+    // justifyContent: 'center',
     backgroundColor: '#0383FA',
     color: 'white',
-    borderRadius: 7,
+    borderRadius: 5,
 
-    // padding: 10,
-    width: '95%',
+    paddingHorizontal:10 ,
+    paddingVertical:0
+    // width: '95%',
+  },
+  rejectbuttontest: {
+    alignSelf: 'center',
+    // marginTop: '90%',
+    height: 34,
+    // textAlign: 'center',
+    // justifyContent: 'center',
+    backgroundColor: 'red',
+    color: 'white',
+    borderRadius: 5,
+
+    paddingHorizontal:10 ,
+    paddingVertical:0
+
+    // width: '95%',
   },
 });

@@ -26,6 +26,7 @@ export class LoginViewModel {
   showMessage: boolean = false;
   DeviceId: string = '';
   CompanyId:string=''
+  URL: string = 'eiplutm.eresourceerp.com/AzaaleaR';
 }
 export default class Loginpage extends BaseComponent<any, LoginViewModel> {
   constructor(props: any) {
@@ -44,6 +45,12 @@ export default class Loginpage extends BaseComponent<any, LoginViewModel> {
     console.log("companyID: ", companyID);
     Model.CompanyId = companyID
     this.UpdateViewModel()
+    var URL = await SessionHelper.GetURLSession();
+    if (URL) {
+      Model.URL = URL;
+      this.UpdateViewModel();
+    }
+    console.log("URL: ",URL);
     
 
     // const deviceId = DeviceInfo.getDeviceId();
@@ -64,8 +71,7 @@ export default class Loginpage extends BaseComponent<any, LoginViewModel> {
    requestNotificationPermission = async () => {
     const result = await request(PERMISSIONS.ANDROID.POST_NOTIFICATIONS);
     return result;
-  };
-  
+  };  
   checkNotificationPermission = async () => {
     const result = await check(PERMISSIONS.ANDROID.POST_NOTIFICATIONS);
     return result;
@@ -97,6 +103,8 @@ export default class Loginpage extends BaseComponent<any, LoginViewModel> {
   };
   Login = async () => {
     var Model = this.state.Model;
+    console.log("ModelURl: ", Model.URL);
+    
     SessionHelper.SetUserNameSession(Model.UserName);
     SessionHelper.SetDeviceIdSession(Model.DeviceId);
     var value = await SessionHelper.GetSession();
@@ -112,7 +120,7 @@ export default class Loginpage extends BaseComponent<any, LoginViewModel> {
     };
     axios
       .post(
-        `http://eiplutm.eresourceerp.com/AzaaleaR/API/Sys/Sys.aspx/JValidate`,
+        `http://${Model.URL}/API/Sys/Sys.aspx/JValidate`,
         LoginCredential,
         {headers: headers},
       )

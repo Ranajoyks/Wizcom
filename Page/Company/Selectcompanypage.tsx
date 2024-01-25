@@ -12,7 +12,7 @@ export class CompanyViewModel {
   CityId: string = '';
   CityList: any[] = [];
   URL: string = 'eiplutm.eresourceerp.com/AzaaleaR';
-  Offset:any
+  Offset: any;
 }
 
 export default class Selectcompanypage extends BaseComponent<
@@ -29,18 +29,22 @@ export default class Selectcompanypage extends BaseComponent<
   async componentDidMount() {
     var Model = this.state.Model;
     console.log('Company Url: ', Model.URL);
+    var URL = await SessionHelper.GetURLSession();
+    if (URL) {
+      Model.URL = URL;
+      this.UpdateViewModel();
+    }
     var date = new Date();
     console.log(date.getTimezoneOffset());
-    Model.Offset = date.getTimezoneOffset()
+    Model.Offset = date.getTimezoneOffset();
     this.UpdateViewModel();
     this.Initializes();
-
   }
   SetCompany = (event: any) => {
-    var Model = this.state.Model
+    var Model = this.state.Model;
     this.SetModelValue(event.name, event.value);
-    console.log("event: ", event.value);
-    
+    console.log('event: ', event.value);
+
     const headers = {
       'Content-Type': 'application/json',
     };
@@ -68,9 +72,7 @@ export default class Selectcompanypage extends BaseComponent<
       .catch(err => {
         // console.log(err);
       });
-    this.props.navigation.navigate({
-      name: 'Loginpage',
-    });
+    this.props.navigation.push('Loginpage');
   };
 
   Initializes = () => {

@@ -26,6 +26,7 @@ import axios from 'axios';
 import {Chat} from '../../Entity/Chat';
 import EntityHelperService from '../Service/EntityHelperService';
 import NetInfo from '@react-native-community/netinfo';
+import RenderHtml from 'react-native-render-html';
 export class ChatdetailsViewModel {
   Message: string = '';
   InvokeMessage: string = '';
@@ -56,6 +57,7 @@ export class ChatdetailsViewModel {
   Scroll: boolean = true;
   DataLength: number = 0;
   BranchID: number = 1;
+  URL: string = 'eiplutm.eresourceerp.com/AzaaleaR';
 }
 export class AllChats {
   date: any = new Date();
@@ -86,7 +88,6 @@ var CurDate;
 var PntDate = '';
 var TodayDate = '';
 var prdt = false;
-var ButtonVar = "<Button><Text>Login</Text></Button>"
 export default class Chatdetails extends BaseComponent<
   any,
   ChatdetailsViewModel
@@ -102,6 +103,11 @@ export default class Chatdetails extends BaseComponent<
     var Model = this.state.Model;
     var ConnectionCode = await SessionHelper.GetCompanyIDSession();
     Model.receiverId = `${ConnectionCode}_${Model.User.lId.toString()}`;
+    var URL = await SessionHelper.GetURLSession();
+    if (URL) {
+      Model.URL = URL;
+      this.UpdateViewModel();
+    }
     this.MakeConnection();
 
     // this.ReceiveMsg();
@@ -801,6 +807,23 @@ export default class Chatdetails extends BaseComponent<
   LocationPage = () => {
     this.props.navigation.navigate('MapPage');
   };
+  Approve = async(text: string) => {
+    var value = await SessionHelper.GetSession();
+    const headers = {
+      'Content-Type': 'application/json',
+      Cookie: `ASP.NET_SessionId=${value}`,
+    };
+    var Model = this.state.Model
+    console.log('Approve: ', text);
+    axios.get(`http://${Model.URL}/${text}`,{headers:headers}).then((res)=>{
+      console.log(res.data);
+      Alert.alert(JSON.stringify(res.data))
+      
+    }).catch((err)=>{
+      console.log(err);
+      Alert.alert(JSON.stringify(err))
+    })
+  };
   render() {
     // const { url } = this.state;
     const prefix = 'https://';
@@ -1070,18 +1093,51 @@ export default class Chatdetails extends BaseComponent<
                       <Text style={styles.today}>{showdate}</Text>
                     ) : null}
 
-                    {item.Chat.map((i: Chat) =>{
-                      return(
-                      `${Model.ConnectionCode}_${i.lSenderId}` ==
+                    {item.Chat.map((i: Chat) => {
+                      var MsgSplit = i.sMsg.split('||');
+                      console.log('MsgSplitlength: ', MsgSplit.length);
+
+                      return `${Model.ConnectionCode}_${i.lSenderId}` ==
                         Model.senderId || i.lSenderId == Model.senderId ? (
                         <>
                           <View style={styles.messageto}>
                             <View style={styles.messagetomessage}>
                               <View style={styles.messagetotext}>
-                                <Text style={styles.messagetotextcontent}>
-                                  {i?.sMsg}
-                                </Text>
-                                {/* <View>{ButtonVar}</View> */}
+                                {MsgSplit.length == 2 ? (
+                                  <><View style={{ flexDirection: 'row',gap:5 }}><Button
+                                      onPress={() => this.Approve(MsgSplit[0])}
+                                      style={styles.buttontest}>
+                                      <Text
+                                        style={{
+                                          color: 'white',
+                                          // fontWeight: '800',
+                                          fontFamily: 'Poppins-Regular',
+                                          fontSize: 12,
+                                          margin:0
+                                        }}>
+                                        Approve
+                                      </Text>
+                                    </Button>
+                                    <Button
+                                      onPress={() => this.Approve(MsgSplit[1])}
+                                      style={styles.rejectbuttontest}>
+                                      <Text
+                                        style={{
+                                          color: 'white',
+                                          // fontWeight: '800',
+                                          fontFamily: 'Poppins-Regular',
+                                          fontSize: 12,
+                                        }}>
+                                        Reject
+                                      </Text>
+                                    </Button>
+                                    </View>
+                                    </>
+                                ) : (
+                                  <Text style={styles.messagetotextcontent}>
+                                    {i?.sMsg}
+                                  </Text>
+                                )}
                               </View>
                             </View>
                             <View style={styles.messagetotime}>
@@ -1140,8 +1196,8 @@ export default class Chatdetails extends BaseComponent<
                             </View>
                           </View>
                         </>
-                      ))
-                                })}
+                      );
+                    })}
                   </View>
                 );
               })}
@@ -1350,15 +1406,31 @@ const styles = StyleSheet.create({
   },
   buttontest: {
     alignSelf: 'center',
-    marginTop: '90%',
-    height: 50,
-    textAlign: 'center',
-    justifyContent: 'center',
+    // marginTop: '90%',
+    height: 34,
+    // textAlign: 'center',
+    // justifyContent: 'center',
     backgroundColor: '#0383FA',
     color: 'white',
-    borderRadius: 7,
+    borderRadius: 5,
 
-    // padding: 10,
-    width: '95%',
+    paddingHorizontal:10 ,
+    paddingVertical:0
+    // width: '95%',
+  },
+  rejectbuttontest: {
+    alignSelf: 'center',
+    // marginTop: '90%',
+    height: 34,
+    // textAlign: 'center',
+    // justifyContent: 'center',
+    backgroundColor: 'red',
+    color: 'white',
+    borderRadius: 5,
+
+    paddingHorizontal:10 ,
+    paddingVertical:0
+
+    // width: '95%',
   },
 });

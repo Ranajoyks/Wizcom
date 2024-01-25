@@ -34,8 +34,14 @@ export default class Branchpage extends BaseComponent<any, BranchViewModel> {
     var ConnectionCode = await SessionHelper.GetCompanyIDSession();
     var UserName = await SessionHelper.GetUserNameSession();
     var FCMTOKEN = await SessionHelper.GetFCMTokenSession();
+    Model.FCMToken = FCMTOKEN
+    this.UpdateViewModel()
     console.log('TokenFCM; ', FCMTOKEN);
-
+    var URL = await SessionHelper.GetURLSession();
+    if (URL) {
+      Model.URL = URL;
+      this.UpdateViewModel();
+    }
     Model.UserName = UserName;
     Model.ConnectionCode = ConnectionCode;
     this.UpdateViewModel();
@@ -59,7 +65,7 @@ export default class Branchpage extends BaseComponent<any, BranchViewModel> {
     };
     axios
       .post(
-        `http://eiplutm.eresourceerp.com/AzaaleaR/API/Sys/Sys.aspx/JOpnCmpny`,
+        `http://${Model.URL}/API/Sys/Sys.aspx/JOpnCmpny`,
         CompanyCredential,
         {headers: headers},
       )
@@ -144,6 +150,8 @@ export default class Branchpage extends BaseComponent<any, BranchViewModel> {
                         userId: `${Model.ConnectionCode}_${response.data[0].lId}`,
                         deviceId: Model.FCMToken,
                       });
+                      console.log("SaveUserDevice: ",SaveUserDevice);
+                      
                       axios
                         .post(
                           `https://wemessanger.azurewebsites.net/api/user/device`,

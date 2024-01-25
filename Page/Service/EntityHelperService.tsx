@@ -45,12 +45,12 @@ export default class EntityHelperService {
       date.getTime() + date.getTimezoneOffset() * 60 * 1000,
     );
 
-    var offset = date.getTimezoneOffset() / 60;
-    var hours = date.getHours()+1;
+    // var offset = date.getTimezoneOffset() / 60;
+    // var hours = date.getHours()+1;
 
-    newDate.setHours(hours - offset);
+    // newDate.setHours(hours - offset);
     // console.log(newDate);
-    const formattedDate = moment(newDate.toString()).format('HH:mm');
+    const formattedDate = moment(date).format('HH:mm');
     return formattedDate;
   }
   public static convertLocalDate(date: any) {

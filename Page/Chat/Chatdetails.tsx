@@ -27,6 +27,7 @@ import {Chat} from '../../Entity/Chat';
 import EntityHelperService from '../Service/EntityHelperService';
 import NetInfo from '@react-native-community/netinfo';
 import RenderHtml from 'react-native-render-html';
+import moment from 'moment';
 export class ChatdetailsViewModel {
   Message: string = '';
   InvokeMessage: string = '';
@@ -68,7 +69,7 @@ export class Chatss {
   bEmlStatus: number = 0;
   bStatus: boolean = false;
   cMsgFlg: string = '';
-  dtMsg?: Date;
+  chidtMsg? :Date;
   lAttchId: number = 0;
   lCompId: number = 0;
   lFromStatusId: number = 0;
@@ -81,6 +82,7 @@ export class Chatss {
   lTypId: number = 0;
   sConnId: string = '';
   sMsg: string = '';
+  dtMsg: any;
 }
 var intervalId: any = true;
 var MsgCounter = 0;
@@ -223,6 +225,10 @@ export default class Chatdetails extends BaseComponent<
         const encodedMsg = message;
         var ReceiveMSg = new Chatss();
         if (message) {
+          var date = new Date();
+          var newDate = new Date(
+            date.getTime() - date.getTimezoneOffset() * 60 * 1000,
+          );
           Model.Scroll = true;
           MsgCounter = MsgCounter + 1;
           var date = new Date();
@@ -239,7 +245,7 @@ export default class Chatdetails extends BaseComponent<
           var dt = new Date(newDate);
           ReceiveMSg.dtMsg = dt;
           var XyzIndex = Model.NewChat.findIndex((i: AllChats) => {
-            const itemDate = new Date();
+            const itemDate = new Date(newDate);
             const iDate = new Date(i.date);
             return (
               itemDate.getUTCFullYear() === iDate.getUTCFullYear() &&
@@ -248,7 +254,7 @@ export default class Chatdetails extends BaseComponent<
             );
           });
           var Xyz = Model.NewChat.find((i: AllChats) => {
-            const itemDate = new Date();
+            const itemDate = new Date(newDate);
             const iDate = new Date(i.date);
             return (
               itemDate.getUTCFullYear() === iDate.getUTCFullYear() &&
@@ -279,29 +285,31 @@ export default class Chatdetails extends BaseComponent<
             this.UpdateViewModel();
             console.log('newChatsend: ', JSON.stringify(Model.NewChat));
           } else {
-          var NewChatArray = new AllChats();
-          var date = new Date();
-    
-          if (
-            date.getUTCFullYear() === new Date(ReceiveMSg.dtMsg).getUTCFullYear() &&
-            date.getUTCMonth() === new Date(ReceiveMSg.dtMsg).getUTCMonth() &&
-            date.getUTCDate() === new Date(ReceiveMSg.dtMsg).getUTCDate()
-          ) {
-            NewChatArray.istoday = true;
-          } else {
-            NewChatArray.istoday = false;
-          }
-          console.log('ReceiveMSg date', ReceiveMSg.dtMsg);
-          NewChatArray.date = ReceiveMSg.dtMsg;
-          // console.log('indexnotavailable', NewChatArray);
-          console.log('ReceiveMSgNNNN date', NewChatArray.date);
-    
-          NewChatArray.Chat.push(ReceiveMSg);
-          Model.NewChat.push(NewChatArray);
-          MsgCounter = 0;
-          // console.log('newChat: ', JSON.stringify(model.NewChat));
-          Model.Message = '';
-          this.UpdateViewModel();
+            var NewChatArray = new AllChats();
+            // var date = new Date();
+            console.log("ElseDate: ",newDate);  
+
+            if (
+              newDate.getUTCFullYear() ===
+                new Date(ReceiveMSg.dtMsg).getUTCFullYear() &&
+                newDate.getUTCMonth() === new Date(ReceiveMSg.dtMsg).getUTCMonth() &&
+                newDate.getUTCDate() === new Date(ReceiveMSg.dtMsg).getUTCDate()
+            ) {
+              NewChatArray.istoday = true;
+            } else {
+              NewChatArray.istoday = false;
+            }
+            console.log('ReceiveMSg date', ReceiveMSg.dtMsg);
+            NewChatArray.date = ReceiveMSg.dtMsg;
+            // console.log('indexnotavailable', NewChatArray);
+            console.log('ReceiveMSgNNNN date', NewChatArray.date);
+
+            NewChatArray.Chat.push(ReceiveMSg);
+            Model.NewChat.push(NewChatArray);
+            MsgCounter = 0;
+            // console.log('newChat: ', JSON.stringify(model.NewChat));
+            Model.Message = '';
+            this.UpdateViewModel();
           }
         }
       },
@@ -366,13 +374,17 @@ export default class Chatdetails extends BaseComponent<
   // };
   GetAllMsg = async () => {
     var Model = this.state.Model;
-    PntDate = '';
-    TodayDate =
-      new Date().getUTCFullYear() +
-      '-' +
-      ('0' + (new Date().getUTCMonth() + 1)).slice(-2) +
-      '-' +
-      new Date().getUTCDate();
+    var date = new Date();
+    var newDate = new Date(
+      date.getTime() - date.getTimezoneOffset() * 60 * 1000,
+    );
+    // PntDate = '';
+    // TodayDate =
+    //   new Date().getUTCFullYear() +
+    //   '-' +
+    //   ('0' + (new Date().getUTCMonth() + 1)).slice(-2) +
+    //   '-' +
+    //   new Date().getUTCDate();
     console.log('Today Date: ', TodayDate);
     console.log(Model.companyId);
     console.log(Model.senderId);
@@ -455,12 +467,15 @@ export default class Chatdetails extends BaseComponent<
       return;
     } else {
       var date = new Date();
+      var newDate = new Date(
+        date.getTime() - date.getTimezoneOffset() * 60 * 1000,
+      );
       // const modifiedDate = new Date(date.getTime() - 19800000);
       console.log('Msg sent:', model.Message);
       model.InvokeMessage = model.Message;
       this.UpdateViewModel();
       var XyzIndex = model.NewChat.findIndex((i: AllChats) => {
-        const itemDate = new Date();
+        const itemDate = new Date(newDate);
         const iDate = new Date(i.date);
         return (
           itemDate.getUTCFullYear() === iDate.getUTCFullYear() &&
@@ -469,15 +484,18 @@ export default class Chatdetails extends BaseComponent<
         );
       });
       var Xyz = model.NewChat.find((i: AllChats) => {
-        const itemDate = new Date();
+        const itemDate = new Date(newDate);
         const iDate = new Date(i.date);
+        console.log('xyzindexitemDate', itemDate);
+        console.log('xyzindexiDate', iDate);
         return (
           itemDate.getUTCFullYear() === iDate.getUTCFullYear() &&
           itemDate.getUTCMonth() === iDate.getUTCMonth() &&
           itemDate.getUTCDate() === iDate.getUTCDate()
         );
       });
-      console.log('index', XyzIndex);
+      // console.log('index', XyzIndex);
+      console.log('xyzindex', Xyz);
       var sendMsg = new Chatss();
       sendMsg.sMsg = model.Message;
       sendMsg.lSenderId = model.senderId;
@@ -517,37 +535,38 @@ export default class Chatdetails extends BaseComponent<
       //   new Date().getUTCDate();
       // console.log('Today Date: ', TodayDate);
       var NewChatArray = new AllChats();
-      console.log('Send MSg: ', sendMsg);
+      // console.log('Send MSg: ', sendMsg);
       if (Xyz) {
-        // console.log('indexavailable', model.NewChat[XyzIndex]);
+        console.log('indexavailable', model.NewChat[XyzIndex]);
         model.NewChat[XyzIndex].Chat.push(sendMsg);
         model.Message = '';
         this.UpdateViewModel();
         console.log('newChatsend: ', JSON.stringify(model.NewChat));
       } else {
-      var NewChatArray = new AllChats();
-      var date = new Date();
+        var NewChatArray = new AllChats();
+        // var date = new Date();
+        console.log("ElseDate: ",newDate);      
 
-      if (
-        date.getUTCFullYear() === new Date(sendMsg.dtMsg).getUTCFullYear() &&
-        date.getUTCMonth() === new Date(sendMsg.dtMsg).getUTCMonth() &&
-        date.getUTCDate() === new Date(sendMsg.dtMsg).getUTCDate()
-      ) {
-        NewChatArray.istoday = true;
-      } else {
-        NewChatArray.istoday = false;
-      }
-      console.log('sendMsg date', sendMsg.dtMsg);
-      NewChatArray.date = sendMsg.dtMsg;
-      // console.log('indexnotavailable', NewChatArray);
-      console.log('sendMsgNNNN date', NewChatArray.date);
+        if (
+          newDate.getUTCFullYear() === new Date(sendMsg.dtMsg).getUTCFullYear() &&
+          newDate.getUTCMonth() === new Date(sendMsg.dtMsg).getUTCMonth() &&
+          newDate.getUTCDate() === new Date(sendMsg.dtMsg).getUTCDate()
+        ) {
+          NewChatArray.istoday = true;
+        } else {
+          NewChatArray.istoday = false;
+        }
+        // console.log('sendMsg date', sendMsg.dtMsg);
+        NewChatArray.date = sendMsg.dtMsg;
+        // console.log('indexnotavailable', NewChatArray);
+        // console.log('sendMsgNNNN date', NewChatArray.date);
 
-      NewChatArray.Chat.push(sendMsg);
-      model.NewChat.push(NewChatArray);
-      MsgCounter = 0;
-      // console.log('newChat: ', JSON.stringify(model.NewChat));
-      model.Message = '';
-      this.UpdateViewModel();
+        NewChatArray.Chat.push(sendMsg);
+        model.NewChat.push(NewChatArray);
+        MsgCounter = 0;
+        console.log('newChat: ', JSON.stringify(model.NewChat));
+        model.Message = '';
+        this.UpdateViewModel();
       }
       console.log(
         'SendMessage',
@@ -789,7 +808,8 @@ export default class Chatdetails extends BaseComponent<
               var NewChatArray = new AllChats();
               var date = new Date();
               if (
-                date.getUTCFullYear() === new Date(item.dtMsg).getUTCFullYear() &&
+                date.getUTCFullYear() ===
+                  new Date(item.dtMsg).getUTCFullYear() &&
                 date.getUTCMonth() === new Date(item.dtMsg).getUTCMonth() &&
                 date.getUTCDate() === new Date(item.dtMsg).getUTCDate()
               ) {
@@ -1095,7 +1115,7 @@ export default class Chatdetails extends BaseComponent<
                       <Text style={styles.today}>Today</Text>
                     ) : (
                       <Text style={styles.today}>
-                        Next Day
+                       {moment.utc(item.date).format('DD-MM-YYYY')}
                         {/* {`${item?.date.slice(8, 10)}-${item?.date.slice(5,7)}-${item?.date.slice(0, 4)}`} */}
                       </Text>
                     )}
@@ -1159,11 +1179,10 @@ export default class Chatdetails extends BaseComponent<
                             </View>
                             <View style={styles.messagetotime}>
                               <Text style={styles.messagefromtimetext}>
-                                {EntityHelperService.convertUTCDateToLocalDate(
-                                  new Date(i?.dtMsg),
-                                )}
+                               {moment.utc(i.dtMsg).format('HH:mm')}
+                                {/* {i.dtMsg.toString()} */}
                               </Text>
-                              <Text>{item?.istoday}</Text>
+                              {/* <Text>{item?.istoday}</Text> */}
                             </View>
                           </View>
                         </>
@@ -1205,9 +1224,8 @@ export default class Chatdetails extends BaseComponent<
                             </View>
                             <View style={styles.messagefromtime}>
                               <Text style={styles.messagefromtimetext}>
-                                {EntityHelperService.convertUTCDateToLocalDate(
-                                  new Date(i?.dtMsg),
-                                )}
+                              {moment.utc(i.dtMsg).format('HH:mm')}
+                                {/* {i?.dtMsg} */}
                               </Text>
                               <Text>{item?.istoday}</Text>
                             </View>

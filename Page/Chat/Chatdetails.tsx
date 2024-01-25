@@ -109,8 +109,6 @@ export default class Chatdetails extends BaseComponent<
       this.UpdateViewModel();
     }
     this.MakeConnection();
-
-    // this.ReceiveMsg();
     var User = await SessionHelper.GetUserDetailsSession();
     var FCMToken = await SessionHelper.GetFCMTokenSession();
     var ConnectionCode = await SessionHelper.GetCompanyIDSession();
@@ -128,20 +126,12 @@ export default class Chatdetails extends BaseComponent<
     console.log('UserDetails.lId', Model.senderId);
     this.UpdateViewModel();
     this.GetAllMsg();
-    // this.CheckAppStatus();
     SessionHelper.SetReceiverIDSession(Model.receiverId);
-    // setInterval(this.CheckAppStatus, 2000);
-    // setTimeout(() => {this.CheckAppStatus},2000)
-
-    // this.CheckInternetConnetion();
-    // if(Model.SignalRConnected === false){
-    //   intervalId = setInterval(this.CheckInternetConnetion, 7000);
-    // // this.UpdateViewModel()
-    // }
     if (Platform.OS == 'android') {
       BackHandler.addEventListener('hardwareBackPress', this.handleBackButton);
     }
     this.MarkRead();
+    this.IsTalking();
   }
   componentWillUnmount() {
     BackHandler.removeEventListener('hardwareBackPress', this.handleBackButton);
@@ -166,6 +156,8 @@ export default class Chatdetails extends BaseComponent<
       senderId: Model.senderId,
       receiverId: Model.receiverId,
     });
+    console.log('Markread: ', Data);
+
     axios
       .put(`https://wemessanger.azurewebsites.net/api/user`, Data, {headers})
       .then((res: any) => {
@@ -175,53 +167,30 @@ export default class Chatdetails extends BaseComponent<
         console.log('ReadMSgERror: ', err);
       });
   };
-  // componentWillUnmount() {
-  //   var Model = this.state.Model
-
-  //   // if(Model.SignalRConnected === false){
-  //   //   intervalId = setInterval(this.CheckInternetConnetion, 3000);
-  //   // // this.UpdateViewModel()
-  //   // }
-
-  // }
-  // async componentWillUnmount() {
-  //   var model = this.state.Model
-  //   console.log('gdfgfgf')
-  //   if (model.InterNetConnection == true) {
-  //     console.log("ModelConnecrtion: ", model.Connection);
-  //     console.log("ModelInternetConnecrtion: ", model.InterNetConnection);
-
-  //     // if(model.Connection==null){
-  //    await this.MakeConnection();
-  //      await model.Connection.start()
-  //     .then(() => {
-  //       console.log('SignalR connected');
-  //       model.Connection.invoke('JoinChat', model.senderId);
-  //     })
-  //     // }
-
-  //   }
-  //   this.UpdateViewModel()
-
-  // }
-  // requestUserPermission = async () => {
-  //   const authStatus = await messaging().requestPermission();
-  //   const enabled =
-  //     authStatus === messaging.AuthorizationStatus.AUTHORIZED ||
-  //     authStatus === messaging.AuthorizationStatus.PROVISIONAL;
-
-  //   if (enabled) {
-  //     console.log('Authorization status:', authStatus);
-  //   }
-  // };
-  // getDeviceToken = async () => {
-  //   try {
-  //     const token = await messaging().getToken();
-  //     console.log('Device Token:', token);
-  //   } catch (error) {
-  //     console.error('Error getting device token:', error);
-  //   }
-  // };
+  IsTalking = () => {
+    var Model = this.state.Model;
+    const headers = {
+      'Content-Type': 'application/json',
+    };
+    var TalkingData = JSON.stringify({
+      FromUserId: Model.senderId,
+      ToUserId: Model.receiverId,
+      IsTaking: true,
+    });
+    console.log('TalkingData: ', TalkingData);
+    axios
+      .post(
+        `https://wemessanger.azurewebsites.net/api/user/taking`,
+        TalkingData,
+        {headers: headers},
+      )
+      .then(res => {
+        console.log('TalkingRes: ', res.data);
+      })
+      .catch(err => {
+        console.log('TalkingError: ', err);
+      });
+  };
   MakeConnection = async () => {
     console.log('hello');
     var Model = this.state.Model;
@@ -553,6 +522,16 @@ export default class Chatdetails extends BaseComponent<
       model.Message = '';
       this.UpdateViewModel();
       // }
+      console.log(
+        'SendMessage',
+        model.companyId,
+        model.senderId,
+        model.receiverId,
+        model.InvokeMessage,
+        model.msgflag,
+        model.itype,
+      );
+
       await model.Connection.invoke(
         'SendMessage',
         model.companyId,
@@ -571,6 +550,7 @@ export default class Chatdetails extends BaseComponent<
           console.log('errorsssss');
           console.error('Error invoking SendMessage:', error);
         });
+      this.MarkRead();
     }
     // }
     // if (!model.SignalRConnected) {
@@ -807,22 +787,24 @@ export default class Chatdetails extends BaseComponent<
   LocationPage = () => {
     this.props.navigation.navigate('MapPage');
   };
-  Approve = async(text: string) => {
+  Approve = async (text: string) => {
     var value = await SessionHelper.GetSession();
     const headers = {
       'Content-Type': 'application/json',
       Cookie: `ASP.NET_SessionId=${value}`,
     };
-    var Model = this.state.Model
+    var Model = this.state.Model;
     console.log('Approve: ', text);
-    axios.get(`http://${Model.URL}/${text}`,{headers:headers}).then((res)=>{
-      console.log(res.data);
-      Alert.alert(JSON.stringify(res.data))
-      
-    }).catch((err)=>{
-      console.log(err);
-      Alert.alert(JSON.stringify(err))
-    })
+    axios
+      .get(`http://${Model.URL}/${text}`, {headers: headers})
+      .then(res => {
+        console.log(res.data);
+        Alert.alert(JSON.stringify(res.data));
+      })
+      .catch(err => {
+        console.log(err);
+        Alert.alert(JSON.stringify(err));
+      });
   };
   render() {
     // const { url } = this.state;
@@ -1104,35 +1086,42 @@ export default class Chatdetails extends BaseComponent<
                             <View style={styles.messagetomessage}>
                               <View style={styles.messagetotext}>
                                 {MsgSplit.length == 2 ? (
-                                  <><View style={{ flexDirection: 'row',gap:5 }}><Button
-                                      onPress={() => this.Approve(MsgSplit[0])}
-                                      style={styles.buttontest}>
-                                      <Text
-                                        style={{
-                                          color: 'white',
-                                          // fontWeight: '800',
-                                          fontFamily: 'Poppins-Regular',
-                                          fontSize: 12,
-                                          margin:0
-                                        }}>
-                                        Approve
-                                      </Text>
-                                    </Button>
-                                    <Button
-                                      onPress={() => this.Approve(MsgSplit[1])}
-                                      style={styles.rejectbuttontest}>
-                                      <Text
-                                        style={{
-                                          color: 'white',
-                                          // fontWeight: '800',
-                                          fontFamily: 'Poppins-Regular',
-                                          fontSize: 12,
-                                        }}>
-                                        Reject
-                                      </Text>
-                                    </Button>
+                                  <>
+                                    <View
+                                      style={{flexDirection: 'row', gap: 5}}>
+                                      <Button
+                                        onPress={() =>
+                                          this.Approve(MsgSplit[0])
+                                        }
+                                        style={styles.buttontest}>
+                                        <Text
+                                          style={{
+                                            color: 'white',
+                                            // fontWeight: '800',
+                                            fontFamily: 'Poppins-Regular',
+                                            fontSize: 12,
+                                            margin: 0,
+                                          }}>
+                                          Approve
+                                        </Text>
+                                      </Button>
+                                      <Button
+                                        onPress={() =>
+                                          this.Approve(MsgSplit[1])
+                                        }
+                                        style={styles.rejectbuttontest}>
+                                        <Text
+                                          style={{
+                                            color: 'white',
+                                            // fontWeight: '800',
+                                            fontFamily: 'Poppins-Regular',
+                                            fontSize: 12,
+                                          }}>
+                                          Reject
+                                        </Text>
+                                      </Button>
                                     </View>
-                                    </>
+                                  </>
                                 ) : (
                                   <Text style={styles.messagetotextcontent}>
                                     {i?.sMsg}
@@ -1414,8 +1403,8 @@ const styles = StyleSheet.create({
     color: 'white',
     borderRadius: 5,
 
-    paddingHorizontal:10 ,
-    paddingVertical:0
+    paddingHorizontal: 10,
+    paddingVertical: 0,
     // width: '95%',
   },
   rejectbuttontest: {
@@ -1428,8 +1417,8 @@ const styles = StyleSheet.create({
     color: 'white',
     borderRadius: 5,
 
-    paddingHorizontal:10 ,
-    paddingVertical:0
+    paddingHorizontal: 10,
+    paddingVertical: 0,
 
     // width: '95%',
   },

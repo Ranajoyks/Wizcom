@@ -17,7 +17,7 @@ import BaseComponent from '../../Core/BaseComponent';
 import BaseState from '../../Core/BaseState';
 import {TouchableOpacity} from 'react-native-gesture-handler';
 import axios from 'axios';
-import alluser from '../../Entity/alluser';
+import alluser from '../../Entity/User';
 import SessionHelper from '../../Core/SessionHelper';
 import DeviceInfo from 'react-native-device-info';
 import * as signalR from '@microsoft/signalr';

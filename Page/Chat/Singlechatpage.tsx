@@ -57,6 +57,7 @@ export class SinglechatpageViewModel {
   OnlineUserLength: number = 0;
   AppStatus: any = AppState.currentState;
   currentLocation: any;
+  ReceiverID: string = '';
 }
 export default class Singlechatpage extends BaseComponent<
   any,
@@ -73,7 +74,7 @@ export default class Singlechatpage extends BaseComponent<
   }
   async componentDidMount() {
     var Model = this.state.Model;
-   
+
     // console.log('Appstate: ', AppState.currentState);
     // const deviceId = DeviceInfo.getDeviceId();
     // Model.DeviceId = deviceId;
@@ -85,6 +86,10 @@ export default class Singlechatpage extends BaseComponent<
     var BranchName = await SessionHelper.GetBranchNameSession();
     var UserName = await SessionHelper.GetUserNameSession();
     var BranchID = await SessionHelper.GetBranchIdSession();
+    var ReceicerId = await SessionHelper.GetReceiverIDSession();
+    if (ReceicerId) {
+      Model.ReceiverID = ReceicerId;
+    }
     Model.BranchID = BranchID;
     Model.UserName = UserName;
     Model.BranchName = BranchName;
@@ -98,6 +103,7 @@ export default class Singlechatpage extends BaseComponent<
     this.FetchAllUser();
     this.GetAllNotification();
     this.CheckAppStatus();
+    this.IsTalking()
     // console.log('User: ', User);
     // console.log('User: ', Model.UserName);
     // setInterval(this.FetchAllUser, 120000);
@@ -105,10 +111,36 @@ export default class Singlechatpage extends BaseComponent<
     // console.log('Next AppState', Model.AppStatus);
     // Geolocation.getCurrentPosition(info => console.log("info:", info));
   }
+  IsTalking = async() => {
+    var Model = this.state.Model;
+    var UserDetails = await SessionHelper.GetUserDetailsSession();
+    const headers = {
+      'Content-Type': 'application/json',
+    };
+    var TalkingData = JSON.stringify({
+      FromUserId: `${Model.ConnectionCode}_${UserDetails.lId}`,
+      ToUserId: Model.ReceiverID,
+      IsTaking: false,
+    });
+    console.log("TalkingData: ",TalkingData);
+    
+    axios
+      .post(
+        `https://wemessanger.azurewebsites.net/api/user/taking`,
+        TalkingData,
+        {headers: headers},
+      )
+      .then(res => {
+        console.log('TalkingRes: ', res.data);
+      })
+      .catch(err => {
+        console.log('TalkingError: ', err);
+      });
+  };
   GetLocation = () => {
     var Model = this.state.Model;
-    console.log("senderId: ", Model.SenderID);
-    
+    console.log('senderId: ', Model.SenderID);
+
     Geolocation.getCurrentPosition(info => {
       Model.currentLocation = info;
       // console.log('locationlatitude', Model.currentLocation?.coords?.latitude.toString());
@@ -123,16 +155,17 @@ export default class Singlechatpage extends BaseComponent<
       Lat: Model.currentLocation?.coords?.latitude.toString(),
       Long: Model.currentLocation?.coords?.longitude.toString(),
     });
-    console.log("location data: ",Data);
-    
+
     axios
-      .post(`https://wemessanger.azurewebsites.net/api/user/location`, Data, {headers})
-      .then((res: any) => {
-        console.log('Location: ', res.data);
+      .post(`https://wemessanger.azurewebsites.net/api/user/location`, Data, {
+        headers,
       })
-      .catch((err: any) => {
-        console.log('LocationERror: ', err);
-      });
+      // .then((res: any) => {
+      //   console.log('Location: ', res.data);
+      // })
+      // .catch((err: any) => {
+      //   console.log('LocationERror: ', err);
+      // });
   };
   CheckAppStatus = async () => {
     var Model = this.state.Model;
@@ -198,14 +231,16 @@ export default class Singlechatpage extends BaseComponent<
 
     var Connection = new signalR.HubConnectionBuilder()
       .withUrl(
-        `https://wemessanger.azurewebsites.net/chatHub?UserId=${model.ConnectionCode}_${UserDetails.lId.toString()}`,
+        `https://wemessanger.azurewebsites.net/chatHub?UserId=${
+          model.ConnectionCode
+        }_${UserDetails.lId.toString()}`,
       )
       .build();
     Connection.start().then(() => {
       console.log('SignalR connected');
       var UserList = Connection.invoke('GetAllUser', myId, 0)
         .then(user => {
-          console.log("GetallUser: ",user);
+          console.log('GetallUser: ', user);
           model.alluser = user;
           var UserOnline = user.filter((i: alluser) => i.isUserLive == true);
           model.FilterUser = model.alluser;
@@ -221,10 +256,16 @@ export default class Singlechatpage extends BaseComponent<
               console.log('Connection', isConnected);
 
               if (isConnected) {
-                console.log(`User - ${model.ConnectionCode}_${UserDetails.lId.toString()} is live`);
+                console.log(
+                  `User - ${
+                    model.ConnectionCode
+                  }_${UserDetails.lId.toString()} is live`,
+                );
               } else {
                 console.log(
-                  `User - ${model.ConnectionCode}_${UserDetails.lId.toString()} is not live`,
+                  `User - ${
+                    model.ConnectionCode
+                  }_${UserDetails.lId.toString()} is not live`,
                 );
               }
             })
@@ -375,7 +416,7 @@ export default class Singlechatpage extends BaseComponent<
   };
   GetAllNotification = async () => {
     // console.log('GetNotification');
-    var Model = this.state.Model 
+    var Model = this.state.Model;
     var UserDetails = await SessionHelper.GetUserDetailsSession();
     var myId = `${Model.ConnectionCode}_${UserDetails.lId}`;
     var Model = this.state.Model;

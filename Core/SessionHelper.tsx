@@ -37,8 +37,8 @@ export default class SessionHelper {
         }
         return JSON.parse(item) as any;
     }
-    public static SetSenderIdSession(SenderId: any) {
-        AsyncStorage.setItem('SenderId', JSON.stringify(SenderId))
+    public static async SetSenderIdSession(SenderId: any) {
+       await AsyncStorage.setItem('SenderId', JSON.stringify(SenderId))
     }
     public static async GetSenderIdSession() {
         var item = await AsyncStorage.getItem('SenderId');

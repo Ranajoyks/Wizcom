@@ -6,7 +6,7 @@ import {View, StyleSheet, Text} from 'react-native';
 //   Icon,
 // } from 'native-base';
 import {NavigationContainer} from '@react-navigation/native';
-import {createStackNavigator} from '@react-navigation/stack';
+import {StackNavigationProp, createStackNavigator} from '@react-navigation/stack';
 // import { createDrawerNavigator } from '@react-navigation/drawer';
 // import LoginPage from '../Login/LoginPage';
 // import DashboardPage from '../Dashboard/DashboardPage';
@@ -30,7 +30,9 @@ import Groupchat from '../Page/Chat/Groupchat';
 import Groupchatdetails from '../Page/Chat/Groupchatdetails';
 import NoficationDetails from '../Page/Chat/NoficationDetails';
 import MapPage from '../Page/Map/MapPage';
+import MainPage from '../Page/Chat/MainPage';
 
+ 
 const Stack = createStackNavigator();
 
 function AppStack() {

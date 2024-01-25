@@ -1,4 +1,4 @@
-export default interface alluser {
+export default interface User {
   cMsgFlag: string
   isUserLive: boolean
   lId: number

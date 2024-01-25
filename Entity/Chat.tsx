@@ -2,7 +2,7 @@ export interface Chat {
     bEmlStatus: number
     bStatus: boolean
     cMsgFlg: string
-    dtMsg: string
+    dtMsg: Date
     lAttchId: number
     lCompId: number
     lFromStatusId: number

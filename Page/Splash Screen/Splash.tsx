@@ -21,6 +21,8 @@ import BaseState from '../../Core/BaseState';
 export class SpalshViewModel {
   URL: string = 'eiplutm.eresourceerp.com/AzaaleaR';
   UserID: string = '';
+  ConnectionCode: any;
+  FCMToken: string = '';
 }
 export default class Splash extends BaseComponent<any, SpalshViewModel> {
   constructor(props: any) {
@@ -36,10 +38,12 @@ export default class Splash extends BaseComponent<any, SpalshViewModel> {
   async componentDidMount() {
     var Model = this.state.Model;
     console.log('MODELURL : ', Model.URL);
-
     var value = await SessionHelper.GetSession();
     var UserID = await SessionHelper.GetUserIDSession();
     var URL = await SessionHelper.GetURLSession();
+    var ConnectionCode = await SessionHelper.GetCompanyIDSession();
+    var FCMTOKEN = await SessionHelper.GetFCMTokenSession();
+    Model.FCMToken = FCMTOKEN;
     if (URL) {
       Model.URL = URL;
       this.UpdateViewModel();
@@ -85,32 +89,52 @@ export default class Splash extends BaseComponent<any, SpalshViewModel> {
       .then((res: any) => {
         console.log('resdata: ', res.data);
         if (res.data) {
+          const SaveUserDevice = JSON.stringify({
+            userId: `${companyID}_${Model.UserID}`,
+            deviceId: Model.FCMToken,
+          });
+          console.log('SaveUserDevice: ', SaveUserDevice);
+
           axios
             .post(
-              `http://eiplutm.eresourceerp.com/AzaaleaR/API/Sys/Sys.aspx/JCheckSession`,
+              `https://wemessanger.azurewebsites.net/api/user/device`,
+              SaveUserDevice,
               {headers: headers},
             )
-            .then(res => {
-              console.log('SessionResponse: ', res.data.d);
-              if (res.data.d.bStatus) {
-                this.props.navigation.reset({
-                  index: 0,
-                  routes: [{name: 'Singlechatpage'}],
-                });
-              }
-              if (!res.data.d.bStatus) {
-                this.props.navigation.reset({
-                  index: 0,
-                  routes: [{name: 'Selectcompanypage'}],
-                });
+            .then(DeviceResponse => {
+              console.log('DeviceResponse: ', DeviceResponse.data);
+              if (DeviceResponse.data) {
+                axios
+                  .post(
+                    `http://eiplutm.eresourceerp.com/AzaaleaR/API/Sys/Sys.aspx/JCheckSession`,
+                    {headers: headers},
+                  )
+                  .then(res => {
+                    console.log('SessionResponse: ', res.data.d);
+                    if (res.data.d.bStatus) {
+                      this.props.navigation.reset({
+                        index: 0,
+                        routes: [{name: 'Singlechatpage'}],
+                      });
+                    }
+                    if (!res.data.d.bStatus) {
+                      this.props.navigation.reset({
+                        index: 0,
+                        routes: [{name: 'Selectcompanypage'}],
+                      });
+                    }
+                  })
+                  .catch(err => {
+                    console.log('SessionError: ', err);
+                    this.props.navigation.reset({
+                      index: 0,
+                      routes: [{name: 'Selectcompanypage'}],
+                    });
+                  });
               }
             })
             .catch(err => {
-              console.log('SessionError: ', err);
-              this.props.navigation.reset({
-                index: 0,
-                routes: [{name: 'Selectcompanypage'}],
-              });
+              console.log('DeviceResponseError: ', err);
             });
         }
       })

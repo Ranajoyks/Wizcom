@@ -68,7 +68,7 @@ export class Chatss {
   bEmlStatus: number = 0;
   bStatus: boolean = false;
   cMsgFlg: string = '';
-  dtMsg: string = '';
+  dtMsg?: Date;
   lAttchId: number = 0;
   lCompId: number = 0;
   lFromStatusId: number = 0;
@@ -207,14 +207,12 @@ export default class Chatdetails extends BaseComponent<
         console.log('SignalR connected');
         Model.SignalRConnected = true;
         this.UpdateViewModel();
-        //   clearInterval(intervalId);
         Model.Connection.invoke('JoinChat', Model.senderId);
       })
       .catch((err: any) => {
         Model.Connection.start();
         Model.SignalRConnected = false;
         this.UpdateViewModel();
-        // intervalId = setInterval(this.CheckInternetConnetion, 3000);
         console.error('SignalR connection error:', err);
       });
     await Model.Connection.on(
@@ -234,53 +232,77 @@ export default class Chatdetails extends BaseComponent<
           var newDate = new Date(
             date.getTime() - date.getTimezoneOffset() * 60 * 1000,
           );
-          var offset = date.getTimezoneOffset() / 60;
-          var hours = date.getHours();
-          newDate.setHours(hours + offset);
+          console.log('getTime: ', newDate);
+          // var offset = date.getTimezoneOffset() / 60;
+          // var hours = date.getHours();
+          // newDate.setHours(hours + offset);
           var dt = new Date(newDate);
-
-          ReceiveMSg.dtMsg =
-            dt.getFullYear().toString() +
-            '-' +
-            ('0' + (dt.getMonth() + 1)).slice(-2).toString() +
-            '-' +
-            ('0' + dt.getDate()).slice(-2).toString() +
-            'T' +
-            ('0' + dt.getHours()).slice(-2).toString() +
-            ':' +
-            ('0' + dt.getMinutes()).slice(-2).toString() +
-            ':' +
-            ('0' + dt.getSeconds()).slice(-2).toString() +
-            '.000';
+          ReceiveMSg.dtMsg = dt;
+          var XyzIndex = Model.NewChat.findIndex((i: AllChats) => {
+            const itemDate = new Date();
+            const iDate = new Date(i.date);
+            return (
+              itemDate.getUTCFullYear() === iDate.getUTCFullYear() &&
+              itemDate.getUTCMonth() === iDate.getUTCMonth() &&
+              itemDate.getUTCDate() === iDate.getUTCDate()
+            );
+          });
+          var Xyz = Model.NewChat.find((i: AllChats) => {
+            const itemDate = new Date();
+            const iDate = new Date(i.date);
+            return (
+              itemDate.getUTCFullYear() === iDate.getUTCFullYear() &&
+              itemDate.getUTCMonth() === iDate.getUTCMonth() &&
+              itemDate.getUTCDate() === iDate.getUTCDate()
+            );
+          });
+          // ReceiveMSg.dtMsg =
+          //   dt.getUTCFullYear().toString() +
+          //   '-' +
+          //   ('0' + (dt.getUTCMonth() + 1)).slice(-2).toString() +
+          //   '-' +
+          //   ('0' + dt.getUTCDate()).slice(-2).toString() +
+          //   'T' +
+          //   ('0' + dt.getHours()).slice(-2).toString() +
+          //   ':' +
+          //   ('0' + dt.getMinutes()).slice(-2).toString() +
+          //   ':' +
+          //   ('0' + dt.getSeconds()).slice(-2).toString() +
+          //   '.000';
           console.log(' ReceiveMSg.dtMsg: ', ReceiveMSg.dtMsg);
           var NewChatArray = new AllChats();
           console.log('ArrayPush:___ ');
-          NewChatArray.Chat.push(ReceiveMSg);
-          Model.NewChat.push(NewChatArray);
-          TodayDate =
-            new Date().getFullYear() +
-            '-' +
-            ('0' + (dt.getMonth() + 1)).slice(-2) +
-            '-' +
-            new Date().getDate();
-          console.log('Today Date: ', TodayDate);
-
+          if (Xyz) {
+            // console.log('indexavailable', model.NewChat[XyzIndex]);
+            Model.NewChat[XyzIndex].Chat.push(ReceiveMSg);
+            Model.Message = '';
+            this.UpdateViewModel();
+            console.log('newChatsend: ', JSON.stringify(Model.NewChat));
+          } else {
+          var NewChatArray = new AllChats();
           var date = new Date();
+    
           if (
-            date.getFullYear() === new Date(ReceiveMSg.dtMsg).getFullYear() &&
-            date.getMonth() === new Date(ReceiveMSg.dtMsg).getMonth() &&
-            date.getDate() === new Date(ReceiveMSg.dtMsg).getDate()
+            date.getUTCFullYear() === new Date(ReceiveMSg.dtMsg).getUTCFullYear() &&
+            date.getUTCMonth() === new Date(ReceiveMSg.dtMsg).getUTCMonth() &&
+            date.getUTCDate() === new Date(ReceiveMSg.dtMsg).getUTCDate()
           ) {
             NewChatArray.istoday = true;
           } else {
             NewChatArray.istoday = false;
           }
-          console.log('newChatreceive: ', JSON.stringify(Model.NewChat));
-          console.log('REceiveMSG: ', ReceiveMSg.sMsg);
+          console.log('ReceiveMSg date', ReceiveMSg.dtMsg);
+          NewChatArray.date = ReceiveMSg.dtMsg;
+          // console.log('indexnotavailable', NewChatArray);
+          console.log('ReceiveMSgNNNN date', NewChatArray.date);
+    
+          NewChatArray.Chat.push(ReceiveMSg);
+          Model.NewChat.push(NewChatArray);
           MsgCounter = 0;
+          // console.log('newChat: ', JSON.stringify(model.NewChat));
+          Model.Message = '';
           this.UpdateViewModel();
-          this.MarkRead();
-          return;
+          }
         }
       },
     );
@@ -346,11 +368,11 @@ export default class Chatdetails extends BaseComponent<
     var Model = this.state.Model;
     PntDate = '';
     TodayDate =
-      new Date().getFullYear() +
+      new Date().getUTCFullYear() +
       '-' +
-      ('0' + (new Date().getMonth() + 1)).slice(-2) +
+      ('0' + (new Date().getUTCMonth() + 1)).slice(-2) +
       '-' +
-      new Date().getDate();
+      new Date().getUTCDate();
     console.log('Today Date: ', TodayDate);
     console.log(Model.companyId);
     console.log(Model.senderId);
@@ -372,9 +394,9 @@ export default class Chatdetails extends BaseComponent<
 
             // Compare only the date part
             return (
-              itemDate.getFullYear() === iDate.getFullYear() &&
-              itemDate.getMonth() === iDate.getMonth() &&
-              itemDate.getDate() === iDate.getDate()
+              itemDate.getUTCFullYear() === iDate.getUTCFullYear() &&
+              itemDate.getUTCMonth() === iDate.getUTCMonth() &&
+              itemDate.getUTCDate() === iDate.getUTCDate()
             );
           });
 
@@ -384,9 +406,9 @@ export default class Chatdetails extends BaseComponent<
             const iDate = new Date(i.date);
             // Compare only the date part
             return (
-              itemDate.getFullYear() === iDate.getFullYear() &&
-              itemDate.getMonth() === iDate.getMonth() &&
-              itemDate.getDate() === iDate.getDate()
+              itemDate.getUTCFullYear() === iDate.getUTCFullYear() &&
+              itemDate.getUTCMonth() === iDate.getUTCMonth() &&
+              itemDate.getUTCDate() === iDate.getUTCDate()
             );
           });
 
@@ -400,9 +422,9 @@ export default class Chatdetails extends BaseComponent<
             var NewChatArray = new AllChats();
             var date = new Date();
             if (
-              date.getFullYear() === new Date(item.dtMsg).getFullYear() &&
-              date.getMonth() === new Date(item.dtMsg).getMonth() &&
-              date.getDate() === new Date(item.dtMsg).getDate()
+              date.getUTCFullYear() === new Date(item.dtMsg).getUTCFullYear() &&
+              date.getUTCMonth() === new Date(item.dtMsg).getUTCMonth() &&
+              date.getUTCDate() === new Date(item.dtMsg).getUTCDate()
             ) {
               NewChatArray.istoday = true;
             } else {
@@ -441,18 +463,18 @@ export default class Chatdetails extends BaseComponent<
         const itemDate = new Date();
         const iDate = new Date(i.date);
         return (
-          itemDate.getFullYear() === iDate.getFullYear() &&
-          itemDate.getMonth() === iDate.getMonth() &&
-          itemDate.getDate() === iDate.getDate()
+          itemDate.getUTCFullYear() === iDate.getUTCFullYear() &&
+          itemDate.getUTCMonth() === iDate.getUTCMonth() &&
+          itemDate.getUTCDate() === iDate.getUTCDate()
         );
       });
       var Xyz = model.NewChat.find((i: AllChats) => {
         const itemDate = new Date();
         const iDate = new Date(i.date);
         return (
-          itemDate.getFullYear() === iDate.getFullYear() &&
-          itemDate.getMonth() === iDate.getMonth() &&
-          itemDate.getDate() === iDate.getDate()
+          itemDate.getUTCFullYear() === iDate.getUTCFullYear() &&
+          itemDate.getUTCMonth() === iDate.getUTCMonth() &&
+          itemDate.getUTCDate() === iDate.getUTCDate()
         );
       });
       console.log('index', XyzIndex);
@@ -464,64 +486,69 @@ export default class Chatdetails extends BaseComponent<
       );
       console.log('getTime: ', newDate);
 
-      var offset = date.getTimezoneOffset() / 60;
-      var hours = date.getHours();
-      newDate.setHours(hours + offset);
-      console.log('NewDate: ', newDate);
-
+      // var offset = date.getTimezoneOffset() / 60;
+      // var hours = date.getHours();
+      // newDate.setHours(hours + offset);
+      // console.log('NewDate: ', newDate);
       var dt = new Date(newDate);
+      sendMsg.dtMsg = dt;
+      // console.log('dttttttt: ', dt.getUTCFullYear());
+      // console.log('datetttttt: ', date.getUTCDate());
 
-      sendMsg.dtMsg =
-        dt.getFullYear().toString() +
-        '-' +
-        ('0' + (dt.getMonth() + 1)).slice(-2).toString() +
-        '-' +
-        ('0' + dt.getDate()).slice(-2).toString() +
-        'T' +
-        ('0' + dt.getHours()).slice(-2).toString() +
-        ':' +
-        ('0' + dt.getMinutes()).slice(-2).toString() +
-        ':' +
-        ('0' + dt.getSeconds()).slice(-2).toString() +
-        '.000';
-      console.log('SendDate', sendMsg.dtMsg);
-      TodayDate =
-        new Date().getFullYear() +
-        '-' +
-        ('0' + (new Date().getMonth() + 1)).slice(-2) +
-        '-' +
-        new Date().getDate();
-      console.log('Today Date: ', TodayDate);
+      // sendMsg.dtMsg =
+      //   dt.getUTCFullYear() +
+      //   '-' +
+      //   ('0' + (dt.getUTCMonth() + 1)).slice(-2) +
+      //   '-' +
+      //   ('0' + dt.getUTCDate()).slice(-2) +
+      //   'T' +
+      //   ('0' + dt.getHours()).slice(-2) +
+      //   ':' +
+      //   ('0' + dt.getMinutes()).slice(-2) +
+      //   ':' +
+      //   ('0' + dt.getSeconds()).slice(-2) +
+      //   '.000';
+      // console.log('SendDate', new Date(sendMsg.dtMsg).getUTCDate());
+      // TodayDate =
+      //   new Date().getUTCFullYear() +
+      //   '-' +
+      //   ('0' + (new Date().getUTCMonth() + 1)).slice(-2) +
+      //   '-' +
+      //   new Date().getUTCDate();
+      // console.log('Today Date: ', TodayDate);
       var NewChatArray = new AllChats();
       console.log('Send MSg: ', sendMsg);
-      // if (Xyz) {
-      //   // console.log('indexavailable', model.NewChat[XyzIndex]);
-      //   model.NewChat[XyzIndex].Chat.push(sendMsg);
-      //   model.Message = '';
-      //   this.UpdateViewModel();
-      //   console.log('newChatsend: ', JSON.stringify(model.NewChat));
-      // } else {
+      if (Xyz) {
+        // console.log('indexavailable', model.NewChat[XyzIndex]);
+        model.NewChat[XyzIndex].Chat.push(sendMsg);
+        model.Message = '';
+        this.UpdateViewModel();
+        console.log('newChatsend: ', JSON.stringify(model.NewChat));
+      } else {
       var NewChatArray = new AllChats();
       var date = new Date();
+
       if (
-        date.getFullYear() === new Date(sendMsg.dtMsg).getFullYear() &&
-        date.getMonth() === new Date(sendMsg.dtMsg).getMonth() &&
-        date.getDate() === new Date(sendMsg.dtMsg).getDate()
+        date.getUTCFullYear() === new Date(sendMsg.dtMsg).getUTCFullYear() &&
+        date.getUTCMonth() === new Date(sendMsg.dtMsg).getUTCMonth() &&
+        date.getUTCDate() === new Date(sendMsg.dtMsg).getUTCDate()
       ) {
         NewChatArray.istoday = true;
       } else {
         NewChatArray.istoday = false;
       }
       console.log('sendMsg date', sendMsg.dtMsg);
-      NewChatArray.date = sendMsg.dtMsg.toString();
-      console.log('indexnotavailable', NewChatArray);
+      NewChatArray.date = sendMsg.dtMsg;
+      // console.log('indexnotavailable', NewChatArray);
+      console.log('sendMsgNNNN date', NewChatArray.date);
+
       NewChatArray.Chat.push(sendMsg);
       model.NewChat.push(NewChatArray);
       MsgCounter = 0;
-      console.log('newChat: ', JSON.stringify(model.NewChat));
+      // console.log('newChat: ', JSON.stringify(model.NewChat));
       model.Message = '';
       this.UpdateViewModel();
-      // }
+      }
       console.log(
         'SendMessage',
         model.companyId,
@@ -562,18 +589,18 @@ export default class Chatdetails extends BaseComponent<
     //     const itemDate = new Date();
     //     const iDate = new Date(i.date);
     //     return (
-    //       itemDate.getFullYear() === iDate.getFullYear() &&
-    //       itemDate.getMonth() === iDate.getMonth() &&
-    //       itemDate.getDate() === iDate.getDate()
+    //       itemDate.getUTCFullYear() === iDate.getUTCFullYear() &&
+    //       itemDate.getUTCMonth() === iDate.getUTCMonth() &&
+    //       itemDate.getUTCDate() === iDate.getUTCDate()
     //     );
     //   });
     //   var Xyz = model.NewChat.find((i: AllChats) => {
     //     const itemDate = new Date();
     //     const iDate = new Date(i.date);
     //     return (
-    //       itemDate.getFullYear() === iDate.getFullYear() &&
-    //       itemDate.getMonth() === iDate.getMonth() &&
-    //       itemDate.getDate() === iDate.getDate()
+    //       itemDate.getUTCFullYear() === iDate.getUTCFullYear() &&
+    //       itemDate.getUTCMonth() === iDate.getUTCMonth() &&
+    //       itemDate.getUTCDate() === iDate.getUTCDate()
     //     );
     //   });
     //   console.log('index', XyzIndex);
@@ -614,9 +641,9 @@ export default class Chatdetails extends BaseComponent<
     //     var NewChatArray = new AllChats();
     //     var date = new Date();
     //     if (
-    //       date.getFullYear() === new Date(sendMsg.dtMsg).getFullYear() &&
-    //       date.getMonth() === new Date(sendMsg.dtMsg).getMonth() &&
-    //       date.getDate() === new Date(sendMsg.dtMsg).getDate()
+    //       date.getUTCFullYear() === new Date(sendMsg.dtMsg).getUTCFullYear() &&
+    //       date.getUTCMonth() === new Date(sendMsg.dtMsg).getUTCMonth() &&
+    //       date.getUTCDate() === new Date(sendMsg.dtMsg).getUTCDate()
     //     ) {
     //       NewChatArray.istoday = true;
     //     } else {
@@ -734,9 +761,9 @@ export default class Chatdetails extends BaseComponent<
 
               // Compare only the date part
               return (
-                itemDate.getFullYear() === iDate.getFullYear() &&
-                itemDate.getMonth() === iDate.getMonth() &&
-                itemDate.getDate() === iDate.getDate()
+                itemDate.getUTCFullYear() === iDate.getUTCFullYear() &&
+                itemDate.getUTCMonth() === iDate.getUTCMonth() &&
+                itemDate.getUTCDate() === iDate.getUTCDate()
               );
             });
 
@@ -746,9 +773,9 @@ export default class Chatdetails extends BaseComponent<
               const iDate = new Date(i.date);
               // Compare only the date part
               return (
-                itemDate.getFullYear() === iDate.getFullYear() &&
-                itemDate.getMonth() === iDate.getMonth() &&
-                itemDate.getDate() === iDate.getDate()
+                itemDate.getUTCFullYear() === iDate.getUTCFullYear() &&
+                itemDate.getUTCMonth() === iDate.getUTCMonth() &&
+                itemDate.getUTCDate() === iDate.getUTCDate()
               );
             });
 
@@ -762,9 +789,9 @@ export default class Chatdetails extends BaseComponent<
               var NewChatArray = new AllChats();
               var date = new Date();
               if (
-                date.getFullYear() === new Date(item.dtMsg).getFullYear() &&
-                date.getMonth() === new Date(item.dtMsg).getMonth() &&
-                date.getDate() === new Date(item.dtMsg).getDate()
+                date.getUTCFullYear() === new Date(item.dtMsg).getUTCFullYear() &&
+                date.getUTCMonth() === new Date(item.dtMsg).getUTCMonth() &&
+                date.getUTCDate() === new Date(item.dtMsg).getUTCDate()
               ) {
                 NewChatArray.istoday = true;
               } else {
@@ -1027,57 +1054,58 @@ export default class Chatdetails extends BaseComponent<
 
             {Model.SignalRConnected === true &&
               Model.NewChat.map((item: AllChats) => {
-                var pdate = false;
-                var showdate = '';
+                // var pdate = false;
+                // var showdate = '';
 
-                // console.log(typeof item?.date, );
+                // // console.log(typeof item?.date, );
 
-                var doDate = typeof item?.date;
-                if (doDate == 'string') {
-                  CurDate = item?.date.toString().slice(0, 10);
-                } else {
-                  CurDate =
-                    item?.date.getFullYear() +
-                    '-' +
-                    ('0' + (item?.date.getMonth() + 1)).slice(-2) +
-                    '-' +
-                    item?.date.getDate();
-                }
-                console.log('PntDate: ', PntDate);
-                console.log('CurDate: ', CurDate);
+                // var doDate = typeof item?.date;
+                // if (doDate == 'string') {
+                //   CurDate = item?.date.toString().slice(0, 10);
+                // } else {
+                //   CurDate =
+                //     item?.date.getUTCFullYear() +
+                //     '-' +
+                //     ('0' + (item?.date.getUTCMonth() + 1)).slice(-2) +
+                //     '-' +
+                //     item?.date.getUTCDate();
+                // }
+                // // console.log('PntDate: ', PntDate);
+                // // console.log('CurDate: ', CurDate);
 
-                if (CurDate != PntDate) {
-                  pdate = true;
-                  PntDate = CurDate;
-                  if (PntDate == TodayDate) {
-                    showdate = 'Today';
-                  } else {
-                    showdate =
-                      PntDate.slice(8, 10) +
-                      '-' +
-                      PntDate.slice(5, 7) +
-                      '-' +
-                      PntDate.slice(0, 4);
-                  }
-                } else {
-                  pdate = false;
-                }
+                // if (CurDate != PntDate) {
+                //   pdate = true;
+                //   PntDate = CurDate;
+                //   if (PntDate == TodayDate) {
+                //     showdate = 'Today';
+                //   } else {
+                //     showdate =
+                //       PntDate.slice(8, 10) +
+                //       '-' +
+                //       PntDate.slice(5, 7) +
+                //       '-' +
+                //       PntDate.slice(0, 4);
+                //   }
+                // } else {
+                //   pdate = false;
+                // }
                 return (
                   <View style={{zIndex: 1}}>
-                    {/* {item.istoday ? (
-                    <Text style={styles.today}>Today</Text>
-                  ) : (
-                    <Text style={styles.today}>
-                      {`${item?.date.slice(8, 10)}-${item?.date.slice(5,7)}-${item?.date.slice(0, 4)}`}
-                    </Text>
-                  )} */}
-                    {pdate ? (
+                    {item.istoday ? (
+                      <Text style={styles.today}>Today</Text>
+                    ) : (
+                      <Text style={styles.today}>
+                        Next Day
+                        {/* {`${item?.date.slice(8, 10)}-${item?.date.slice(5,7)}-${item?.date.slice(0, 4)}`} */}
+                      </Text>
+                    )}
+                    {/* {pdate ? (
                       <Text style={styles.today}>{showdate}</Text>
-                    ) : null}
+                    ) : null} */}
 
-                    {item.Chat.map((i: Chat) => {
+                    {item.Chat.map((i: Chatss) => {
                       var MsgSplit = i.sMsg.split('||');
-                      console.log('MsgSplitlength: ', MsgSplit.length);
+                      // console.log('MsgSplitlength: ', MsgSplit.length);
 
                       return `${Model.ConnectionCode}_${i.lSenderId}` ==
                         Model.senderId || i.lSenderId == Model.senderId ? (

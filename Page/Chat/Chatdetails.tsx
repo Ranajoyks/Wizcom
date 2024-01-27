@@ -69,14 +69,14 @@ export class Chatss {
   bEmlStatus: number = 0;
   bStatus: boolean = false;
   cMsgFlg: string = '';
-  chidtMsg? :Date;
+  chidtMsg?: Date;
   lAttchId: number = 0;
   lCompId: number = 0;
   lFromStatusId: number = 0;
   lId: number = 0;
   lRecCompId: number = 0;
-  lReceiverId: number = 0;
-  lSenderId: string = '';
+  lReceiverId: any;
+  lSenderId: any;
   lSrId: number = 0;
   lToStatusId: number = 0;
   lTypId: number = 0;
@@ -134,6 +134,8 @@ export default class Chatdetails extends BaseComponent<
     }
     this.MarkRead();
     this.IsTalking();
+    this.CheckAppStatus();
+    this.REceiverLIve();
   }
   componentWillUnmount() {
     BackHandler.removeEventListener('hardwareBackPress', this.handleBackButton);
@@ -193,8 +195,33 @@ export default class Chatdetails extends BaseComponent<
         console.log('TalkingError: ', err);
       });
   };
+  IsTalkingFlase = () => {
+    var Model = this.state.Model;
+    const headers = {
+      'Content-Type': 'application/json',
+    };
+    var TalkingData = JSON.stringify({
+      FromUserId: Model.senderId,
+      ToUserId: '0',
+      IsTaking: true,
+    });
+    console.log('TalkingData: ', TalkingData);
+    axios
+      .post(
+        `https://wemessanger.azurewebsites.net/api/user/taking`,
+        TalkingData,
+        {headers: headers},
+      )
+      .then(res => {
+        console.log('TalkingRes: ', res.data);
+      })
+      .catch(err => {
+        console.log('TalkingError: ', err);
+      });
+  };
   MakeConnection = async () => {
     console.log('hello');
+    this.IsTalking();
     var Model = this.state.Model;
     var BranchID = await SessionHelper.GetBranchIdSession();
     Model.companyId = BranchID;
@@ -204,6 +231,7 @@ export default class Chatdetails extends BaseComponent<
         `https://wemessanger.azurewebsites.net/chatHub?UserId=${Model.senderId}`,
       )
       .build();
+    this.UpdateViewModel();
     Model.Connection.start()
       .then(() => {
         console.log('SignalR connected');
@@ -239,9 +267,6 @@ export default class Chatdetails extends BaseComponent<
             date.getTime() - date.getTimezoneOffset() * 60 * 1000,
           );
           console.log('getTime: ', newDate);
-          // var offset = date.getTimezoneOffset() / 60;
-          // var hours = date.getHours();
-          // newDate.setHours(hours + offset);
           var dt = new Date(newDate);
           ReceiveMSg.dtMsg = dt;
           var XyzIndex = Model.NewChat.findIndex((i: AllChats) => {
@@ -255,65 +280,80 @@ export default class Chatdetails extends BaseComponent<
           });
           var Xyz = Model.NewChat.find((i: AllChats) => {
             const itemDate = new Date(newDate);
-            const iDate = new Date(i.date);
+            const iDate = new Date(i.date);            
             return (
               itemDate.getUTCFullYear() === iDate.getUTCFullYear() &&
               itemDate.getUTCMonth() === iDate.getUTCMonth() &&
               itemDate.getUTCDate() === iDate.getUTCDate()
             );
           });
-          // ReceiveMSg.dtMsg =
-          //   dt.getUTCFullYear().toString() +
-          //   '-' +
-          //   ('0' + (dt.getUTCMonth() + 1)).slice(-2).toString() +
-          //   '-' +
-          //   ('0' + dt.getUTCDate()).slice(-2).toString() +
-          //   'T' +
-          //   ('0' + dt.getHours()).slice(-2).toString() +
-          //   ':' +
-          //   ('0' + dt.getMinutes()).slice(-2).toString() +
-          //   ':' +
-          //   ('0' + dt.getSeconds()).slice(-2).toString() +
-          //   '.000';
           console.log(' ReceiveMSg.dtMsg: ', ReceiveMSg.dtMsg);
           var NewChatArray = new AllChats();
-          console.log('ArrayPush:___ ');
-          if (Xyz) {
-            // console.log('indexavailable', model.NewChat[XyzIndex]);
-            Model.NewChat[XyzIndex].Chat.push(ReceiveMSg);
-            Model.Message = '';
-            this.UpdateViewModel();
-            console.log('newChatsend: ', JSON.stringify(Model.NewChat));
-          } else {
-            var NewChatArray = new AllChats();
-            // var date = new Date();
-            console.log("ElseDate: ",newDate);  
+          this.GetAllMsg()
+          console.log('Xyzdddd:___ ',Xyz);
+          // if (Xyz) {
+          //   // console.log('indexavailable', model.NewChat[XyzIndex]);
+          //   Model.NewChat[XyzIndex].Chat.push(ReceiveMSg);
+          //   Model.Message = '';
+          //   this.UpdateViewModel();
+          //   // console.log('newChatsend: ', JSON.stringify(Model.NewChat));
+          // } else {
+          //   var NewChatArray = new AllChats();
+          //   // var date = new Date();
+          //   console.log('ElseDate: ', newDate);
 
-            if (
-              newDate.getUTCFullYear() ===
-                new Date(ReceiveMSg.dtMsg).getUTCFullYear() &&
-                newDate.getUTCMonth() === new Date(ReceiveMSg.dtMsg).getUTCMonth() &&
-                newDate.getUTCDate() === new Date(ReceiveMSg.dtMsg).getUTCDate()
-            ) {
-              NewChatArray.istoday = true;
-            } else {
-              NewChatArray.istoday = false;
-            }
-            console.log('ReceiveMSg date', ReceiveMSg.dtMsg);
-            NewChatArray.date = ReceiveMSg.dtMsg;
-            // console.log('indexnotavailable', NewChatArray);
-            console.log('ReceiveMSgNNNN date', NewChatArray.date);
+          //   if (
+          //     newDate.getUTCFullYear() ===
+          //       new Date(ReceiveMSg.dtMsg).getUTCFullYear() &&
+          //     newDate.getUTCMonth() ===
+          //       new Date(ReceiveMSg.dtMsg).getUTCMonth() &&
+          //     newDate.getUTCDate() === new Date(ReceiveMSg.dtMsg).getUTCDate()
+          //   ) {
+          //     NewChatArray.istoday = true;
+          //   } else {
+          //     NewChatArray.istoday = false;
+          //   }
+          //   // console.log('ReceiveMSg date', ReceiveMSg.dtMsg);
+          //   NewChatArray.date = ReceiveMSg.dtMsg;
+          //   // console.log('indexnotavailable', NewChatArray);
+          //   // console.log('ReceiveMSgNNNN date', NewChatArray.date);
 
-            NewChatArray.Chat.push(ReceiveMSg);
-            Model.NewChat.push(NewChatArray);
-            MsgCounter = 0;
-            // console.log('newChat: ', JSON.stringify(model.NewChat));
-            Model.Message = '';
-            this.UpdateViewModel();
-          }
+          //   NewChatArray.Chat.push(ReceiveMSg);
+          //   Model.NewChat.push(NewChatArray);
+          //   MsgCounter = 0;
+          //   // console.log('newChat: ', JSON.stringify(model.NewChat));
+          //   Model.Message = '';
+          //   this.UpdateViewModel();
+          // }
+         
         }
       },
     );
+    // this.UserLIve();
+  };
+  REceiverLIve = () => {
+    var Model = this.state.Model;
+    console.log('HIiii');
+
+    console.log('IsUserLive: ', Model.receiverId);
+    // console.log('SingleRConnection: ', Model.Connection);
+    Model.Connection.start().then(() => {
+      console.log('SignalR connected');
+
+      Model.Connection.invoke('IsUserConnected', Model.receiverId)
+        .then((isConnected: any) => {
+          console.log('ConnectionReceiver', isConnected);
+
+          if (isConnected) {
+            console.log(`REceivere - ${Model.receiverId} is live`);
+          } else {
+            console.log(`REceivere - ${Model.receiverId} is not live`);
+          }
+        })
+        .catch((error: any) => {
+          console.log(error);
+        });
+    });
   };
   CheckAppStatus = async () => {
     var Model = this.state.Model;
@@ -324,9 +364,13 @@ export default class Chatdetails extends BaseComponent<
         Model.AppStatus = nextAppState;
         this.UpdateViewModel();
         if (nextAppState == 'active') {
+          console.log('hi');
+
+          this.IsTalking();
           this.MakeConnection();
         }
         if (nextAppState == 'background') {
+          this.IsTalkingFlase();
           var Connection = new signalR.HubConnectionBuilder()
             .withUrl(
               `https://wemessanger.azurewebsites.net/chatHub?UserId=${Model.senderId}`,
@@ -378,13 +422,6 @@ export default class Chatdetails extends BaseComponent<
     var newDate = new Date(
       date.getTime() - date.getTimezoneOffset() * 60 * 1000,
     );
-    // PntDate = '';
-    // TodayDate =
-    //   new Date().getUTCFullYear() +
-    //   '-' +
-    //   ('0' + (new Date().getUTCMonth() + 1)).slice(-2) +
-    //   '-' +
-    //   new Date().getUTCDate();
     console.log('Today Date: ', TodayDate);
     console.log(Model.companyId);
     console.log(Model.senderId);
@@ -394,7 +431,7 @@ export default class Chatdetails extends BaseComponent<
         `https://wemessanger.azurewebsites.net/api/User/readmessage?companyId=${Model.companyId}&senderId=${Model.senderId}&receiverId=${Model.receiverId}&pageNo=${Model.PageNumber}`,
       )
       .then(res => {
-        console.log('AllChat: ', res.data);
+        // console.log('AllChat: ', res.data);
         Model.AllChats = res.data;
         this.UpdateViewModel();
 
@@ -470,7 +507,6 @@ export default class Chatdetails extends BaseComponent<
       var newDate = new Date(
         date.getTime() - date.getTimezoneOffset() * 60 * 1000,
       );
-      // const modifiedDate = new Date(date.getTime() - 19800000);
       console.log('Msg sent:', model.Message);
       model.InvokeMessage = model.Message;
       this.UpdateViewModel();
@@ -495,7 +531,7 @@ export default class Chatdetails extends BaseComponent<
         );
       });
       // console.log('index', XyzIndex);
-      console.log('xyzindex', Xyz);
+      // console.log('xyzindex', Xyz);
       var sendMsg = new Chatss();
       sendMsg.sMsg = model.Message;
       sendMsg.lSenderId = model.senderId;
@@ -503,39 +539,9 @@ export default class Chatdetails extends BaseComponent<
         date.getTime() - date.getTimezoneOffset() * 60 * 1000,
       );
       console.log('getTime: ', newDate);
-
-      // var offset = date.getTimezoneOffset() / 60;
-      // var hours = date.getHours();
-      // newDate.setHours(hours + offset);
-      // console.log('NewDate: ', newDate);
       var dt = new Date(newDate);
       sendMsg.dtMsg = dt;
-      // console.log('dttttttt: ', dt.getUTCFullYear());
-      // console.log('datetttttt: ', date.getUTCDate());
-
-      // sendMsg.dtMsg =
-      //   dt.getUTCFullYear() +
-      //   '-' +
-      //   ('0' + (dt.getUTCMonth() + 1)).slice(-2) +
-      //   '-' +
-      //   ('0' + dt.getUTCDate()).slice(-2) +
-      //   'T' +
-      //   ('0' + dt.getHours()).slice(-2) +
-      //   ':' +
-      //   ('0' + dt.getMinutes()).slice(-2) +
-      //   ':' +
-      //   ('0' + dt.getSeconds()).slice(-2) +
-      //   '.000';
-      // console.log('SendDate', new Date(sendMsg.dtMsg).getUTCDate());
-      // TodayDate =
-      //   new Date().getUTCFullYear() +
-      //   '-' +
-      //   ('0' + (new Date().getUTCMonth() + 1)).slice(-2) +
-      //   '-' +
-      //   new Date().getUTCDate();
-      // console.log('Today Date: ', TodayDate);
       var NewChatArray = new AllChats();
-      // console.log('Send MSg: ', sendMsg);
       if (Xyz) {
         console.log('indexavailable', model.NewChat[XyzIndex]);
         model.NewChat[XyzIndex].Chat.push(sendMsg);
@@ -545,10 +551,11 @@ export default class Chatdetails extends BaseComponent<
       } else {
         var NewChatArray = new AllChats();
         // var date = new Date();
-        console.log("ElseDate: ",newDate);      
+        console.log('ElseDate: ', newDate);
 
         if (
-          newDate.getUTCFullYear() === new Date(sendMsg.dtMsg).getUTCFullYear() &&
+          newDate.getUTCFullYear() ===
+            new Date(sendMsg.dtMsg).getUTCFullYear() &&
           newDate.getUTCMonth() === new Date(sendMsg.dtMsg).getUTCMonth() &&
           newDate.getUTCDate() === new Date(sendMsg.dtMsg).getUTCDate()
         ) {
@@ -564,7 +571,7 @@ export default class Chatdetails extends BaseComponent<
         NewChatArray.Chat.push(sendMsg);
         model.NewChat.push(NewChatArray);
         MsgCounter = 0;
-        console.log('newChat: ', JSON.stringify(model.NewChat));
+        // console.log('newChat: ', JSON.stringify(model.NewChat));
         model.Message = '';
         this.UpdateViewModel();
       }
@@ -695,6 +702,7 @@ export default class Chatdetails extends BaseComponent<
     //     );
     //   }
     // }
+    // this.GetAllMsg()
   };
   Search = async () => {
     var Model = this.state.Model;
@@ -1115,7 +1123,7 @@ export default class Chatdetails extends BaseComponent<
                       <Text style={styles.today}>Today</Text>
                     ) : (
                       <Text style={styles.today}>
-                       {moment.utc(item.date).format('DD-MM-YYYY')}
+                        {moment.utc(item.date).format('DD-MM-YYYY')}
                         {/* {`${item?.date.slice(8, 10)}-${item?.date.slice(5,7)}-${item?.date.slice(0, 4)}`} */}
                       </Text>
                     )}
@@ -1179,7 +1187,7 @@ export default class Chatdetails extends BaseComponent<
                             </View>
                             <View style={styles.messagetotime}>
                               <Text style={styles.messagefromtimetext}>
-                               {moment.utc(i.dtMsg).format('HH:mm')}
+                                {moment.utc(i.dtMsg).format('HH:mm')}
                                 {/* {i.dtMsg.toString()} */}
                               </Text>
                               {/* <Text>{item?.istoday}</Text> */}
@@ -1224,7 +1232,7 @@ export default class Chatdetails extends BaseComponent<
                             </View>
                             <View style={styles.messagefromtime}>
                               <Text style={styles.messagefromtimetext}>
-                              {moment.utc(i.dtMsg).format('HH:mm')}
+                                {moment.utc(i.dtMsg).format('HH:mm')}
                                 {/* {i?.dtMsg} */}
                               </Text>
                               <Text>{item?.istoday}</Text>

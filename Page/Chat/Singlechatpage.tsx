@@ -58,6 +58,7 @@ export class SinglechatpageViewModel {
   AppStatus: any = AppState.currentState;
   currentLocation: any;
   ReceiverID: string = '';
+  SingleRConnection : any
 }
 export default class Singlechatpage extends BaseComponent<
   any,
@@ -106,7 +107,7 @@ export default class Singlechatpage extends BaseComponent<
     this.IsTalking()
     // console.log('User: ', User);
     // console.log('User: ', Model.UserName);
-    // setInterval(this.FetchAllUser, 120000);
+    setInterval(this.UserList, 2000);
     // setInterval(this.CheckAppStatus, 2000);
     // console.log('Next AppState', Model.AppStatus);
     // Geolocation.getCurrentPosition(info => console.log("info:", info));
@@ -119,8 +120,8 @@ export default class Singlechatpage extends BaseComponent<
     };
     var TalkingData = JSON.stringify({
       FromUserId: `${Model.ConnectionCode}_${UserDetails.lId}`,
-      ToUserId: Model.ReceiverID,
-      IsTaking: false,
+      ToUserId: "0",
+      IsTaking: true,
     });
     console.log("TalkingData: ",TalkingData);
     
@@ -179,6 +180,7 @@ export default class Singlechatpage extends BaseComponent<
           this.FetchAllUser();
         }
         if (nextAppState == 'background') {
+          this.IsTalking()
           var Connection = new signalR.HubConnectionBuilder()
             .withUrl(
               `https://wemessanger.azurewebsites.net/chatHub?UserId=${Model.SenderID}`,
@@ -229,58 +231,65 @@ export default class Singlechatpage extends BaseComponent<
     // console.log('MYID: ', model.SenderID);
     const deviceId = DeviceInfo.getDeviceId();
 
-    var Connection = new signalR.HubConnectionBuilder()
+   model.SingleRConnection = new signalR.HubConnectionBuilder()
       .withUrl(
         `https://wemessanger.azurewebsites.net/chatHub?UserId=${
           model.ConnectionCode
         }_${UserDetails.lId.toString()}`,
       )
       .build();
-    Connection.start().then(() => {
+      this.UpdateViewModel()
+      model.SingleRConnection.start().then(() => {
       console.log('SignalR connected');
-      var UserList = Connection.invoke('GetAllUser', myId, 0)
-        .then(user => {
-          console.log('GetallUser: ', user);
-          model.alluser = user;
-          var UserOnline = user.filter((i: alluser) => i.isUserLive == true);
-          model.FilterUser = model.alluser;
-          model.OnlineUserLength = UserOnline.length;
-          this.UpdateViewModel();
-          console.log('UserOnline', UserOnline.length);
-
-          Connection.invoke(
-            'IsUserConnected',
-            `${model.ConnectionCode}_${UserDetails.lId.toString()}`,
-          )
-            .then(isConnected => {
-              console.log('Connection', isConnected);
-
-              if (isConnected) {
-                console.log(
-                  `User - ${
-                    model.ConnectionCode
-                  }_${UserDetails.lId.toString()} is live`,
-                );
-              } else {
-                console.log(
-                  `User - ${
-                    model.ConnectionCode
-                  }_${UserDetails.lId.toString()} is not live`,
-                );
-              }
-            })
-            .catch(error => {
-              console.log(error);
-            });
-        })
-        .catch((err: any) => {
-          Connection.start();
-          console.log('Error to invoke: ', err);
-        });
+     
     });
-
-    // this.CheckAppStatus();
+    this.UserList()
+    this.IsTalking()
   };
+  UserList =async()=>{
+    var model = this.state.Model
+    var UserDetails = await SessionHelper.GetUserDetailsSession();
+    var myId = `${model.ConnectionCode}_${UserDetails.lId}`;
+    var UserList = model.SingleRConnection.invoke('GetAllUser', myId, 0)
+    .then((user:any) => {
+      // console.log('GetallUser: ', user);
+      model.alluser = user;
+      var UserOnline = user.filter((i: alluser) => i.isUserLive == true);
+      model.FilterUser = model.alluser;
+      model.OnlineUserLength = UserOnline.length;
+      this.UpdateViewModel();
+      // console.log('UserOnline', UserOnline.length);
+
+      model.SingleRConnection.invoke(
+        'IsUserConnected',
+        `${model.ConnectionCode}_${UserDetails.lId.toString()}`,
+      )
+        // .then((isConnected:any) => {
+        //   console.log('Connection', isConnected);
+
+        //   if (isConnected) {
+        //     console.log(
+        //       `User - ${
+        //         model.ConnectionCode
+        //       }_${UserDetails.lId.toString()} is live`,
+        //     );
+        //   } else {
+        //     console.log(
+        //       `User - ${
+        //         model.ConnectionCode
+        //       }_${UserDetails.lId.toString()} is not live`,
+        //     );
+        //   }
+        // })
+        // .catch((error:any) => {
+        //   console.log(error);
+        // });
+    })
+    .catch((err: any) => {
+      model.SingleRConnection.start();
+      console.log('Error to invoke: ', err);
+    });
+  }
   NextPage = (user: alluser) => {
     var Model = this.state.Model;
     console.log('Branch: ', Model.BranchID);

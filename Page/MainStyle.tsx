@@ -152,6 +152,34 @@ const MainStyle = StyleSheet.create({
     color: 'white',
     // paddingRight: 1,
   },
+  OTOheader: {
+    backgroundColor: '#FFFFFF', // Lighter blue header
+    padding: 15,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  BadgeStyle:{
+    backgroundColor: '#E9E9E9',
+    width: 35,
+    height: 35,
+    borderRadius: 50,
+    alignItems: 'center',
+    display: 'flex',
+  },
+  BadgeTextStyle:{
+    color: 'black',
+    fontSize: 22,
+    fontWeight: '400',
+    fontFamily: 'OpenSans-Regular',
+  },
+  SendInputView:{
+    backgroundColor: '#F1F1F1',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 6,
+    flexDirection: 'row',
+  }
 });
 
 export default MainStyle;

@@ -31,6 +31,7 @@ import Groupchatdetails from '../Page/Chat/Groupchatdetails';
 import NoficationDetails from '../Page/Chat/NoficationDetails';
 import MapPage from '../Page/Map/MapPage';
 import MainPage from '../Page/Chat/MainPage';
+import OneToOneChatDetails from '../Page/Chat/OneToOneChatDetails';
 
  
 const Stack = createStackNavigator();
@@ -51,7 +52,7 @@ function AppStack() {
         />
         <Stack.Screen
           name="Chatdetails"
-          component={Chatdetails}
+          component={OneToOneChatDetails}
           options={{headerShown: false, gestureEnabled: false}}
         />
         <Stack.Screen
@@ -77,7 +78,7 @@ function AppStack() {
         />
         <Stack.Screen
           name="Singlechatpage"
-          component={Singlechatpage}
+          component={MainPage}
           options={{headerShown: false, gestureEnabled: false}}
         />
         <Stack.Screen

@@ -605,114 +605,6 @@ export default class Chatdetails extends BaseComponent<
         });
       this.MarkRead();
     }
-    // }
-    // if (!model.SignalRConnected) {
-    //   model.SignalRConnected = false
-    //   this.UpdateViewModel()
-    //   var date = new Date();
-    //   console.log('Msg sent:', model.Message);
-    //   var XyzIndex = model.NewChat.findIndex((i: AllChats) => {
-    //     const itemDate = new Date();
-    //     const iDate = new Date(i.date);
-    //     return (
-    //       itemDate.getUTCFullYear() === iDate.getUTCFullYear() &&
-    //       itemDate.getUTCMonth() === iDate.getUTCMonth() &&
-    //       itemDate.getUTCDate() === iDate.getUTCDate()
-    //     );
-    //   });
-    //   var Xyz = model.NewChat.find((i: AllChats) => {
-    //     const itemDate = new Date();
-    //     const iDate = new Date(i.date);
-    //     return (
-    //       itemDate.getUTCFullYear() === iDate.getUTCFullYear() &&
-    //       itemDate.getUTCMonth() === iDate.getUTCMonth() &&
-    //       itemDate.getUTCDate() === iDate.getUTCDate()
-    //     );
-    //   });
-    //   console.log('index', XyzIndex);
-    //   var sendMsg = new Chatss();
-    //   sendMsg.sMsg = model.Message;
-    //   sendMsg.lSenderId = model.senderId;
-    //   var newDate = new Date(
-    //     date.getTime() - date.getTimezoneOffset() * 60 * 1000,
-    //   );
-    //   var offset = date.getTimezoneOffset() / 60;
-    //   var hours = date.getHours();
-    //   newDate.setHours(hours + offset);
-    //   sendMsg.dtMsg = new Date(newDate).toString();
-    //   console.log('SendDate', sendMsg.dtMsg);
-    //   console.log('Send MSg: ', sendMsg);
-    //   if (Xyz) {
-    //     console.log('indexavailable', model.NewChat[XyzIndex]);
-    //     model.NewChat[XyzIndex].Chat.push(sendMsg);
-    //     Alert.alert(
-    //       'Connection Status',
-    //       'No internet connection',
-    //       [
-    //         {
-    //           text: 'OK',
-    //           onPress: () => {
-    //             var ChatLength = model.NewChat.length - 1;
-    //             model.NewChat[ChatLength].Chat.pop();
-    //             model.Message = '';
-    //             this.UpdateViewModel();
-    //             console.log('NewChat2: ', model.NewChat);
-    //             console.log('OK Pressed');
-    //           },
-    //         },
-    //       ],
-    //       {cancelable: false},
-    //     );
-    //   } else {
-    //     var NewChatArray = new AllChats();
-    //     var date = new Date();
-    //     if (
-    //       date.getUTCFullYear() === new Date(sendMsg.dtMsg).getUTCFullYear() &&
-    //       date.getUTCMonth() === new Date(sendMsg.dtMsg).getUTCMonth() &&
-    //       date.getUTCDate() === new Date(sendMsg.dtMsg).getUTCDate()
-    //     ) {
-    //       NewChatArray.istoday = true;
-    //     } else {
-    //       NewChatArray.istoday = false;
-    //     }
-    //     console.log('sendMsg date', sendMsg.dtMsg);
-    //     NewChatArray.date = sendMsg.dtMsg.toString();
-    //     NewChatArray.Chat.push(sendMsg);
-    //     console.log('indexnotavailable', NewChatArray);
-    //     model.NewChat.push(NewChatArray);
-    //     console.log('NewChat: ', model.NewChat);
-
-    //     Alert.alert(
-    //       'Connection Status',
-    //       'No internet connection',
-    //       [
-    //         {
-    //           text: 'OK',
-    //           onPress: () => {
-    //             var ChatLength = model.NewChat.length - 1;
-    //             model.NewChat[ChatLength].Chat.pop();
-    //             model.Message = '';
-    //             this.UpdateViewModel();
-    //             console.log('NewChat2: ', model.NewChat);
-    //             console.log('OK Pressed');
-    //           },
-    //         },
-    //       ],
-    //       {cancelable: false},
-    //     );
-    //   }
-    // }
-    // this.GetAllMsg()
-  };
-  Search = async () => {
-    var Model = this.state.Model;
-    Model.IsShow = !Model.IsShow;
-    this.UpdateViewModel();
-  };
-  Cancle = async () => {
-    var Model = this.state.Model;
-    Model.IsShow = !Model.IsShow;
-    this.UpdateViewModel();
   };
   DropDowmOpen = async () => {
     var Model = this.state.Model;
@@ -1052,7 +944,6 @@ export default class Chatdetails extends BaseComponent<
               </View>
             </View>
           )}
-
           <ScrollView
             onScroll={this.handleScroll}
             scrollEventThrottle={16}
@@ -1300,8 +1191,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    // borderBottomWidth: 1,
-    // borderColor: '#d9eeff', // Lighter blue accent
   },
   divider: {
     height: 1,

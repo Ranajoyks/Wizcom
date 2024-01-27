@@ -39,7 +39,7 @@ import BackgroundTimer from 'react-native-background-timer';
 import MainStyle from '../MainStyle';
 import CustomPageLoader from '../../Control/CustomPageLoader';
 import {useNavigation} from '@react-navigation/native';
-import { now } from 'moment';
+import {now} from 'moment';
 import UIHelper from '../../Core/UIHelper';
 
 const MainPage = () => {
@@ -57,7 +57,7 @@ const MainPage = () => {
   const [FilterUser, setFilterUser] = useState<User[]>([]);
   const [AllNotification, setAllNotification] = useState<User[]>([]);
   const [currentLocation, setcurrentLocation] = useState<any>();
-  const [IsShow, setIsShow] = useState(false);
+  const [IsShow, setIsShow] = useState(true);
   const [IsOpen, setIsOpen] = useState(false);
   const [AppStatus, setAppStatus] = useState(AppState.currentState);
   const [Url, setUrl] = useState('wemessanger.azurewebsites.net');
@@ -68,7 +68,7 @@ const MainPage = () => {
 
   useEffect(() => {
     //SessionHelper.SetSenderIdSession('65').then(() => {
-      IniTilizeOnce();
+    IniTilizeOnce();
     //});
   }, [AllUser.length]);
 
@@ -88,16 +88,15 @@ const MainPage = () => {
       SenderID: SenderID,
     };
     await setUserInfo(tempuserInfo);
-    var myId = `${tempuserInfo.ConnectionCode}_${tempuserInfo.SenderID}`;
+    var myId = `${tempuserInfo.ConnectionCode}_65`;
+    console.log('senderId: ', myId);
+
     await FetchAllUser(myId);
   };
   const FetchAllUser = async (myId: string) => {
     setShowPageLoader(true);
-   
     var finalUrl = `https://${Url}/chatHub?UserId=${myId}`;
-    UIHelper.LogTime("GetUser","Start",finalUrl)
-    
-    
+    UIHelper.LogTime('GetUser', 'Start', finalUrl);
     var Connection = new signalR.HubConnectionBuilder()
       .withUrl(finalUrl)
       .build();
@@ -105,25 +104,12 @@ const MainPage = () => {
       console.log('SignalR connected');
       Connection.invoke('GetAllUser', myId, 0)
         .then(user => {
-            UIHelper.LogTime("GetUser","End",finalUrl)
+          UIHelper.LogTime('GetUser', 'End', finalUrl);
           console.log('GetallUser: ', user);
           setAllUser(user);
           setFilterUser(user);
           setShowPageLoader(false);
           Connection.invoke('IsUserConnected', `${myId}`);
-          // .then(isConnected => {
-
-          //   if (isConnected) {
-          //     console.log(`User - ${model.ConnectionCode}_${UserDetails.lId.toString()} is live`);
-          //   } else {
-          //     console.log(
-          //       `User - ${model.ConnectionCode}_${UserDetails.lId.toString()} is not live`,
-          //     );
-          //   }
-          // })
-          // .catch(error => {
-          //   console.log(error);
-          // });
         })
         .catch((err: any) => {
           setShowPageLoader(false);
@@ -190,8 +176,6 @@ const MainPage = () => {
   };
   return (
     <Container>
-      {ShowPageLoader && <CustomPageLoader></CustomPageLoader>}
-
       <View style={MainStyle.container}>
         {IsShow && (
           <View style={MainStyle.header}>
@@ -221,19 +205,13 @@ const MainPage = () => {
 
             <TouchableOpacity
               style={{width: 25, paddingRight: 40, marginTop: -5}}
-              onPress={() => {
-                Search;
-              }}>
+              onPress={Search}>
               <Image
                 source={require('../../assets/search.png')}
                 style={{height: 25, width: 25}}
               />
             </TouchableOpacity>
-            <TouchableOpacity
-              style={{marginTop: -5}}
-              onPress={() => {
-                DropDownOpen;
-              }}>
+            <TouchableOpacity style={{marginTop: -5}} onPress={DropDownOpen}>
               <Badge
                 style={{
                   backgroundColor: '#E9E9E9',
@@ -259,7 +237,7 @@ const MainPage = () => {
             </TouchableOpacity>
           </View>
         )}
-        {IsShow && (
+        {!IsShow && (
           <View style={{padding: 10}}>
             <View
               style={{
@@ -355,166 +333,169 @@ const MainPage = () => {
             </View>
           </View>
         )}
-        <Tabs
-          tabBarUnderlineStyle={{
-            borderColor: 'white',
-            backgroundColor: 'black',
-            borderWidth: 0.5,
-            height: 0,
-          }}
-          tabContainerStyle={{
-            borderColor: 'white',
-            shadowColor: 'white',
-          }}>
-          <Tab
-            heading="All Messages"
-            color="black"
-            textStyle={{color: '#a6a6a6', fontFamily: 'Poppins-SemiBold'}}
-            activeTextStyle={{color: 'black', fontFamily: 'Poppins-SemiBold'}}
-            tabContainerStyle={{backgroundColor: 'white'}}
-            tabStyle={{backgroundColor: 'white'}}
-            activeTabStyle={{backgroundColor: 'white', borderColor: 'white'}}>
-            <Content>
-              <List>
-                {FilterUser.map((i: User, index) => (
-                  <TouchableOpacity key={i.lId} onPress={() => NextPage(i)}>
-                    <ListItem avatar>
-                      <Left>
-                        <View>
-                          <Badge
-                            style={{
-                              backgroundColor: '#E9E9E9',
-                              width: 50,
-                              height: 50,
-                              borderRadius: 25,
-                              justifyContent: 'center',
-                              alignItems: 'center',
-                            }}>
-                            <Text
+        {ShowPageLoader && <CustomPageLoader></CustomPageLoader>}
+        {!ShowPageLoader && (
+          <Tabs
+            tabBarUnderlineStyle={{
+              borderColor: 'white',
+              backgroundColor: 'black',
+              borderWidth: 0.5,
+              height: 0,
+            }}
+            tabContainerStyle={{
+              borderColor: 'white',
+              shadowColor: 'white',
+            }}>
+            <Tab
+              heading="All Messages"
+              color="black"
+              textStyle={{color: '#a6a6a6', fontFamily: 'Poppins-SemiBold'}}
+              activeTextStyle={{color: 'black', fontFamily: 'Poppins-SemiBold'}}
+              tabContainerStyle={{backgroundColor: 'white'}}
+              tabStyle={{backgroundColor: 'white'}}
+              activeTabStyle={{backgroundColor: 'white', borderColor: 'white'}}>
+              <Content>
+                <List>
+                  {FilterUser.map((i: User, index) => (
+                    <TouchableOpacity key={i.lId} onPress={() => NextPage(i)}>
+                      <ListItem avatar>
+                        <Left>
+                          <View>
+                            <Badge
                               style={{
-                                color: 'black',
-                                fontSize: 22,
-                                fontWeight: '400',
-                                fontFamily: 'OpenSans-Regular',
+                                backgroundColor: '#E9E9E9',
+                                width: 50,
+                                height: 50,
+                                borderRadius: 25,
+                                justifyContent: 'center',
+                                alignItems: 'center',
                               }}>
-                              {i.userFullName.toLocaleUpperCase().charAt(0)}
-                            </Text>
-                          </Badge>
-                          {i?.isUserLive ? (
-                            <View style={MainStyle.circle}></View>
-                          ) : (
-                            <View style={MainStyle.circle2}></View>
-                          )}
-                        </View>
-                      </Left>
-                      <Body>
-                        <View
-                          style={{
-                            flexDirection: 'row',
-                            justifyContent: 'space-between',
-                          }}>
-                          <Text
-                            style={{
-                              color: 'black',
-                              fontWeight: '600',
-                              fontFamily: 'OpenSans-SemiBold',
-                              marginBottom: 5,
-                              fontSize: 14.5,
-                              // letterSpacing:0.5
-                            }}>
-                            {i.userFullName}
-                          </Text>
-                          {i?.mCount > 0 && (
-                            <View style={MainStyle.circle3}>
                               <Text
                                 style={{
-                                  textAlign: 'center',
-                                  color: 'white',
+                                  color: 'black',
+                                  fontSize: 22,
+                                  fontWeight: '400',
+                                  fontFamily: 'OpenSans-Regular',
                                 }}>
-                                {i?.mCount}
+                                {i.userFullName.toLocaleUpperCase().charAt(0)}
                               </Text>
-                            </View>
-                          )}
-                        </View>
-                        <Text
-                          style={{
-                            color: i.status ? '#a6a6a6' : '#0383FA',
-                            fontWeight: '200',
-                            fontFamily: 'OpenSans-SemiBold',
-                            letterSpacing: 0.2,
-                            fontSize: 12,
-                          }}>
-                          {i.message ? i.message : 'No message'}
-                        </Text>
-                      </Body>
-                      <Right></Right>
-                    </ListItem>
-                  </TouchableOpacity>
-                ))}
-              </List>
-            </Content>
-          </Tab>
-          <Tab
-            heading="Notification"
-            color="black"
-            textStyle={{color: '#a6a6a6', fontFamily: 'Poppins-SemiBold'}}
-            activeTextStyle={{color: 'black', fontFamily: 'Poppins-SemiBold'}}
-            tabContainerStyle={{backgroundColor: 'white'}}
-            tabStyle={{backgroundColor: 'white'}}
-            activeTabStyle={{backgroundColor: 'white'}}>
-            <Content>
-              <List>
-                {AllNotification.map((i: User) => (
-                  <TouchableOpacity onPress={() => NotificationDetalis(i)}>
-                    <ListItem avatar>
-                      <Left>
-                        <View>
-                          <Badge
+                            </Badge>
+                            {i?.isUserLive ? (
+                              <View style={MainStyle.circle}></View>
+                            ) : (
+                              <View style={MainStyle.circle2}></View>
+                            )}
+                          </View>
+                        </Left>
+                        <Body>
+                          <View
                             style={{
-                              backgroundColor: '#E9E9E9',
-                              width: 50,
-                              height: 50,
-                              borderRadius: 25,
-                              justifyContent: 'center',
-                              alignItems: 'center',
+                              flexDirection: 'row',
+                              justifyContent: 'space-between',
                             }}>
                             <Text
                               style={{
                                 color: 'black',
-                                fontSize: 22,
-                                fontWeight: '400',
-                                fontFamily: 'OpenSans-Regular',
+                                fontWeight: '600',
+                                fontFamily: 'OpenSans-SemiBold',
+                                marginBottom: 5,
+                                fontSize: 14.5,
+                                // letterSpacing:0.5
                               }}>
-                              {i.userFullName.toLocaleUpperCase().charAt(0)}
+                              {i.userFullName}
                             </Text>
-                          </Badge>
-                          {i?.isUserLive ? (
-                            <View style={MainStyle.circle}></View>
-                          ) : (
-                            <View style={MainStyle.circle2}></View>
-                          )}
-                        </View>
-                      </Left>
-                      <Body>
-                        <View style={{flexDirection: 'row'}}>
-                          <Text style={MainStyle.UserName}>
-                            {i.userFullName}
+                            {i?.mCount > 0 && (
+                              <View style={MainStyle.circle3}>
+                                <Text
+                                  style={{
+                                    textAlign: 'center',
+                                    color: 'white',
+                                  }}>
+                                  {i?.mCount}
+                                </Text>
+                              </View>
+                            )}
+                          </View>
+                          <Text
+                            style={{
+                              color: i.status ? '#a6a6a6' : '#0383FA',
+                              fontWeight: '200',
+                              fontFamily: 'OpenSans-SemiBold',
+                              letterSpacing: 0.2,
+                              fontSize: 12,
+                            }}>
+                            {i.message ? i.message : 'No message'}
                           </Text>
-                        </View>
-                        {i.message ? (
-                          <Text style={MainStyle.MsgStyle}>{i.message}</Text>
-                        ) : (
-                          <Text style={MainStyle.NoMsgStyle}>No message</Text>
-                        )}
-                      </Body>
-                      <Right></Right>
-                    </ListItem>
-                  </TouchableOpacity>
-                ))}
-              </List>
-            </Content>
-          </Tab>
-        </Tabs>
+                        </Body>
+                        <Right></Right>
+                      </ListItem>
+                    </TouchableOpacity>
+                  ))}
+                </List>
+              </Content>
+            </Tab>
+            <Tab
+              heading="Notification"
+              color="black"
+              textStyle={{color: '#a6a6a6', fontFamily: 'Poppins-SemiBold'}}
+              activeTextStyle={{color: 'black', fontFamily: 'Poppins-SemiBold'}}
+              tabContainerStyle={{backgroundColor: 'white'}}
+              tabStyle={{backgroundColor: 'white'}}
+              activeTabStyle={{backgroundColor: 'white'}}>
+              <Content>
+                <List>
+                  {AllNotification.map((i: User) => (
+                    <TouchableOpacity onPress={() => NotificationDetalis(i)}>
+                      <ListItem avatar>
+                        <Left>
+                          <View>
+                            <Badge
+                              style={{
+                                backgroundColor: '#E9E9E9',
+                                width: 50,
+                                height: 50,
+                                borderRadius: 25,
+                                justifyContent: 'center',
+                                alignItems: 'center',
+                              }}>
+                              <Text
+                                style={{
+                                  color: 'black',
+                                  fontSize: 22,
+                                  fontWeight: '400',
+                                  fontFamily: 'OpenSans-Regular',
+                                }}>
+                                {i.userFullName.toLocaleUpperCase().charAt(0)}
+                              </Text>
+                            </Badge>
+                            {i?.isUserLive ? (
+                              <View style={MainStyle.circle}></View>
+                            ) : (
+                              <View style={MainStyle.circle2}></View>
+                            )}
+                          </View>
+                        </Left>
+                        <Body>
+                          <View style={{flexDirection: 'row'}}>
+                            <Text style={MainStyle.UserName}>
+                              {i.userFullName}
+                            </Text>
+                          </View>
+                          {i.message ? (
+                            <Text style={MainStyle.MsgStyle}>{i.message}</Text>
+                          ) : (
+                            <Text style={MainStyle.NoMsgStyle}>No message</Text>
+                          )}
+                        </Body>
+                        <Right></Right>
+                      </ListItem>
+                    </TouchableOpacity>
+                  ))}
+                </List>
+              </Content>
+            </Tab>
+          </Tabs>
+        )}
       </View>
     </Container>
   );

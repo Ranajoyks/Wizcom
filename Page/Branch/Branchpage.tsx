@@ -263,7 +263,7 @@ export default class Branchpage extends BaseComponent<any, BranchViewModel> {
             }}>
             <Badge
               style={{
-                backgroundColor: '#E9E9E9',
+                backgroundColor: '#404040',
                 width: 35,
                 height: 35,
                 borderRadius: 50,
@@ -273,11 +273,10 @@ export default class Branchpage extends BaseComponent<any, BranchViewModel> {
                 marginTop: 0,
               }}>
               <Text
-                style={{
-                  color: 'black',
+                 style={{
+                  color: 'white',
                   fontSize: 22,
-                  fontWeight: '400',
-                  fontFamily: 'OpenSans-Regular',
+                  fontFamily: 'OpenSans_Condensed-Bold',
                 }}>
                 {model.UserName.toLocaleUpperCase().charAt(0)}
               </Text>

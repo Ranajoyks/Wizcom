@@ -28,6 +28,7 @@ import EntityHelperService from '../Service/EntityHelperService';
 import NetInfo from '@react-native-community/netinfo';
 import RenderHtml from 'react-native-render-html';
 import moment from 'moment';
+import DocumentPicker from 'react-native-document-picker';
 export class ChatdetailsViewModel {
   Message: string = '';
   InvokeMessage: string = '';
@@ -59,6 +60,8 @@ export class ChatdetailsViewModel {
   DataLength: number = 0;
   BranchID: number = 1;
   URL: string = 'eiplutm.eresourceerp.com/AzaaleaR';
+  selectedFile: any;
+  FileName: string = '';
 }
 export class AllChats {
   date: any = new Date();
@@ -116,16 +119,16 @@ export default class Chatdetails extends BaseComponent<
     var ConnectionCode = await SessionHelper.GetCompanyIDSession();
     var BranchID = await SessionHelper.GetBranchIdSession();
     var UserDetails = await SessionHelper.GetUserDetailsSession();
-    console.log('user: ', User);
+    // console.log('user: ', User);
     Model.BranchID = BranchID;
     Model.ConnectionCode = ConnectionCode;
     Model.FCMToken = FCMToken;
     Model.sender = User.userName;
     this.UpdateViewModel();
-    console.log('@Receiver', this.props.route.params.User);
+    // console.log('@Receiver', this.props.route.params.User);
     Model.senderId = `${ConnectionCode}_${UserDetails.lId.toString()}`;
-    console.log('UserDetails.lId', UserDetails);
-    console.log('UserDetails.lId', Model.senderId);
+    // console.log('UserDetails.lId', UserDetails);
+    // console.log('UserDetails.lId', Model.senderId);
     this.UpdateViewModel();
     this.GetAllMsg();
     SessionHelper.SetReceiverIDSession(Model.receiverId);
@@ -135,7 +138,6 @@ export default class Chatdetails extends BaseComponent<
     this.MarkRead();
     this.IsTalking();
     this.CheckAppStatus();
-    this.REceiverLIve();
   }
   componentWillUnmount() {
     BackHandler.removeEventListener('hardwareBackPress', this.handleBackButton);
@@ -149,9 +151,6 @@ export default class Chatdetails extends BaseComponent<
   };
   MarkRead = () => {
     var Model = this.state.Model;
-    console.log('Branch: ', Model.BranchID);
-    console.log('SenderID', Model.senderId);
-    console.log('ReceiverId', Model.receiverId);
     const headers = {
       'Content-Type': 'application/json',
     };
@@ -160,15 +159,15 @@ export default class Chatdetails extends BaseComponent<
       senderId: Model.senderId,
       receiverId: Model.receiverId,
     });
-    console.log('Markread: ', Data);
+    // console.log('Markread: ', Data);
 
     axios
       .put(`https://wemessanger.azurewebsites.net/api/user`, Data, {headers})
       .then((res: any) => {
-        console.log('ReadMSg: ', res.data);
+        // console.log('ReadMSg: ', res.data);
       })
       .catch((err: any) => {
-        console.log('ReadMSgERror: ', err);
+        // console.log('ReadMSgERror: ', err);
       });
   };
   IsTalking = () => {
@@ -181,7 +180,7 @@ export default class Chatdetails extends BaseComponent<
       ToUserId: Model.receiverId,
       IsTaking: true,
     });
-    console.log('TalkingData: ', TalkingData);
+    // console.log('TalkingData: ', TalkingData);
     axios
       .post(
         `https://wemessanger.azurewebsites.net/api/user/taking`,
@@ -189,10 +188,10 @@ export default class Chatdetails extends BaseComponent<
         {headers: headers},
       )
       .then(res => {
-        console.log('TalkingRes: ', res.data);
+        // console.log('TalkingRes: ', res.data);
       })
       .catch(err => {
-        console.log('TalkingError: ', err);
+        // console.log('TalkingError: ', err);
       });
   };
   IsTalkingFlase = () => {
@@ -205,7 +204,7 @@ export default class Chatdetails extends BaseComponent<
       ToUserId: '0',
       IsTaking: true,
     });
-    console.log('TalkingData: ', TalkingData);
+    // console.log('TalkingData: ', TalkingData);
     axios
       .post(
         `https://wemessanger.azurewebsites.net/api/user/taking`,
@@ -213,14 +212,13 @@ export default class Chatdetails extends BaseComponent<
         {headers: headers},
       )
       .then(res => {
-        console.log('TalkingRes: ', res.data);
+        // console.log('TalkingRes: ', res.data);
       })
       .catch(err => {
-        console.log('TalkingError: ', err);
+        // console.log('TalkingError: ', err);
       });
   };
   MakeConnection = async () => {
-    console.log('hello');
     this.IsTalking();
     var Model = this.state.Model;
     var BranchID = await SessionHelper.GetBranchIdSession();
@@ -266,7 +264,6 @@ export default class Chatdetails extends BaseComponent<
           var newDate = new Date(
             date.getTime() - date.getTimezoneOffset() * 60 * 1000,
           );
-          console.log('getTime: ', newDate);
           var dt = new Date(newDate);
           ReceiveMSg.dtMsg = dt;
           var XyzIndex = Model.NewChat.findIndex((i: AllChats) => {
@@ -280,17 +277,15 @@ export default class Chatdetails extends BaseComponent<
           });
           var Xyz = Model.NewChat.find((i: AllChats) => {
             const itemDate = new Date(newDate);
-            const iDate = new Date(i.date);            
+            const iDate = new Date(i.date);
             return (
               itemDate.getUTCFullYear() === iDate.getUTCFullYear() &&
               itemDate.getUTCMonth() === iDate.getUTCMonth() &&
               itemDate.getUTCDate() === iDate.getUTCDate()
             );
           });
-          console.log(' ReceiveMSg.dtMsg: ', ReceiveMSg.dtMsg);
           var NewChatArray = new AllChats();
-          this.GetAllMsg()
-          console.log('Xyzdddd:___ ',Xyz);
+          this.GetAllMsg();
           // if (Xyz) {
           //   // console.log('indexavailable', model.NewChat[XyzIndex]);
           //   Model.NewChat[XyzIndex].Chat.push(ReceiveMSg);
@@ -325,47 +320,58 @@ export default class Chatdetails extends BaseComponent<
           //   Model.Message = '';
           //   this.UpdateViewModel();
           // }
-         
+        }
+      },
+    );
+    await Model.Connection.on(
+      'ReceiveAttachment',
+      async (
+        sender: string,
+        receiver: string,
+        attId: number,
+        fileName: string,
+      ) => {
+        console.log(attId);
+        console.log(fileName);
+        if (fileName) {
+          this.GetAllMsg();
         }
       },
     );
     // this.UserLIve();
   };
-  REceiverLIve = () => {
-    var Model = this.state.Model;
-    console.log('HIiii');
+  // REceiverLIve = () => {
+  //   var Model = this.state.Model;
 
-    console.log('IsUserLive: ', Model.receiverId);
-    // console.log('SingleRConnection: ', Model.Connection);
-    Model.Connection.start().then(() => {
-      console.log('SignalR connected');
+  //   console.log('IsUserLive: ', Model.receiverId);
+  //   // console.log('SingleRConnection: ', Model.Connection);
+  //   Model.Connection.start().then(() => {
+  //     console.log('SignalR connected');
 
-      Model.Connection.invoke('IsUserConnected', Model.receiverId)
-        .then((isConnected: any) => {
-          console.log('ConnectionReceiver', isConnected);
+  //     Model.Connection.invoke('IsUserConnected', Model.receiverId)
+  //       .then((isConnected: any) => {
+  //         console.log('ConnectionReceiver', isConnected);
 
-          if (isConnected) {
-            console.log(`REceivere - ${Model.receiverId} is live`);
-          } else {
-            console.log(`REceivere - ${Model.receiverId} is not live`);
-          }
-        })
-        .catch((error: any) => {
-          console.log(error);
-        });
-    });
-  };
+  //         if (isConnected) {
+  //           console.log(`REceivere - ${Model.receiverId} is live`);
+  //         } else {
+  //           console.log(`REceivere - ${Model.receiverId} is not live`);
+  //         }
+  //       })
+  //       .catch((error: any) => {
+  //         console.log(error);
+  //       });
+  //   });
+  // };
   CheckAppStatus = async () => {
     var Model = this.state.Model;
     const appStateListener = AppState.addEventListener(
       'change',
       nextAppState => {
-        console.log('Next AppState is: ', nextAppState);
+        // console.log('Next AppState is: ', nextAppState);
         Model.AppStatus = nextAppState;
         this.UpdateViewModel();
         if (nextAppState == 'active') {
-          console.log('hi');
-
           this.IsTalking();
           this.MakeConnection();
         }
@@ -422,16 +428,12 @@ export default class Chatdetails extends BaseComponent<
     var newDate = new Date(
       date.getTime() - date.getTimezoneOffset() * 60 * 1000,
     );
-    console.log('Today Date: ', TodayDate);
-    console.log(Model.companyId);
-    console.log(Model.senderId);
-    console.log(Model.receiverId);
     axios
       .get(
         `https://wemessanger.azurewebsites.net/api/User/readmessage?companyId=${Model.companyId}&senderId=${Model.senderId}&receiverId=${Model.receiverId}&pageNo=${Model.PageNumber}`,
       )
       .then(res => {
-        // console.log('AllChat: ', res.data);
+        console.log('AllChat: ', res.data);
         Model.AllChats = res.data;
         this.UpdateViewModel();
 
@@ -479,7 +481,6 @@ export default class Chatdetails extends BaseComponent<
             } else {
               NewChatArray.istoday = false;
             }
-            console.log('new date', item.dtMsg);
             NewChatArray.date = item.dtMsg.toString();
             NewChatArray.Chat.push(item);
             Model.NewChat.push(NewChatArray);
@@ -494,12 +495,55 @@ export default class Chatdetails extends BaseComponent<
         console.log(err);
       });
   };
+  UploadFile = async () => {
+    var Model = this.state.Model;
+    try {
+      const result = await DocumentPicker.pick({
+        type: [DocumentPicker.types.allFiles],
+      });
+      console.log('FileRESultResult: ', result[0]);
+      Model.selectedFile = result[0];
+      Model.Message = result[0].name as string;
+      Model.FileName = result[0].name as string;
+      this.UpdateViewModel();
+    } catch (err) {
+      if (DocumentPicker.isCancel(err)) {
+        console.log('Document picker cancelled');
+      } else {
+        console.error('Error picking document:', err);
+      }
+    }
+  };
+  DownloadFile = async (AttachmentId: number) => {
+    var Model = this.state.Model;
+    var value = await SessionHelper.GetSession();
+    console.log('SessionValue: ', `ASP.NET_SessionId=${value}`);
+    const FileUploadheaders = {
+      'Content-Type': 'application/json',
+      Cookie: `ASP.NET_SessionId=${value}`,
+    };
+    axios
+      .post(`http://${Model.URL}/SYS/Download.ashx?lId=${AttachmentId}`, {
+        headers: FileUploadheaders,
+      })
+      .then(res => {
+        console.log('DownloadREsponse: ', res.data);
+      })
+      .catch(err => {
+        console.log('DownloadREsponseErr: ', err);
+      });
+  };
   ButtonClick = async () => {
+    var value = await SessionHelper.GetSession();
+    console.log('SessionValue: ', `ASP.NET_SessionId=${value}`);
+    const FileUploadheaders = {
+      'Content-Type': 'multipart/form-data',
+      Cookie: `ASP.NET_SessionId=${value}`,
+    };
     var model = this.state.Model;
     model.Scroll = true;
     this.UpdateViewModel();
     MsgCounter = MsgCounter + 1;
-    // if (model.SignalRConnected) {
     if (model.Message.trim() === '') {
       return;
     } else {
@@ -522,37 +566,29 @@ export default class Chatdetails extends BaseComponent<
       var Xyz = model.NewChat.find((i: AllChats) => {
         const itemDate = new Date(newDate);
         const iDate = new Date(i.date);
-        console.log('xyzindexitemDate', itemDate);
-        console.log('xyzindexiDate', iDate);
         return (
           itemDate.getUTCFullYear() === iDate.getUTCFullYear() &&
           itemDate.getUTCMonth() === iDate.getUTCMonth() &&
           itemDate.getUTCDate() === iDate.getUTCDate()
         );
       });
-      // console.log('index', XyzIndex);
-      // console.log('xyzindex', Xyz);
       var sendMsg = new Chatss();
       sendMsg.sMsg = model.Message;
       sendMsg.lSenderId = model.senderId;
       var newDate = new Date(
         date.getTime() - date.getTimezoneOffset() * 60 * 1000,
       );
-      console.log('getTime: ', newDate);
       var dt = new Date(newDate);
       sendMsg.dtMsg = dt;
       var NewChatArray = new AllChats();
       if (Xyz) {
-        console.log('indexavailable', model.NewChat[XyzIndex]);
+        // console.log('indexavailable', model.NewChat[XyzIndex]);
         model.NewChat[XyzIndex].Chat.push(sendMsg);
         model.Message = '';
         this.UpdateViewModel();
         console.log('newChatsend: ', JSON.stringify(model.NewChat));
       } else {
         var NewChatArray = new AllChats();
-        // var date = new Date();
-        console.log('ElseDate: ', newDate);
-
         if (
           newDate.getUTCFullYear() ===
             new Date(sendMsg.dtMsg).getUTCFullYear() &&
@@ -563,15 +599,10 @@ export default class Chatdetails extends BaseComponent<
         } else {
           NewChatArray.istoday = false;
         }
-        // console.log('sendMsg date', sendMsg.dtMsg);
         NewChatArray.date = sendMsg.dtMsg;
-        // console.log('indexnotavailable', NewChatArray);
-        // console.log('sendMsgNNNN date', NewChatArray.date);
-
         NewChatArray.Chat.push(sendMsg);
         model.NewChat.push(NewChatArray);
         MsgCounter = 0;
-        // console.log('newChat: ', JSON.stringify(model.NewChat));
         model.Message = '';
         this.UpdateViewModel();
       }
@@ -584,125 +615,76 @@ export default class Chatdetails extends BaseComponent<
         model.msgflag,
         model.itype,
       );
+      if (model.selectedFile) {
+        const headers = {
+          'Content-Type': 'application/json',
+        };
 
-      await model.Connection.invoke(
-        'SendMessage',
-        model.companyId,
-        model.senderId,
-        model.receiverId,
-        model.InvokeMessage,
-        model.msgflag,
-        model.itype,
-      )
-        .then(() => {
-          console.log('ok');
-          model.Message = '';
-          this.UpdateViewModel();
-        })
-        .catch((error: any) => {
-          console.log('errorsssss');
-          console.error('Error invoking SendMessage:', error);
-        });
+        var FileUploadData = new FormData();
+        FileUploadData.append(model.FileName, model.selectedFile);
+        // console.log('FileUploadData: ', JSON.stringify(FileUploadData));
+        // console.log('FileUploadheaders: ', FileUploadheaders);
+        axios
+          .post(
+            `http://eiplutm.eresourceerp.com/AzaaleaR/Sys/Handler2.ashx`,
+            FileUploadData,
+            {headers: FileUploadheaders},
+          )
+          .then(res => {
+            console.log('FileUpload1stREsponse: ', res.data);
+            var FileUploadRaw = JSON.stringify({
+              CompanyId: model.BranchID,
+              FromUserId: model.senderId,
+              ToUserId: model.receiverId,
+              ConnectionId: 'connectionId',
+              AttachmentId: res.data.lAttchId,
+              FileName: res.data.sFileName,
+              Message: '',
+            });
+            console.log('FileUploadRaw: ', FileUploadRaw);
+
+            if (res.data) {
+              axios
+                .post(
+                  `https://wemessanger.azurewebsites.net/api/user/sendfile`,
+                  FileUploadRaw,
+                  {headers: headers},
+                )
+                .then((res: any) => {
+                  console.log('FileUploadData: ', res.data);
+                  model.selectedFile = null;
+                  this.UpdateViewModel();
+                })
+                .catch((Err: any) => {
+                  console.log('FlieUploadErr: ', Err);
+                });
+            }
+          })
+          .catch(err => {
+            console.log('FlieUploadErr: ', err);
+          });
+      } else {
+        await model.Connection.invoke(
+          'SendMessage',
+          model.companyId,
+          model.senderId,
+          model.receiverId,
+          model.InvokeMessage,
+          model.msgflag,
+          model.itype,
+        )
+          .then(() => {
+            console.log('ok');
+            model.Message = '';
+            this.UpdateViewModel();
+          })
+          .catch((error: any) => {
+            console.log('errorsssss');
+            console.error('Error invoking SendMessage:', error);
+          });
+      }
       this.MarkRead();
     }
-    // }
-    // if (!model.SignalRConnected) {
-    //   model.SignalRConnected = false
-    //   this.UpdateViewModel()
-    //   var date = new Date();
-    //   console.log('Msg sent:', model.Message);
-    //   var XyzIndex = model.NewChat.findIndex((i: AllChats) => {
-    //     const itemDate = new Date();
-    //     const iDate = new Date(i.date);
-    //     return (
-    //       itemDate.getUTCFullYear() === iDate.getUTCFullYear() &&
-    //       itemDate.getUTCMonth() === iDate.getUTCMonth() &&
-    //       itemDate.getUTCDate() === iDate.getUTCDate()
-    //     );
-    //   });
-    //   var Xyz = model.NewChat.find((i: AllChats) => {
-    //     const itemDate = new Date();
-    //     const iDate = new Date(i.date);
-    //     return (
-    //       itemDate.getUTCFullYear() === iDate.getUTCFullYear() &&
-    //       itemDate.getUTCMonth() === iDate.getUTCMonth() &&
-    //       itemDate.getUTCDate() === iDate.getUTCDate()
-    //     );
-    //   });
-    //   console.log('index', XyzIndex);
-    //   var sendMsg = new Chatss();
-    //   sendMsg.sMsg = model.Message;
-    //   sendMsg.lSenderId = model.senderId;
-    //   var newDate = new Date(
-    //     date.getTime() - date.getTimezoneOffset() * 60 * 1000,
-    //   );
-    //   var offset = date.getTimezoneOffset() / 60;
-    //   var hours = date.getHours();
-    //   newDate.setHours(hours + offset);
-    //   sendMsg.dtMsg = new Date(newDate).toString();
-    //   console.log('SendDate', sendMsg.dtMsg);
-    //   console.log('Send MSg: ', sendMsg);
-    //   if (Xyz) {
-    //     console.log('indexavailable', model.NewChat[XyzIndex]);
-    //     model.NewChat[XyzIndex].Chat.push(sendMsg);
-    //     Alert.alert(
-    //       'Connection Status',
-    //       'No internet connection',
-    //       [
-    //         {
-    //           text: 'OK',
-    //           onPress: () => {
-    //             var ChatLength = model.NewChat.length - 1;
-    //             model.NewChat[ChatLength].Chat.pop();
-    //             model.Message = '';
-    //             this.UpdateViewModel();
-    //             console.log('NewChat2: ', model.NewChat);
-    //             console.log('OK Pressed');
-    //           },
-    //         },
-    //       ],
-    //       {cancelable: false},
-    //     );
-    //   } else {
-    //     var NewChatArray = new AllChats();
-    //     var date = new Date();
-    //     if (
-    //       date.getUTCFullYear() === new Date(sendMsg.dtMsg).getUTCFullYear() &&
-    //       date.getUTCMonth() === new Date(sendMsg.dtMsg).getUTCMonth() &&
-    //       date.getUTCDate() === new Date(sendMsg.dtMsg).getUTCDate()
-    //     ) {
-    //       NewChatArray.istoday = true;
-    //     } else {
-    //       NewChatArray.istoday = false;
-    //     }
-    //     console.log('sendMsg date', sendMsg.dtMsg);
-    //     NewChatArray.date = sendMsg.dtMsg.toString();
-    //     NewChatArray.Chat.push(sendMsg);
-    //     console.log('indexnotavailable', NewChatArray);
-    //     model.NewChat.push(NewChatArray);
-    //     console.log('NewChat: ', model.NewChat);
-
-    //     Alert.alert(
-    //       'Connection Status',
-    //       'No internet connection',
-    //       [
-    //         {
-    //           text: 'OK',
-    //           onPress: () => {
-    //             var ChatLength = model.NewChat.length - 1;
-    //             model.NewChat[ChatLength].Chat.pop();
-    //             model.Message = '';
-    //             this.UpdateViewModel();
-    //             console.log('NewChat2: ', model.NewChat);
-    //             console.log('OK Pressed');
-    //           },
-    //         },
-    //       ],
-    //       {cancelable: false},
-    //     );
-    //   }
-    // }
-    // this.GetAllMsg()
   };
   Search = async () => {
     var Model = this.state.Model;
@@ -738,19 +720,17 @@ export default class Chatdetails extends BaseComponent<
       )
       .build();
     Connection.start().then(() => {
-      console.log('SignalR connected');
+      // console.log('SignalR connected');
       Connection.invoke('DisconnectUser', Model.senderId)
         .then((res: any) => {
-          console.log('resDisconnect: ', res);
+          // console.log('resDisconnect: ', res);
         })
         .catch((err: any) => {
-          console.log('ErrorDisconnect: ', err);
+          // console.log('ErrorDisconnect: ', err);
         });
     });
   };
   handleScroll = (event: any) => {
-    // console.log("?Hiiii");
-
     var Model = this.state.Model;
 
     const {layoutMeasurement, contentOffset, contentSize} = event.nativeEvent;
@@ -758,22 +738,20 @@ export default class Chatdetails extends BaseComponent<
 
     // Check if the current scroll position is less than the previous one
     if (contentOffset.y < Model.prevScrollY) {
-      console.log('hiii');
-      console.log('Scrolled up - Trigger loading more data');
       Model.PageNumber = Model.PageNumber + 1;
       Model.Scroll = false;
       this.UpdateViewModel();
       // this.loadMoreData();
-      console.log('PageNo:', Model.PageNumber);
+      // console.log('PageNo:', Model.PageNumber);
 
       axios
         .get(
           `https://wemessanger.azurewebsites.net/api/User/readmessage?companyId=${Model.companyId}&senderId=${Model.senderId}&receiverId=${Model.receiverId}&pageNo=${Model.PageNumber}`,
         )
         .then((res: any) => {
-          console.log('AllChat: ', res.data);
+          // console.log('AllChat: ', res.data);
           var ReverseData = res.data.reverse();
-          console.log('ReverseData', ReverseData.length);
+          // console.log('ReverseData', ReverseData.length);
           Model.DataLength = ReverseData.length;
           this.UpdateViewModel();
           if (ReverseData.length == 0) {
@@ -825,7 +803,6 @@ export default class Chatdetails extends BaseComponent<
               } else {
                 NewChatArray.istoday = false;
               }
-              console.log('new date', item.dtMsg);
               NewChatArray.date = item.dtMsg.toString();
               NewChatArray.Chat.unshift(item);
               Model.NewChat.unshift(NewChatArray);
@@ -865,9 +842,6 @@ export default class Chatdetails extends BaseComponent<
     // const { url } = this.state;
     const prefix = 'https://';
     var Model = this.state.Model;
-    // console.log('Appstatus: ', Model.AppStatus);
-    // console.log('SignalConnectionR: ', Model.SignalRConnected);
-    // console.log('Chats:', JSON.stringify(Model.NewChat) );
 
     return (
       <View style={styles.container}>
@@ -899,7 +873,7 @@ export default class Chatdetails extends BaseComponent<
             }}>
             <Image
               source={require('../../assets/location.png')}
-              style={{height: 30, width: 30, marginRight: 10}}
+              style={{height: 30, width: 23.5, marginRight: 10}}
             />
           </TouchableOpacity>
           <TouchableOpacity
@@ -908,7 +882,7 @@ export default class Chatdetails extends BaseComponent<
             }}>
             <Badge
               style={{
-                backgroundColor: '#E9E9E9',
+                backgroundColor: '#404040',
                 width: 35,
                 height: 35,
                 borderRadius: 50,
@@ -919,10 +893,9 @@ export default class Chatdetails extends BaseComponent<
               }}>
               <Text
                 style={{
-                  color: 'black',
+                  color: 'white',
                   fontSize: 22,
-                  fontWeight: '400',
-                  fontFamily: 'OpenSans-Regular',
+                  fontFamily: 'OpenSans_Condensed-Bold',
                 }}>
                 {Model.sender.toLocaleUpperCase().charAt(0)}
               </Text>
@@ -1052,7 +1025,6 @@ export default class Chatdetails extends BaseComponent<
               </View>
             </View>
           )}
-
           <ScrollView
             onScroll={this.handleScroll}
             scrollEventThrottle={16}
@@ -1082,41 +1054,6 @@ export default class Chatdetails extends BaseComponent<
 
             {Model.SignalRConnected === true &&
               Model.NewChat.map((item: AllChats) => {
-                // var pdate = false;
-                // var showdate = '';
-
-                // // console.log(typeof item?.date, );
-
-                // var doDate = typeof item?.date;
-                // if (doDate == 'string') {
-                //   CurDate = item?.date.toString().slice(0, 10);
-                // } else {
-                //   CurDate =
-                //     item?.date.getUTCFullYear() +
-                //     '-' +
-                //     ('0' + (item?.date.getUTCMonth() + 1)).slice(-2) +
-                //     '-' +
-                //     item?.date.getUTCDate();
-                // }
-                // // console.log('PntDate: ', PntDate);
-                // // console.log('CurDate: ', CurDate);
-
-                // if (CurDate != PntDate) {
-                //   pdate = true;
-                //   PntDate = CurDate;
-                //   if (PntDate == TodayDate) {
-                //     showdate = 'Today';
-                //   } else {
-                //     showdate =
-                //       PntDate.slice(8, 10) +
-                //       '-' +
-                //       PntDate.slice(5, 7) +
-                //       '-' +
-                //       PntDate.slice(0, 4);
-                //   }
-                // } else {
-                //   pdate = false;
-                // }
                 return (
                   <View style={{zIndex: 1}}>
                     {item.istoday ? (
@@ -1133,53 +1070,66 @@ export default class Chatdetails extends BaseComponent<
 
                     {item.Chat.map((i: Chatss) => {
                       var MsgSplit = i.sMsg.split('||');
-                      // console.log('MsgSplitlength: ', MsgSplit.length);
-
                       return `${Model.ConnectionCode}_${i.lSenderId}` ==
                         Model.senderId || i.lSenderId == Model.senderId ? (
                         <>
                           <View style={styles.messageto}>
                             <View style={styles.messagetomessage}>
                               <View style={styles.messagetotext}>
-                                {MsgSplit.length == 2 ? (
-                                  <>
-                                    <View
-                                      style={{flexDirection: 'row', gap: 5}}>
-                                      <Button
-                                        onPress={() =>
-                                          this.Approve(MsgSplit[0])
-                                        }
-                                        style={styles.buttontest}>
-                                        <Text
-                                          style={{
-                                            color: 'white',
-                                            // fontWeight: '800',
-                                            fontFamily: 'Poppins-Regular',
-                                            fontSize: 12,
-                                            margin: 0,
-                                          }}>
-                                          Approve
-                                        </Text>
-                                      </Button>
-                                      <Button
-                                        onPress={() =>
-                                          this.Approve(MsgSplit[1])
-                                        }
-                                        style={styles.rejectbuttontest}>
-                                        <Text
-                                          style={{
-                                            color: 'white',
-                                            // fontWeight: '800',
-                                            fontFamily: 'Poppins-Regular',
-                                            fontSize: 12,
-                                          }}>
-                                          Reject
-                                        </Text>
-                                      </Button>
-                                    </View>
-                                  </>
+                                {i.lAttchId == 0 ? (
+                                  MsgSplit.length == 2 ? (
+                                    <>
+                                      <View
+                                        style={{flexDirection: 'row', gap: 5}}>
+                                        <Button
+                                          onPress={() =>
+                                            this.Approve(MsgSplit[0])
+                                          }
+                                          style={styles.buttontest}>
+                                          <Text
+                                            style={{
+                                              color: 'white',
+                                              // fontWeight: '800',
+                                              fontFamily: 'Poppins-Regular',
+                                              fontSize: 12,
+                                              margin: 0,
+                                            }}>
+                                            Approve
+                                          </Text>
+                                        </Button>
+                                        <Button
+                                          onPress={() =>
+                                            this.Approve(MsgSplit[1])
+                                          }
+                                          style={styles.rejectbuttontest}>
+                                          <Text
+                                            style={{
+                                              color: 'white',
+                                              // fontWeight: '800',
+                                              fontFamily: 'Poppins-Regular',
+                                              fontSize: 12,
+                                            }}>
+                                            Reject
+                                          </Text>
+                                        </Button>
+                                      </View>
+                                    </>
+                                  ) : (
+                                    <Text style={styles.messagetotextcontent}>
+                                      {i?.sMsg}
+                                    </Text>
+                                  )
                                 ) : (
                                   <Text style={styles.messagetotextcontent}>
+                                     {/* <TouchableOpacity
+                                      onPress={() =>
+                                        this.DownloadFile(i?.lAttchId)
+                                      }> */}
+                                      <Image
+                                        source={require('../../assets/download.png')}
+                                        style={{height: 20, width: 19.5}}
+                                      />
+                                    {/* </TouchableOpacity> */}
                                     {i?.sMsg}
                                   </Text>
                                 )}
@@ -1212,22 +1162,24 @@ export default class Chatdetails extends BaseComponent<
                                 </Text>
                               </View>
                               <View style={styles.messagefromtext}>
-                                <Text style={styles.messagefromtextcontent}>
-                                  {i?.sMsg}
-                                </Text>
-                                {/* <Button
-                                  // onPress={this.Login}
-                                  // style={styles.buttontest}
-                                  >
-                                  <Text
-                                    style={{
-                                      color: 'white',
-                                      // fontWeight: '800',
-                                      fontFamily: 'Poppins-Bold',
-                                    }}>
-                                    Login
+                                {i.lAttchId == 0 ? (
+                                  <Text style={styles.messagefromtextcontent}>
+                                    {i?.sMsg}
                                   </Text>
-                                </Button> */}
+                                ) : (
+                                  <Text style={styles.messagefromtextcontent}>
+                                    <TouchableOpacity
+                                      onPress={() =>
+                                        this.DownloadFile(i?.lAttchId)
+                                      }>
+                                      <Image
+                                        source={require('../../assets/download.png')}
+                                        style={{height: 20, width: 19.5}}
+                                      />
+                                    </TouchableOpacity>
+                                    {i?.sMsg}
+                                  </Text>
+                                )}
                               </View>
                             </View>
                             <View style={styles.messagefromtime}>
@@ -1249,7 +1201,7 @@ export default class Chatdetails extends BaseComponent<
             <View
               style={{
                 backgroundColor: '#F1F1F1',
-                paddingHorizontal: 10,
+                // paddingHorizontal: 10,
                 paddingVertical: 5,
                 borderRadius: 6,
                 flexDirection: 'row',
@@ -1264,24 +1216,34 @@ export default class Chatdetails extends BaseComponent<
                   var Model = this.state.Model;
                   Model.Scroll = true;
                   this.UpdateViewModel();
-                  console.log('Hi');
                 }}
                 style={
                   (styles.input,
                   {
-                    width: Dimensions.get('window').width - 70,
+                    width: Dimensions.get('window').width - 100,
                     fontFamily: 'OpenSans-Regular',
                   })
                 }
                 placeholder="Write your message here"></TextInput>
-              <TouchableOpacity
-                onPress={this.ButtonClick}
-                style={{flexShrink: 1, width: 25, justifyContent: 'center'}}>
-                <Image
-                  source={require('../../assets/send.png')}
-                  style={{height: 25, width: 25}}
-                />
-              </TouchableOpacity>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  paddingRight: 10,
+                }}>
+                <TouchableOpacity onPress={this.UploadFile}>
+                  <Image
+                    source={require('../../assets/attachment.png')}
+                    style={{height: 25, width: 13, marginHorizontal: 10}}
+                  />
+                </TouchableOpacity>
+                <TouchableOpacity onPress={this.ButtonClick}>
+                  <Image
+                    source={require('../../assets/send.png')}
+                    style={{height: 25, width: 25}}
+                  />
+                </TouchableOpacity>
+              </View>
             </View>
           </View>
         </SafeAreaView>
@@ -1430,7 +1392,7 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     fontSize: 15,
     color: '#C66E12',
-    lineHeight: 25,
+    // lineHeight: 30,
     fontFamily: 'OpenSans-VariableFont_wdth,wght',
     zIndex: 1,
   },

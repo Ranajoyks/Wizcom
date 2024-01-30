@@ -7,7 +7,9 @@ import {
   TouchableOpacity,
   Image,
   TextInput,
-  BackHandler 
+  BackHandler,
+  PermissionsAndroid,
+  Platform,
 } from 'react-native';
 import BaseComponent from '../../Core/BaseComponent';
 import BaseState from '../../Core/BaseState';
@@ -17,7 +19,7 @@ import axios from 'axios';
 import * as signalR from '@microsoft/signalr';
 import messaging from '@react-native-firebase/messaging';
 
-import { request, check, PERMISSIONS, RESULTS } from 'react-native-permissions';
+import {request, check, PERMISSIONS, RESULTS} from 'react-native-permissions';
 import PermissionHelper from '../../Core/PermissionHelper';
 export class LoginViewModel {
   UserName: string = '';
@@ -25,7 +27,7 @@ export class LoginViewModel {
   BranchList: [] = [];
   showMessage: boolean = false;
   DeviceId: string = '';
-  CompanyId:string=''
+  CompanyId: string = '';
   URL: string = 'eiplutm.eresourceerp.com/AzaaleaR';
 }
 export default class Loginpage extends BaseComponent<any, LoginViewModel> {
@@ -40,61 +42,84 @@ export default class Loginpage extends BaseComponent<any, LoginViewModel> {
   async componentDidMount() {
     var Model = this.state.Model;
     var value = await SessionHelper.GetSession();
-    console.log("SessionValue: ",`ASP.NET_SessionId=${value}`);
-    var companyID = await SessionHelper.GetCompanyIDSession()
-    console.log("companyID: ", companyID);
-    Model.CompanyId = companyID
-    this.UpdateViewModel()
+    console.log('SessionValue: ', `ASP.NET_SessionId=${value}`);
+    var companyID = await SessionHelper.GetCompanyIDSession();
+    console.log('companyID: ', companyID);
+    Model.CompanyId = companyID;
+    this.UpdateViewModel();
     var URL = await SessionHelper.GetURLSession();
     if (URL) {
       Model.URL = URL;
       this.UpdateViewModel();
     }
-    console.log("URL: ",URL);
-    
+    console.log('URL: ', URL);
 
     // const deviceId = DeviceInfo.getDeviceId();
     const checkPermission = await this.checkNotificationPermission();
-    console.log("checkPermission: ",checkPermission);
+    console.log('checkPermission: ', checkPermission);
     if (checkPermission !== RESULTS.GRANTED) {
-      
       const request = await this.requestNotificationPermission();
-      console.log("request: ",request);
-       if(request !== RESULTS.GRANTED){
-       // BackHandler.exitApp()
-        }
+      console.log('request: ', request);
+      if (request !== RESULTS.GRANTED) {
+        // BackHandler.exitApp()
+      }
     }
-    this.FirebaseSetup()
+    this.FirebaseSetup();
     PermissionHelper.requestLocationPermission();
-   
+    this.requestStoragePermission()
   }
-   requestNotificationPermission = async () => {
+  requestStoragePermission = async () => {
+    console.log("HOOOOOO");
+    
+    try {
+      const granted = await PermissionsAndroid.request(
+        PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
+        {
+          title: 'Stroage Permission',
+          message:
+            'Cool Photo App needs access to your Stroage ' +
+            'so you can download file.',
+          buttonNeutral: 'Ask Me Later',
+          buttonNegative: 'Cancel',
+          buttonPositive: 'OK',
+        },
+      );
+      if (granted === PermissionsAndroid.RESULTS.GRANTED) {
+        console.log('You can use Stroage');
+      } else {
+        console.log('Storage permission denied');
+      }
+    } catch (err) {
+      console.warn(err);
+    }
+  }
+  requestNotificationPermission = async () => {
     const result = await request(PERMISSIONS.ANDROID.POST_NOTIFICATIONS);
     return result;
-  };  
+  };
   checkNotificationPermission = async () => {
     const result = await check(PERMISSIONS.ANDROID.POST_NOTIFICATIONS);
     return result;
   };
-  FirebaseSetup=()=>{
-    var Model = this.state.Model
+  FirebaseSetup = () => {
+    var Model = this.state.Model;
     messaging()
-    .requestPermission()
-    .then(() => {
-      return messaging().getToken();
-    })
-    .then((token) => {
-      // Log the FCM token
-      console.log('FCM Token:', token);
-      Model.DeviceId = token;
-      this.UpdateViewModel();
-      // console.log('deviceId: ', deviceId);
-      SessionHelper.SetFCMTokenSession(token)
-    })
-    .catch((error) => {
-      console.error('Error getting FCM token:', error);
-    });
-  }
+      .requestPermission()
+      .then(() => {
+        return messaging().getToken();
+      })
+      .then(token => {
+        // Log the FCM token
+        console.log('FCM Token:', token);
+        Model.DeviceId = token;
+        this.UpdateViewModel();
+        // console.log('deviceId: ', deviceId);
+        SessionHelper.SetFCMTokenSession(token);
+      })
+      .catch(error => {
+        console.error('Error getting FCM token:', error);
+      });
+  };
   onChangeText() {}
   handleSetUrl = () => {
     this.props.navigation.navigate({
@@ -103,8 +128,8 @@ export default class Loginpage extends BaseComponent<any, LoginViewModel> {
   };
   Login = async () => {
     var Model = this.state.Model;
-    console.log("ModelURl: ", Model.URL);
-    
+    console.log('ModelURl: ', Model.URL);
+
     SessionHelper.SetUserNameSession(Model.UserName);
     SessionHelper.SetDeviceIdSession(Model.DeviceId);
     var value = await SessionHelper.GetSession();
@@ -119,18 +144,16 @@ export default class Loginpage extends BaseComponent<any, LoginViewModel> {
       },
     };
     axios
-      .post(
-        `http://${Model.URL}/API/Sys/Sys.aspx/JValidate`,
-        LoginCredential,
-        {headers: headers},
-      )
+      .post(`http://${Model.URL}/API/Sys/Sys.aspx/JValidate`, LoginCredential, {
+        headers: headers,
+      })
       .then(response => {
         console.log('response3`', response.data.d.data.ado);
         if (!response.data.d.bStatus) {
           Model.showMessage = true;
           this.UpdateViewModel();
         }
-        if (response.data.d.bStatus) {       
+        if (response.data.d.bStatus) {
           Model.showMessage = false;
           // Model.BranchList = response.data.d.data.ado
           this.UpdateViewModel();
@@ -330,7 +353,7 @@ const styles = StyleSheet.create({
     borderRadius: 7,
     justifyContent: 'center',
     textAlign: 'center',
-    fontFamily:"OpenSans-Regular",
+    fontFamily: 'OpenSans-Regular',
   },
   buttontest: {
     alignSelf: 'center',

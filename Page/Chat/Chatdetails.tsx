@@ -1120,18 +1120,13 @@ export default class Chatdetails extends BaseComponent<
                                     </Text>
                                   )
                                 ) : (
-                                  <Text style={styles.messagetotextcontent}>
-                                     {/* <TouchableOpacity
-                                      onPress={() =>
-                                        this.DownloadFile(i?.lAttchId)
-                                      }> */}
-                                      <Image
-                                        source={require('../../assets/download.png')}
-                                        style={{height: 20, width: 19.5}}
-                                      />
-                                    {/* </TouchableOpacity> */}
-                                    {i?.sMsg}
-                                  </Text>
+                                  <View style={styles.messagetotextcontent}>
+                                    <Image
+                                      source={require('../../assets/download.png')}
+                                      style={{height: 20, width: 19.5,marginRight: 10,}}
+                                    />
+                                     <Text style={{color:"#C66E12"}}>{i?.sMsg}</Text>
+                                  </View>
                                 )}
                               </View>
                             </View>
@@ -1167,18 +1162,18 @@ export default class Chatdetails extends BaseComponent<
                                     {i?.sMsg}
                                   </Text>
                                 ) : (
-                                  <Text style={styles.messagefromtextcontent}>
-                                    <TouchableOpacity
-                                      onPress={() =>
-                                        this.DownloadFile(i?.lAttchId)
-                                      }>
-                                      <Image
-                                        source={require('../../assets/download.png')}
-                                        style={{height: 20, width: 19.5}}
-                                      />
-                                    </TouchableOpacity>
-                                    {i?.sMsg}
-                                  </Text>
+                                  <View style={styles.messagefromtextcontent}>
+                                    <Text>{i?.sMsg}</Text>
+
+                                    <Image
+                                      source={require('../../assets/download.png')}
+                                      style={{
+                                        height: 20,
+                                        width: 19.5,
+                                        marginLeft: 10,
+                                      }}
+                                    />
+                                  </View>
                                 )}
                               </View>
                             </View>
@@ -1362,6 +1357,8 @@ const styles = StyleSheet.create({
     color: '#000',
     lineHeight: 25,
     fontFamily: 'OpenSans-VariableFont_wdth,wght',
+    
+    flexDirection:"row"
   },
   messagefromtime: {
     // flexDirections: 'row-reverse',
@@ -1394,7 +1391,9 @@ const styles = StyleSheet.create({
     color: '#C66E12',
     // lineHeight: 30,
     fontFamily: 'OpenSans-VariableFont_wdth,wght',
-    zIndex: 1,
+    // zIndex: 1,
+    flexDirection:"row"
+
   },
   messagetotime: {
     flexDirections: 'row-reverse',

@@ -31,6 +31,7 @@ import Groupchatdetails from '../Page/Chat/Groupchatdetails';
 import NoficationDetails from '../Page/Chat/NoficationDetails';
 import MapPage from '../Page/Map/MapPage';
 import MainPage from '../Page/Chat/MainPage';
+import CreateGroup from '../Page/Chat/CreateGroup';
 
  
 const Stack = createStackNavigator();
@@ -98,6 +99,11 @@ function AppStack() {
         <Stack.Screen
           name="MapPage"
           component={MapPage}
+          options={{headerShown: false, gestureEnabled: false}}
+        />
+         <Stack.Screen
+          name="CreateGroup"
+          component={CreateGroup}
           options={{headerShown: false, gestureEnabled: false}}
         />
       </Stack.Navigator>

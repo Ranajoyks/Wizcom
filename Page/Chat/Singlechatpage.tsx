@@ -712,6 +712,22 @@ export default class Singlechatpage extends BaseComponent<
                   )}
                   <View style={styles.divider}></View>
 
+<TouchableOpacity onPress={() =>    this.props.navigation.navigate('CreateGroup')}>
+  <Text
+    style={{
+      fontFamily: 'OpenSans-SemiBold',
+      marginTop: 15,
+      paddingLeft: 20,
+      color: '#0383FA',
+      alignSelf: 'left',
+      fontSize: 12,
+      marginBottom: 15,
+    }}>
+    New Group
+  </Text>
+</TouchableOpacity>
+                  <View style={styles.divider}></View>
+
                   <TouchableOpacity onPress={() => this.Logout()}>
                     <Text
                       style={{
@@ -836,6 +852,81 @@ export default class Singlechatpage extends BaseComponent<
             </Tab>
             <Tab
               heading="Notification"
+              color="black"
+              textStyle={{color: '#a6a6a6', fontFamily: 'Poppins-SemiBold'}}
+              activeTextStyle={{color: 'black', fontFamily: 'Poppins-SemiBold'}}
+              tabContainerStyle={{backgroundColor: 'white'}}
+              tabStyle={{backgroundColor: 'white'}}
+              activeTabStyle={{backgroundColor: 'white'}}>
+              <Content>
+                <List>
+                  {model.AllNotification.map((i: alluser) => (
+                    <TouchableOpacity
+                      onPress={() => this.NotificationDetalis(i)}>
+                      <ListItem avatar>
+                        <Left>
+                          <View>
+                            <Badge
+                              style={{
+                                backgroundColor: '#E9E9E9',
+                                width: 50,
+                                height: 50,
+                                borderRadius: 25,
+                                justifyContent: 'center',
+                                alignItems: 'center',
+                              }}>
+                              <Text
+                                style={{
+                                  color: 'black',
+                                  fontSize: 22,
+                                  fontWeight: '400',
+                                  fontFamily: 'OpenSans-Regular',
+                                }}>
+                                {i.userFullName.toLocaleUpperCase().charAt(0)}
+                              </Text>
+                            </Badge>
+                            {i?.isUserLive ? (
+                              <View style={styles.circle}></View>
+                            ) : (
+                              <View style={styles.circle2}></View>
+                            )}
+                          </View>
+                        </Left>
+                        <Body>
+                          <View style={{flexDirection: 'row'}}>
+                            <Text
+                              style={{
+                                color: 'black',
+                                fontWeight: '600',
+                                fontFamily: 'OpenSans-SemiBold',
+                                marginBottom: 5,
+                                fontSize: 14.5,
+                                // letterSpacing:0.5
+                              }}>
+                              {i.userFullName}
+                            </Text>
+                          </View>
+                          <Text
+                            style={{
+                              color: i.status ? '#a6a6a6' : '#0383FA',
+                              fontWeight: '200',
+                              fontFamily: 'OpenSans-SemiBold',
+                              letterSpacing: 0.2,
+                              fontSize: 12,
+                            }}>
+                            {i.message ? i.message : 'No message'}
+                          </Text>
+                        </Body>
+                        <Right></Right>
+                      </ListItem>
+                    </TouchableOpacity>
+                  ))}
+                </List>
+              </Content>
+            </Tab>
+            {/* group */}
+            <Tab
+              heading="Group"
               color="black"
               textStyle={{color: '#a6a6a6', fontFamily: 'Poppins-SemiBold'}}
               activeTextStyle={{color: 'black', fontFamily: 'Poppins-SemiBold'}}

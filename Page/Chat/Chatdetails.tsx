@@ -904,10 +904,7 @@ export default class Chatdetails extends BaseComponent<
         <View style={styles.header}>
           <TouchableOpacity
             onPress={() => {
-              this.props.navigation.reset({
-                index: 0,
-                routes: [{name: 'Singlechatpage'}],
-              });
+              this.props.navigation.navigate('Singlechatpage');
             }}>
             <Image
               source={require('../../assets/backimg.png')}

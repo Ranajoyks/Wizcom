@@ -34,7 +34,7 @@ import User from '../../Entity/User';
 import {GroupDetails} from '../../Entity/GroupDetails';
 
 // const navigation = useNavigation();
-export class CreateGroupViewModel {
+export class DeleteGroupMemberViewModel {
   GroupName?: string;
   index: number = 0;
   FilterUser: User[] = [];
@@ -52,15 +52,16 @@ export class CreateGroupViewModel {
   URL: string = 'wemessanger.azurewebsites.net';
   GroupId: string = '';
   Groupdetais?: GroupDetails;
+  SelectedUser: User[] = [];
 }
 
-export default class CreateGroup extends BaseComponent<
+export default class DeleteGroupMember extends BaseComponent<
   any,
-  CreateGroupViewModel
+  DeleteGroupMemberViewModel
 > {
   constructor(props: any) {
     super(props);
-    this.state = new BaseState(new CreateGroupViewModel());
+    this.state = new BaseState(new DeleteGroupMemberViewModel());
     this.state.Model.GroupId = props.route.params?.GroupId;
   }
   async componentDidMount() {
@@ -139,10 +140,9 @@ export default class CreateGroup extends BaseComponent<
     SelectedMember: User,
     SelectedMemberID: string,
   ) => {
+    console.log('SelectedMemberID: ', SelectedMemberID);
+
     var Model = this.state.Model;
-    if (Model.GroupId && SelectedMember.IsSelected == true) {
-      this.DeleteGroupMember(SelectedMemberID);
-    }
     var Members = {
       memberId: Model.ConnectionCode + '_' + SelectedMemberID.toString(),
     };
@@ -151,52 +151,25 @@ export default class CreateGroup extends BaseComponent<
 
     var Checking = Model.GroupMembers.find(
       i =>
-        i.memberId == Model.ConnectionCode + '_' + SelectedMemberID.toString()
+        i.memberId == Model.ConnectionCode + '_' + SelectedMemberID.toString(),
     );
+    console.log('GroupMembers: ', Model.GroupMembers);
+    console.log('Members: ', Members);
+    console.log('Checking: ', Checking);
 
     if (!Checking) {
       Model.GroupMembers.push(Members);
       this.UpdateViewModel();
     }
+
     if (Checking) {
       Model.GroupMembers = Model.GroupMembers.filter(
-        i =>  i.memberId !=
-        Model.ConnectionCode + '_' + SelectedMemberID.toString(),
+        i =>
+          i.memberId !=
+          Model.ConnectionCode + '_' + SelectedMemberID.toString(),
       );
       this.UpdateViewModel();
     }
-  };
-  CreateGroup = async () => {
-    var Model = this.state.Model;
-    var UserDetails = await SessionHelper.GetUserDetailsSession();
-    var myId = `${Model.ConnectionCode}_${UserDetails.lId}`;
-    var Headers = {
-      'Content-Type': 'application/json',
-    };
-
-    var GroupCreateRequest = JSON.stringify({
-      companyId: Model.BranchID,
-      creatorId: myId,
-      groupName: Model.GroupName,
-      members: Model.GroupMembers,
-    });
-    console.log('GroupCreateRequest: ', GroupCreateRequest);
-    axios
-      .post(`https://${Model.URL}/api/user/creategroup`, GroupCreateRequest, {
-        headers: Headers,
-      })
-      .then(res => {
-        console.log('Groupresponse: ', res.data);
-        if (res.data) {
-          this.props.navigation.reset({
-            routes: [{name: 'Singlechatpage'}],
-          });
-        }
-      })
-      .catch((err: any) => {
-        console.log('GroupCreateError: ', err);
-        Alert.alert(err);
-      });
   };
   GetGroupDetails = async () => {
     var Model = this.state.Model;
@@ -209,6 +182,7 @@ export default class CreateGroup extends BaseComponent<
       .then(res => {
         // console.log('GroupDetailsResponse: ', res.data);
         Model.Groupdetais = res.data;
+
         this.UpdateViewModel();
         console.log('GroupDetailsResponse: ', Model.Groupdetais);
         Model.GroupName = Model.Groupdetais?.group.groupName;
@@ -217,6 +191,7 @@ export default class CreateGroup extends BaseComponent<
           Model.Groupdetais?.members.forEach(j => {
             if (j.memberId == i.lId.toString()) {
               i.IsSelected = true;
+              Model.SelectedUser.push(i);
             }
           });
         });
@@ -226,25 +201,29 @@ export default class CreateGroup extends BaseComponent<
         console.log('GroupDetailsError: ', err);
       });
   };
-  AddGroupMember = async () => {
+  DeleteGroupMember = async () => {
     var Model = this.state.Model;
     var UserDetails = await SessionHelper.GetUserDetailsSession();
     var myId = `${Model.ConnectionCode}_${UserDetails.lId}`;
     var Headers = {
       'Content-Type': 'application/json',
     };
-    var GroupMemberAddRequest = JSON.stringify({
+    var GroupMemberDeleteRequest = JSON.stringify({
       userId: myId,
       groupId: Model.GroupId,
       members: Model.GroupMembers,
     });
-    console.log('GroupCreateRequest: ', GroupMemberAddRequest);
+    console.log('GroupCreateRequest: ', GroupMemberDeleteRequest);
     axios
-      .post(`https://${Model.URL}/api/user/addmember`, GroupMemberAddRequest, {
-        headers: Headers,
-      })
+      .post(
+        `https://${Model.URL}/api/user/deletemember`,
+        GroupMemberDeleteRequest,
+        {
+          headers: Headers,
+        },
+      )
       .then(res => {
-        console.log('Groupresponse: ', res.data);
+        console.log('DeleteGroupresponse: ', res.data);
         if (res.data) {
           this.props.navigation.reset({
             routes: [
@@ -256,43 +235,6 @@ export default class CreateGroup extends BaseComponent<
             ],
           });
         }
-      })
-      .catch((err: any) => {
-        console.log('GroupCreateError: ', err);
-        Alert.alert(err);
-      });
-  };
-  DeleteGroupMember = async (SelectedMemberID: string) => {
-    var Model = this.state.Model;
-    var UserDetails = await SessionHelper.GetUserDetailsSession();
-    var myId = `${Model.ConnectionCode}_${UserDetails.lId}`;
-    var Headers = {
-      'Content-Type': 'application/json',
-    };
-    var Members = {
-      memberId: Model.ConnectionCode + '_' + SelectedMemberID.toString(),
-    };
-    var GroupMemberDeleteRequest = JSON.stringify({
-      userId: myId,
-      groupId: Model.GroupId,
-      members: [Members],
-    });
-    console.log('GroupCreateRequest: ', GroupMemberDeleteRequest);
-    axios
-      .post(
-        `https://${Model.URL}/api/user/addmember`,
-        GroupMemberDeleteRequest,
-        {
-          headers: Headers,
-        },
-      )
-      .then(res => {
-        console.log('DeleteGroupresponse: ', res.data);
-        // if (res.data) {
-        //   this.props.navigation.reset({
-        //     routes: [{name: 'Singlechatpage'}],
-        //   });
-        // }
       })
       .catch((err: any) => {
         console.log('DeleteGroupCreateError: ', err);
@@ -317,7 +259,7 @@ export default class CreateGroup extends BaseComponent<
             />
           </TouchableOpacity>
           <View style={{flex: 1}}>
-            <Text style={styles.title}>Create Group</Text>
+            <Text style={styles.title}>Delete Member</Text>
           </View>
         </View>
         <View style={{padding: 10}}>
@@ -349,29 +291,23 @@ export default class CreateGroup extends BaseComponent<
                 alignItems: 'center',
                 //paddingRight: 5,
               }}>
-              {model?.GroupId ? (
-                <TouchableOpacity onPress={this.AddGroupMember}>
-                  <Text
-                    style={{fontSize: 16, fontWeight: 'bold', marginRight: 10}}>
-                    Update
-                  </Text>
-                </TouchableOpacity>
-              ) : (
-                <TouchableOpacity onPress={this.CreateGroup}>
-                  <Text style={{fontSize: 16, fontWeight: 'bold'}}>Create</Text>
-                </TouchableOpacity>
-              )}
+              <TouchableOpacity onPress={() => this.DeleteGroupMember()}>
+                <Text
+                  style={{fontSize: 16, fontWeight: 'bold', marginRight: 10}}>
+                  Update
+                </Text>
+              </TouchableOpacity>
             </View>
           </View>
         </View>
         <Content>
           <List>
-            {model.FilterUser.length <= 0 && (
+            {model.SelectedUser.length <= 0 && (
               <ActivityIndicator size="large" color="#0000ff" />
             )}
 
-            {model.FilterUser.length > 0 &&
-              model.FilterUser.map((i: User, index) => (
+            {model.SelectedUser.length > 0 &&
+              model.SelectedUser.map((i: User, index) => (
                 //   <TouchableOpacity onPress={() => this.NextPage(i)}>
                 <ListItem avatar key={index}>
                   <Left>

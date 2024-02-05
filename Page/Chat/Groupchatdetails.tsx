@@ -24,11 +24,20 @@ import * as RNFS from 'react-native-fs';
 import RNFetchBlob from 'rn-fetch-blob';
 import Snackbar from 'react-native-snackbar';
 import * as signalR from '@microsoft/signalr';
-
+import {GroupDetails} from '../../Entity/GroupDetails';
+import DocumentPicker from 'react-native-document-picker';
+const memberStyles = [
+  { backgroundColor: 'red' },     // Style for index 0
+  { backgroundColor: 'blue' },    // Style for index 1
+  { backgroundColor: 'green' },   // Style for index 2
+  { backgroundColor: 'yellow' },  // Style for index 3
+  // Add more styles for additional indices as needed
+];
 export class GroupchatdetailsViewModel {
   GroupName: string = '';
   GroupID: string = '';
   Url: string = 'wemessanger.azurewebsites.net';
+  URL: string = 'eiplutm.eresourceerp.com/AzaaleaR';
   ConnectionCode: string = '';
   BranchID: string = '';
   FCMToken: string = '';
@@ -48,6 +57,8 @@ export class GroupchatdetailsViewModel {
   AppVersion: string = '1.0.0';
   GroupMembers: any[] = [];
   SingleRConnection: any;
+  Groupdetais?: GroupDetails;
+  isAdmin: boolean = false;
 }
 export class AllGroupChats {
   date: any = new Date();
@@ -81,8 +92,10 @@ export default class Groupchatdetails extends BaseComponent<
   constructor(props: any) {
     super(props);
     this.state = new BaseState(new GroupchatdetailsViewModel());
-    this.state.Model.GroupName = props.route.params.GroupName;
-    this.state.Model.GroupID = props.route.params.GroupID;
+    this.state.Model.GroupName = props.route.params?.GroupName;
+    this.state.Model.GroupID = props.route.params?.GroupID;
+    this.state.Model.GroupName = props.route?.GroupName;
+    this.state.Model.GroupID = props.route?.GroupID;
   }
   async componentDidMount() {
     var Model = this.state.Model;
@@ -104,7 +117,10 @@ export default class Groupchatdetails extends BaseComponent<
     Model.ReceiverId = ReceiverId;
     this.UpdateViewModel();
     this.GetAllGroupMsg();
-    this.MakeSignalRConnection()
+    this.MakeSignalRConnection();
+    this.GroupDetails();
+    console.log('Groupname: ', this.props.route);
+    // console.log("GroupId: ", Model.GroupID);
   }
   MakeSignalRConnection = async () => {
     var Model = this.state.Model;
@@ -118,27 +134,67 @@ export default class Groupchatdetails extends BaseComponent<
       )
       .build();
     this.UpdateViewModel();
-    Model.SingleRConnection.start().then(() => {
+    Model.SingleRConnection.start().then(async () => {
       console.log('SignalR connected');
-      this.ReceiveGroupMsg()
-      Model.SingleRConnection.on(
+      this.ReceiveGroupMsg();
+      await Model.SingleRConnection.on(
         'ReceiveGroupMessage',
-        async (fromUserId: any, userName: any, groupName: any,message:any) => {
-          console.log("receiveMsg: ",message);
-          
-        })
+        async (
+          fromUserId: any,
+          userName: any,
+          groupName: any,
+          message: any,
+        ) => {
+          console.log('receiveMsg: ', message);
+        },
+      );
     });
   };
-  ReceiveGroupMsg=async()=>{
-    console.log("Hi");    
-    var Model = this.state.Model
-    Model.SingleRConnection.on(
+  ReceiveGroupMsg = async () => {
+    console.log('Hi');
+    var Model = this.state.Model;
+    await Model.SingleRConnection.on(
       'ReceiveGroupMessage',
-      async (fromUserId: any, userName: any, groupName: any,message:any) => {
-        console.log("receiveMsg: ",message);
-        
+      async (fromUserId: any, userName: any, groupName: any, message: any) => {
+        console.log('receiveMsg: ', message);
+      },
+    );
+  };
+  showSnackbar = () => {
+    Snackbar.show({
+      text: 'Download Successfully',
+      duration: 1000, // Or LENGTH_LONG, LENGTH_INDEFINITE
+      // Optional:
+      backgroundColor: '#4DB14F',
+      // action: {
+      //   text: 'Dismiss',
+      //   onPress: () => { null },
+      // },
+    });
+  };
+  GroupDetails = async () => {
+    var Model = this.state.Model;
+    var UserDetails = await SessionHelper.GetUserDetailsSession();
+    var myId = `${Model.ConnectionCode}_${UserDetails.lId}`;
+    axios
+      .get(
+        `http://${Model.Url}/api/user/groupdetail?userId=${myId}&groupId=${Model.GroupID}`,
+      )
+      .then(res => {
+        // console.log('GroupDetailsResponse: ', res.data);
+        Model.Groupdetais = res.data;
+        this.UpdateViewModel();
+        console.log('GroupDetailsResponse: ', Model.Groupdetais);
+        Model.Groupdetais?.members.forEach(i => {
+          if (i.memberId == UserDetails.lId && i.isOwner == true) {
+            Model.isAdmin = true;
+          }
+        });
       })
-  }
+      .catch((err: any) => {
+        console.log('GroupDetailsError: ', err);
+      });
+  };
   Snackbar = () => {
     Snackbar.show({
       text: 'Download Successfully',
@@ -311,86 +367,71 @@ export default class Groupchatdetails extends BaseComponent<
         Model.GroupMsg = '';
         this.UpdateViewModel();
       }
-      // console.log(
-      //   'SendMessage',
-      //   Model.companyId,
-      //   Model.senderId,
-      //   Model.receiverId,
-      //   Model.InvokeMessage,
-      //   Model.msgflag,
-      //   Model.itype,
-      // );
-      // if (Model.selectedFile) {
-      //   const headers = {
-      //     'Content-Type': 'application/json',
-      //   };
+      if (Model.selectedFile) {
+        const headers = {
+          'Content-Type': 'application/json',
+        };
 
-      //   var FileUploadData = new FormData();
-      //   FileUploadData.append(Model.FileName, Model.selectedFile);
-      //   // console.log('FileUploadData: ', JSON.stringify(FileUploadData));
-      //   // console.log('FileUploadheaders: ', FileUploadheaders);
-      //   axios
-      //     .post(
-      //       `http://eiplutm.eresourceerp.com/AzaaleaR/Sys/Handler2.ashx`,
-      //       FileUploadData,
-      //       {headers: FileUploadheaders},
-      //     )
-      //     .then(res => {
-      //       console.log('FileUpload1stREsponse: ', res.data);
-      //       var FileUploadRaw = JSON.stringify({
-      //         CompanyId: Model.BranchID,
-      //         FromUserId: Model.senderId,
-      //         ToUserId: Model.receiverId,
-      //         ConnectionId: 'connectionId',
-      //         AttachmentId: res.data.lAttchId,
-      //         FileName: res.data.sFileName,
-      //         Message: '',
-      //       });
-      //       console.log('FileUploadRaw: ', FileUploadRaw);
-      //       console.log(
-      //         'SendMessage',
-      //         Model.companyId,
-      //         Model.senderId,
-      //         Model.receiverId,
-      //         Model.InvokeMessage,
-      //         Model.msgflag,
-      //         Model.itype,
-      //       );
+        var FileUploadData = new FormData();
+        FileUploadData.append(Model.FileName, Model.selectedFile);
+        // console.log('FileUploadData: ', JSON.stringify(FileUploadData));
+        // console.log('FileUploadheaders: ', FileUploadheaders);
+        axios
+          .post(
+            `http://eiplutm.eresourceerp.com/AzaaleaR/Sys/Handler2.ashx`,
+            FileUploadData,
+            {headers: FileUploadheaders},
+          )
+          .then(res => {
+            console.log('FileUpload1stREsponse: ', res.data);
+            var FileUploadRaw = JSON.stringify({
+              companyId: Model.BranchID,
+              fromUserId: myId,
+              userName:Model.SenderDetails?.userFullName,
+              AttachmentId: res.data.lAttchId,
+              message: res.data.sFileName,
+              groupName: Model.GroupName+"_"+Model.GroupID
+            });
+            console.log('FileUploadRaw: ', FileUploadRaw);
 
-      //       if (res.data) {
-      //         axios
-      //           .post(
-      //             `https://wemessanger.azurewebsites.net/api/user/sendfile`,
-      //             FileUploadRaw,
-      //             {headers: headers},
-      //           )
-      //           .then((res: any) => {
-      //             console.log('FileUploadData: ', res.data);
-      //             Model.selectedFile = null;
-      //             Model.AttchId = 0;
-      //             this.UpdateViewModel();
-      //           })
-      //           .catch((Err: any) => {
-      //             console.log('FlieUploadErr: ', Err);
-      //           });
-      //       }
-      //     })
-      //     .catch(err => {
-      //       console.log('FlieUploadErr: ', err);
-      //     });
-      // } else {
-      axios
-        .post(`https://${Model.Url}/api/user/sendgroupmessage`, SendMSgOption, {
-          headers: Headers,
-        })
-        .then(res => {
-          console.log('SendMsgRes: ', res.data);
-        })
-        .catch((err: any) => {
-          console.log('SendMsgErr: ', err);
-          Alert.alert(err);
-        });
-      // }
+            if (res.data) {
+              axios
+                .post(
+                  `https://wemessanger.azurewebsites.net/api/user/sendgroupmessage`,
+                  FileUploadRaw,
+                  {headers: headers},
+                )
+                .then((res: any) => {
+                  console.log('FileUploadData: ', res.data);
+                  Model.selectedFile = null;
+                  Model.AttchId = 0;
+                  this.UpdateViewModel();
+                })
+                .catch((Err: any) => {
+                  console.log('FlieUploadErr: ', Err);
+                });
+            }
+          })
+          .catch(err => {
+            console.log('FileUpload1stError: ', err);
+          });
+      } else {
+        axios
+          .post(
+            `https://${Model.Url}/api/user/sendgroupmessage`,
+            SendMSgOption,
+            {
+              headers: Headers,
+            },
+          )
+          .then(res => {
+            console.log('SendMsgRes: ', res.data);
+          })
+          .catch((err: any) => {
+            console.log('SendMsgErr: ', err);
+            Alert.alert(err);
+          });
+      }
     }
   };
   Approve = async (text: string) => {
@@ -412,6 +453,26 @@ export default class Groupchatdetails extends BaseComponent<
         Alert.alert(JSON.stringify(err));
       });
   };
+  UploadFile = async () => {
+    var Model = this.state.Model;
+    try {
+      const result = await DocumentPicker.pick({
+        type: [DocumentPicker.types.allFiles],
+      });
+      console.log('FileRESultResult: ', result[0]);
+      Model.selectedFile = result[0];
+      Model.GroupMsg = result[0].name as string;
+      Model.FileName = result[0].name as string;
+      Model.AttchId = 1;
+      this.UpdateViewModel();
+    } catch (err) {
+      if (DocumentPicker.isCancel(err)) {
+        console.log('Document picker cancelled');
+      } else {
+        console.error('Error picking document:', err);
+      }
+    }
+  };
   DownloadFile = async (AttachmentId: number, FileName: string) => {
     console.log('FileName: ', FileName);
 
@@ -426,7 +487,7 @@ export default class Groupchatdetails extends BaseComponent<
       lId: AttachmentId,
     };
     axios
-      .post(`http://${Model.Url}/API/SYS/Sys.aspx/JGetAttch`, FileUploadData, {
+      .post(`http://${Model.URL}/API/SYS/Sys.aspx/JGetAttch`, FileUploadData, {
         headers: FileUploadheaders,
       })
       .then(res => {
@@ -457,43 +518,7 @@ export default class Groupchatdetails extends BaseComponent<
     Model.IsOpen = !Model.IsOpen;
     this.UpdateViewModel();
   };
-  ExitGroup = async () => {
-    var Model = this.state.Model;
-    var UserDetails = await SessionHelper.GetUserDetailsSession();
-    var myId = `${Model.ConnectionCode}_${UserDetails.lId}`;
-    var Headers = {
-      'Content-Type': 'application/json',
-    };
-    var Members = {
-      memberId: myId,
-    };
-    var GroupMemberDeleteRequest = JSON.stringify({
-      userId: myId,
-      groupId: 1,
-      members: [Members],
-    });
-    console.log('GroupDeleteRequest: ', GroupMemberDeleteRequest);
-    axios
-      .post(
-        `https://${Model.Url}/api/user/addmember`,
-        GroupMemberDeleteRequest,
-        {
-          headers: Headers,
-        },
-      )
-      .then(res => {
-        console.log('GroupDeleteResponse: ', res.data);
-        if (res.data) {
-          this.props.navigation.reset({
-            routes: [{name: 'Singlechatpage'}],
-          });
-        }
-      })
-      .catch((err: any) => {
-        console.log('GroupDeleteError: ', err);
-        Alert.alert(err);
-      });
-  };
+
   render() {
     var Model = this.state.Model;
     // console.log('model,newChat: ', JSON.stringify(Model.NewChat));
@@ -632,79 +657,99 @@ export default class Groupchatdetails extends BaseComponent<
                       {Model.AppVersion}
                     </Text>
                   </View>
-                  <View style={styles.divider}></View>
-
-                  <TouchableOpacity
-                    onPress={() =>
-                      this.props.navigation.navigate('CreateGroup')
-                    }>
-                    <Text
-                      style={{
-                        fontFamily: 'OpenSans-SemiBold',
-                        marginTop: 15,
-                        paddingLeft: 20,
-                        color: '#0383FA',
-                        alignSelf: 'flex-start',
-                        fontSize: 12,
-                        marginBottom: 15,
-                      }}>
-                      Add Member
-                    </Text>
-                  </TouchableOpacity>
-                  <View style={styles.divider}></View>
-
-                  <TouchableOpacity onPress={() => this.ExitGroup()}>
-                    <Text
-                      style={{
-                        fontFamily: 'OpenSans-SemiBold',
-                        marginTop: 15,
-                        paddingLeft: 20,
-                        color: '#0383FA',
-                        alignSelf: 'flex-start',
-                        fontSize: 12,
-                        marginBottom: 20,
-                      }}>
-                      Left Group
-                    </Text>
-                  </TouchableOpacity>
+                  {Model.isAdmin ? (
+                    <>
+                      <View style={styles.divider}></View>
+                      <TouchableOpacity
+                        onPress={() =>
+                          this.props.navigation.navigate('CreateGroup', {
+                            GroupId: Model.GroupID,
+                          })
+                        }>
+                        <Text
+                          style={{
+                            fontFamily: 'OpenSans-SemiBold',
+                            marginTop: 15,
+                            paddingLeft: 20,
+                            color: '#0383FA',
+                            alignSelf: 'flex-start',
+                            fontSize: 12,
+                            marginBottom: 15,
+                          }}>
+                          Add Member
+                        </Text>
+                      </TouchableOpacity>
+                      <View style={styles.divider}></View>
+                      <TouchableOpacity
+                        onPress={() =>
+                          this.props.navigation.navigate('DeleteGroupMember', {
+                            GroupId: Model.GroupID,
+                          })
+                        }>
+                        <Text
+                          style={{
+                            fontFamily: 'OpenSans-SemiBold',
+                            marginTop: 15,
+                            paddingLeft: 20,
+                            color: '#0383FA',
+                            alignSelf: 'flex-start',
+                            fontSize: 12,
+                            marginBottom: 20,
+                          }}>
+                          Remove Member
+                        </Text>
+                      </TouchableOpacity>
+                    </>
+                  ) : null}
                 </View>
               </View>
             </View>
           )}
         </View>
-
         <View style={styles.groupcontainer}>
           <View>
             <View style={styles.groupheader}>
-              <Text style={styles.headerText}>
-                {Model.GroupName}
-              </Text>
+              <Text style={styles.headerText}>{Model.GroupName}</Text>
             </View>
             <View style={styles.memberCount}>
-              <Text style={styles.memberCountText}>7 Members</Text>
+              <Text style={styles.memberCountText}>
+                {Model.Groupdetais?.members.length} Members
+              </Text>
             </View>
           </View>
           <View style={styles.avatarContainer}>
             {/* Top Layer */}
-            <View style={styles.topLayer}>
-              <Image
-                source={{
-                  uri: 'https://filmfare.wwmindia.com/content/2020/nov/hrithik-roshan-411605007858.jpg',
-                }}
-                style={styles.topAvatar}
-              />
+              {Model.Groupdetais?.members.map((i,index) => (
+            <View style={[styles.topLayer, memberStyles[index % memberStyles.length]]} key={index}>
+                <Badge
+                  style={{
+                    backgroundColor: '#404040',
+                    width: 35,
+                    height: 35,
+                    borderRadius: 50,
+                    alignItems: 'center',
+                    display: 'flex',
+                    marginTop: -5,
+                  }}>
+                  <Text
+                    style={{
+                      color: 'white',
+                      fontSize: 22,
+                      fontFamily: 'OpenSans_Condensed-Bold',
+                    }}>
+                    {i?.fullName.toLocaleUpperCase().charAt(0)}
+                  </Text>
+                </Badge>
             </View>
+              ))}
 
-            {/* Bottom Layer */}
-            <View style={styles.bottomLayer}>
+            {/* <View style={styles.bottomLayer}>
               <Image
                 source={{
                   uri: 'https://filmfare.wwmindia.com/content/2020/nov/hrithik-roshan-411605007858.jpg',
                 }}
                 style={styles.avatar}
-              />
-              {/* <Image source={{ uri: 'https://filmfare.wwmindia.com/content/2020/nov/hrithik-roshan-411605007858.jpg' }} style={styles.avatar} /> */}
-            </View>
+              /> </View>
             <View style={styles.bottomLayer}>
               <Image
                 source={{
@@ -720,7 +765,7 @@ export default class Groupchatdetails extends BaseComponent<
                 }}
                 style={styles.avatar3}
               />
-            </View>
+            </View> */}
           </View>
         </View>
         <SafeAreaView style={styles.body}>
@@ -882,19 +927,28 @@ export default class Groupchatdetails extends BaseComponent<
                   this.UpdateViewModel();
                 }}
                 style={
-                  (styles.input, {width: Dimensions.get('window').width - 70})
+                  (styles.input, {width: Dimensions.get('window').width - 100})
                 }
                 placeholder="Write your message here"></TextInput>
-              <TouchableOpacity
-                onPress={() => {
-                  this.SendGroupMsg();
-                }}
-                style={{flexShrink: 1, width: 25, justifyContent: 'center'}}>
-                <Image
-                  source={require('../../assets/send.png')}
-                  style={{height: 25, width: 25}}
-                />
-              </TouchableOpacity>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  paddingRight: 10,
+                }}>
+                <TouchableOpacity onPress={this.UploadFile}>
+                  <Image
+                    source={require('../../assets/attachment.png')}
+                    style={{height: 25, width: 13, marginHorizontal: 10}}
+                  />
+                </TouchableOpacity>
+                <TouchableOpacity onPress={this.SendGroupMsg}>
+                  <Image
+                    source={require('../../assets/send.png')}
+                    style={{height: 25, width: 25}}
+                  />
+                </TouchableOpacity>
+              </View>
             </View>
           </View>
         </SafeAreaView>
@@ -1087,8 +1141,9 @@ const styles = StyleSheet.create({
 
   topLayer: {
     position: 'relative',
-    top: 0,
-    left: 0,
+    top: 10,
+    left: 5,
+    flexDirection: 'row',
     // zIndex: 3,
   },
 

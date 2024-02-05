@@ -255,7 +255,7 @@ export default class Singlechatpage extends BaseComponent<
     var myId = `${model.ConnectionCode}_${UserDetails.lId}`;
     var UserList = model.SingleRConnection.invoke('GetAllUser', myId, 0)
       .then((user: any) => {
-        console.log('GetallUser: ', user);
+        // console.log('GetallUser: ', user);
         model.alluser = user;
         var UserOnline = user.filter((i: User) => i.isUserLive == true);
         model.FilterUser = model.alluser;
@@ -448,10 +448,15 @@ export default class Singlechatpage extends BaseComponent<
         console.log('NotificationERror: ', err);
       });
   };
-  GroupChatPage = async (GroupName:string,GroupID:string) => {
-    this.props.navigation.navigate('Groupchatdetails', {
-      GroupName: GroupName,
-      GroupID:GroupID
+  GroupChatPage = async (GroupName: string, GroupID: string) => {
+    this.props.navigation.reset({
+      routes: [
+        {
+          name: 'Groupchatdetails',
+          GroupID: GroupID,
+          GroupName: GroupName,
+        },
+      ],
     });
   };
   GetAllGroup = async () => {
@@ -591,7 +596,7 @@ export default class Singlechatpage extends BaseComponent<
                         marginTop: 15,
                         paddingLeft: 20,
                         color: '#0383FA',
-                        alignSelf: 'flex-end',
+
                         fontSize: 12,
                       }}>
                       User:
@@ -600,7 +605,7 @@ export default class Singlechatpage extends BaseComponent<
                       style={{
                         paddingLeft: 20,
                         color: 'black',
-                        alignSelf: 'flex-end',
+
                         fontSize: 12,
                         fontFamily: 'OpenSans-SemiBold',
                       }}>
@@ -615,7 +620,7 @@ export default class Singlechatpage extends BaseComponent<
                         marginTop: 15,
                         paddingLeft: 20,
                         color: '#0383FA',
-                        alignSelf: 'flex-end',
+
                         fontSize: 12,
                       }}>
                       Designation:
@@ -629,7 +634,7 @@ export default class Singlechatpage extends BaseComponent<
                         marginTop: 15,
                         paddingLeft: 20,
                         color: '#0383FA',
-                        alignSelf: 'flex-end',
+
                         fontSize: 12,
                       }}>
                       Connection Code:
@@ -638,7 +643,7 @@ export default class Singlechatpage extends BaseComponent<
                       style={{
                         paddingLeft: 20,
                         color: 'black',
-                        alignSelf: 'flex-end',
+
                         fontSize: 12,
                         fontFamily: 'OpenSans-SemiBold',
                       }}>
@@ -654,7 +659,7 @@ export default class Singlechatpage extends BaseComponent<
                         marginTop: 15,
                         paddingLeft: 20,
                         color: '#0383FA',
-                        alignSelf: 'flex-end',
+
                         fontSize: 12,
                       }}>
                       Version:
@@ -663,7 +668,7 @@ export default class Singlechatpage extends BaseComponent<
                       style={{
                         paddingLeft: 20,
                         color: 'black',
-                        alignSelf: 'flex-end',
+
                         fontSize: 12,
                         fontFamily: 'OpenSans-SemiBold',
                       }}>
@@ -681,7 +686,7 @@ export default class Singlechatpage extends BaseComponent<
                             marginTop: 15,
                             paddingLeft: 20,
                             color: '#0383FA',
-                            alignSelf: 'flex-end',
+
                             fontSize: 12,
                           }}>
                           {model.OnlineText}
@@ -691,7 +696,7 @@ export default class Singlechatpage extends BaseComponent<
                         style={{
                           paddingLeft: 20,
                           color: 'black',
-                          alignSelf: 'flex-end',
+
                           fontSize: 12,
                           fontFamily: 'OpenSans-SemiBold',
                         }}>
@@ -707,7 +712,7 @@ export default class Singlechatpage extends BaseComponent<
                             marginTop: 15,
                             paddingLeft: 20,
                             color: '#0383FA',
-                            alignSelf: 'flex-end',
+
                             fontSize: 12,
                           }}>
                           {model.OnlineText}
@@ -717,7 +722,7 @@ export default class Singlechatpage extends BaseComponent<
                       style={{
                         paddingLeft:20,
                         color: 'black',
-                        alignSelf: 'flex-end',
+                        
                         fontSize: 12,
                         fontFamily: 'OpenSans-SemiBold',
                       }}>
@@ -737,7 +742,7 @@ export default class Singlechatpage extends BaseComponent<
                         marginTop: 15,
                         paddingLeft: 20,
                         color: '#0383FA',
-                        alignSelf: 'flex-end',
+
                         fontSize: 12,
                         marginBottom: 15,
                       }}>
@@ -753,7 +758,7 @@ export default class Singlechatpage extends BaseComponent<
                         marginTop: 15,
                         paddingLeft: 20,
                         color: '#0383FA',
-                        alignSelf: 'flex-end',
+
                         fontSize: 12,
                         marginBottom: 20,
                       }}>
@@ -959,7 +964,10 @@ export default class Singlechatpage extends BaseComponent<
 
                   {model.GroupList.length > 0 &&
                     model.GroupList.map((i: Groups, index) => (
-                      <TouchableOpacity onPress={() => this.GroupChatPage(i.groupName,i?.groupId.toString())}>
+                      <TouchableOpacity
+                        onPress={() =>
+                          this.GroupChatPage(i.groupName, i?.groupId.toString())
+                        }>
                         <ListItem avatar key={index}>
                           <Left>
                             <View>
@@ -971,7 +979,7 @@ export default class Singlechatpage extends BaseComponent<
                                   borderRadius: 25,
                                   justifyContent: 'center',
                                   alignItems: 'center',
-                                  marginTop:-5
+                                  marginTop: -5,
                                 }}>
                                 <Text
                                   style={{

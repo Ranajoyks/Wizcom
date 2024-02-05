@@ -32,6 +32,7 @@ import NoficationDetails from '../Page/Chat/NoficationDetails';
 import MapPage from '../Page/Map/MapPage';
 import MainPage from '../Page/Chat/MainPage';
 import CreateGroup from '../Page/Chat/CreateGroup';
+import DeleteGroupMember from '../Page/Chat/DeleteGroupMember';
 
  
 const Stack = createStackNavigator();
@@ -104,6 +105,11 @@ function AppStack() {
          <Stack.Screen
           name="CreateGroup"
           component={CreateGroup}
+          options={{headerShown: false, gestureEnabled: false}}
+        />
+         <Stack.Screen
+          name="DeleteGroupMember"
+          component={DeleteGroupMember}
           options={{headerShown: false, gestureEnabled: false}}
         />
       </Stack.Navigator>

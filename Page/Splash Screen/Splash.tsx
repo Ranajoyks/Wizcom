@@ -23,6 +23,8 @@ export class SpalshViewModel {
   UserID: string = '';
   ConnectionCode: any;
   FCMToken: string = '';
+  Offset: number = new Date().getTimezoneOffset();
+  BranchId: any;
 }
 export default class Splash extends BaseComponent<any, SpalshViewModel> {
   constructor(props: any) {
@@ -43,6 +45,12 @@ export default class Splash extends BaseComponent<any, SpalshViewModel> {
     var URL = await SessionHelper.GetURLSession();
     var ConnectionCode = await SessionHelper.GetCompanyIDSession();
     var FCMTOKEN = await SessionHelper.GetFCMTokenSession();
+    var BranchID = await SessionHelper.GetBranchIdSession();
+    Model.BranchId = BranchID;
+    var date = new Date();
+    console.log(date.getTimezoneOffset());
+    Model.Offset = date.getTimezoneOffset();
+    this.UpdateViewModel();
     Model.FCMToken = FCMTOKEN;
     if (URL) {
       Model.URL = URL;
@@ -57,13 +65,13 @@ export default class Splash extends BaseComponent<any, SpalshViewModel> {
     console.log('Value: ', value);
     if (value) {
       this.PageRander();
-    } else {
-      setTimeout(() => {
-        this.props.navigation.reset({
-          index: 0,
-          routes: [{name: 'Selectcompanypage'}],
-        });
-      }, 2000);
+      } else {
+        setTimeout(() => {
+          this.props.navigation.reset({
+            index: 0,
+            routes: [{name: 'Selectcompanypage'}],
+          });
+        }, 2000);
     }
   }
   PageRander = async () => {
@@ -82,6 +90,14 @@ export default class Splash extends BaseComponent<any, SpalshViewModel> {
       session: value,
       code: companyID,
     });
+    const AutologinData = JSON.stringify({
+      sConn: `${companyID}`,
+      dOffSet: Model.Offset,
+      cPlatForm: 'M',
+      lUsrId: parseInt(Model.UserID),
+      lCompId: parseInt(Model.BranchId),
+    });
+    console.log('AutologinData: ', AutologinData);
     axios
       .post(`https://wemessanger.azurewebsites.net/api/user/set`, Data, {
         headers: headers,
@@ -118,10 +134,35 @@ export default class Splash extends BaseComponent<any, SpalshViewModel> {
                       });
                     }
                     if (!res.data.d.bStatus) {
-                      this.props.navigation.reset({
-                        index: 0,
-                        routes: [{name: 'Selectcompanypage'}],
+                      axios
+                      .post(
+                        `http://eiplutm.eresourceerp.com/AzaaleaR/API/Sys/Sys.aspx/JAutoLogin`,
+                        AutologinData,
+                        {headers: headers},
+                      )
+                      .then(res => {
+                        console.log('Autologin data', res.data);
+                        if(res.data.d.bStatus){
+                          this.props.navigation.reset({
+                            index: 0,
+                            routes: [{name: 'Singlechatpage'}],
+                          });
+                        }
+                        if(!res.data.d.bStatus){
+                          this.props.navigation.reset({
+                            index: 0,
+                            routes: [{name: 'Selectcompanypage'}],
+                          });
+                        }
+                      })
+                      .catch(err => {
+                        console.log('autologinErr: ', err);
+                        this.props.navigation.reset({
+                          index: 0,
+                          routes: [{name: 'Selectcompanypage'}],
+                        });
                       });
+                      
                     }
                   })
                   .catch(err => {

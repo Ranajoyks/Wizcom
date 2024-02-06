@@ -27,10 +27,10 @@ import * as signalR from '@microsoft/signalr';
 import {GroupDetails} from '../../Entity/GroupDetails';
 import DocumentPicker from 'react-native-document-picker';
 const memberStyles = [
-  { backgroundColor: 'red' },     // Style for index 0
-  { backgroundColor: 'blue' },    // Style for index 1
-  { backgroundColor: 'green' },   // Style for index 2
-  { backgroundColor: 'yellow' },  // Style for index 3
+  {backgroundColor: 'red'}, // Style for index 0
+  {backgroundColor: 'blue'}, // Style for index 1
+  {backgroundColor: 'green'}, // Style for index 2
+  {backgroundColor: 'yellow'}, // Style for index 3
   // Add more styles for additional indices as needed
 ];
 export class GroupchatdetailsViewModel {
@@ -83,6 +83,7 @@ export class GroupChatss {
   sConnId: string = '';
   sMsg: string = '';
   dtMsg: any;
+  userName: string = '';
 }
 
 export default class Groupchatdetails extends BaseComponent<
@@ -126,6 +127,9 @@ export default class Groupchatdetails extends BaseComponent<
     var Model = this.state.Model;
     var UserDetails = await SessionHelper.GetUserDetailsSession();
     var myId = `${Model.ConnectionCode}_${UserDetails.lId}`;
+    console.log("GroupId: ",Model.GroupID);
+    console.log("GroupId: ",Model.GroupName);
+    
     Model.SingleRConnection = new signalR.HubConnectionBuilder()
       .withUrl(
         `https://wemessanger.azurewebsites.net/chatHub?UserId=${
@@ -136,30 +140,109 @@ export default class Groupchatdetails extends BaseComponent<
     this.UpdateViewModel();
     Model.SingleRConnection.start().then(async () => {
       console.log('SignalR connected');
-      this.ReceiveGroupMsg();
-      await Model.SingleRConnection.on(
-        'ReceiveGroupMessage',
-        async (
-          fromUserId: any,
-          userName: any,
-          groupName: any,
-          message: any,
-        ) => {
-          console.log('receiveMsg: ', message);
-        },
-      );
+      await Model.SingleRConnection.invoke('JoinChat', `${Model.GroupName}_${Model.GroupID}`)
+     
+    }).catch((err: any) => {
+      Model.SingleRConnection.start();
+      console.error('SignalR connection error:', err);
     });
-  };
-  ReceiveGroupMsg = async () => {
-    console.log('Hi');
-    var Model = this.state.Model;
     await Model.SingleRConnection.on(
       'ReceiveGroupMessage',
-      async (fromUserId: any, userName: any, groupName: any, message: any) => {
-        console.log('receiveMsg: ', message);
+      async (fromUserId: any,
+        userName: any,
+        groupName: any,
+        AttachmentID:any,
+        message: any,) => {
+        console.log('receiveMsg: ', fromUserId,message,AttachmentID,groupName);
+        var ReceiveMSg = new GroupChatss();
+        if (message && fromUserId !==myId ) {
+          var date = new Date();
+          var newDate = new Date(
+            date.getTime() - date.getTimezoneOffset() * 60 * 1000,
+          );
+          var date = new Date();
+          ReceiveMSg.sMsg = message;
+          ReceiveMSg.userName = userName
+          var newDate = new Date(
+            date.getTime() - date.getTimezoneOffset() * 60 * 1000,
+          );
+          var dt = new Date(newDate);
+          ReceiveMSg.dtMsg = dt;
+          ReceiveMSg.lAttchId = AttachmentID
+          var XyzIndex = Model.NewChat.findIndex((i: AllGroupChats) => {
+            const itemDate = new Date(newDate);
+            const iDate = new Date(i.date);
+            return (
+              itemDate.getUTCFullYear() === iDate.getUTCFullYear() &&
+              itemDate.getUTCMonth() === iDate.getUTCMonth() &&
+              itemDate.getUTCDate() === iDate.getUTCDate()
+            );
+          });
+          var Xyz = Model.NewChat.find((i: AllGroupChats) => {
+            const itemDate = new Date(newDate);
+            const iDate = new Date(i.date);
+            return (
+              itemDate.getUTCFullYear() === iDate.getUTCFullYear() &&
+              itemDate.getUTCMonth() === iDate.getUTCMonth() &&
+              itemDate.getUTCDate() === iDate.getUTCDate()
+            );
+          });
+          var NewChatArray = new AllGroupChats();
+          // this.GetAllMsg();
+          if (Xyz) {
+            // console.log('indexavailable', model.NewChat[XyzIndex]);
+            Model.NewChat[XyzIndex].Chat.push(ReceiveMSg);
+            Model.GroupMsg = '';
+            this.UpdateViewModel();
+            // console.log('newChatsend: ', JSON.stringify(Model.NewChat));
+          } else {
+            var NewChatArray = new AllGroupChats();
+            // var date = new Date();
+            console.log('ElseDate: ', newDate);
+
+            if (
+              newDate.getUTCFullYear() ===
+                new Date(ReceiveMSg.dtMsg).getUTCFullYear() &&
+              newDate.getUTCMonth() ===
+                new Date(ReceiveMSg.dtMsg).getUTCMonth() &&
+              newDate.getUTCDate() === new Date(ReceiveMSg.dtMsg).getUTCDate()
+            ) {
+              NewChatArray.istoday = true;
+            } else {
+              NewChatArray.istoday = false;
+            }
+            // console.log('ReceiveMSg date', ReceiveMSg.dtMsg);
+            NewChatArray.date = ReceiveMSg.dtMsg;
+            // console.log('indexnotavailable', NewChatArray);
+            // console.log('ReceiveMSgNNNN date', NewChatArray.date);
+
+            NewChatArray.Chat.push(ReceiveMSg);
+            Model.NewChat.push(NewChatArray);
+            // console.log('newChat: ', JSON.stringify(model.NewChat));
+            Model.GroupMsg = '';
+            this.UpdateViewModel();
+          }
+        }
       },
     );
   };
+  // ReceiveGroupMsg = async () => {
+  //   console.log('Hi');
+  //   var Model = this.state.Model;
+  //   await Model.SingleRConnection.on(
+  //     'ReceiveGroupMessage',
+  //     async (fromUserId: any,
+  //       userName: any,
+  //       groupName: any,
+  //       AttachmentID:any,
+  //       message: any,) => {
+  //       console.log('receiveMsg: ', message);
+  //       if(message){
+  //         this.GetAllGroupMsg()
+  //       }
+  //     },
+  //   );
+  // };
   showSnackbar = () => {
     Snackbar.show({
       text: 'Download Successfully',
@@ -387,10 +470,10 @@ export default class Groupchatdetails extends BaseComponent<
             var FileUploadRaw = JSON.stringify({
               companyId: Model.BranchID,
               fromUserId: myId,
-              userName:Model.SenderDetails?.userFullName,
+              userName: Model.SenderDetails?.userFullName,
               AttachmentId: res.data.lAttchId,
               message: res.data.sFileName,
-              groupName: Model.GroupName+"_"+Model.GroupID
+              groupName: Model.GroupName + '_' + Model.GroupID,
             });
             console.log('FileUploadRaw: ', FileUploadRaw);
 
@@ -517,6 +600,28 @@ export default class Groupchatdetails extends BaseComponent<
     var Model = this.state.Model;
     Model.IsOpen = !Model.IsOpen;
     this.UpdateViewModel();
+  };
+  DeleteGroup = async () => {
+    var Model = this.state.Model;
+    console.log('MOdel.GroupId: ', Model.GroupID);
+    var UserDetails = await SessionHelper.GetUserDetailsSession();
+    var myId = `${Model.ConnectionCode}_${UserDetails.lId}`;
+    axios
+      .get(
+        `http://${Model.Url}/api/user/deletegroup?userId=${myId}&groupId=${Model.GroupID}`,
+      )
+      .then(res => {
+        console.log('DeleteResponse: ', res.data);
+        if (!res.data) {
+          return;
+        }
+        this.props.navigation.reset({
+          routes: [{name: 'Singlechatpage'}],
+        });
+      })
+      .catch((err: any) => {
+        console.log('DeleteResponseError: ', err);
+      });
   };
 
   render() {
@@ -674,7 +779,6 @@ export default class Groupchatdetails extends BaseComponent<
                             color: '#0383FA',
                             alignSelf: 'flex-start',
                             fontSize: 12,
-                            marginBottom: 15,
                           }}>
                           Add Member
                         </Text>
@@ -694,9 +798,23 @@ export default class Groupchatdetails extends BaseComponent<
                             color: '#0383FA',
                             alignSelf: 'flex-start',
                             fontSize: 12,
-                            marginBottom: 20,
                           }}>
                           Remove Member
+                        </Text>
+                      </TouchableOpacity>
+                      <View style={styles.divider}></View>
+                      <TouchableOpacity onPress={() => this.DeleteGroup()}>
+                        <Text
+                          style={{
+                            fontFamily: 'OpenSans-SemiBold',
+                            marginTop: 15,
+                            paddingLeft: 20,
+                            color: '#0383FA',
+                            alignSelf: 'flex-start',
+                            fontSize: 12,
+                            marginBottom: 15,
+                          }}>
+                          Delete Group
                         </Text>
                       </TouchableOpacity>
                     </>
@@ -719,8 +837,8 @@ export default class Groupchatdetails extends BaseComponent<
           </View>
           <View style={styles.avatarContainer}>
             {/* Top Layer */}
-              {Model.Groupdetais?.members.map((i,index) => (
-            <View style={[styles.topLayer, memberStyles[index % memberStyles.length]]} key={index}>
+            {Model.Groupdetais?.members.map((i, index) => (
+              <View style={styles.topLayer} key={index}>
                 <Badge
                   style={{
                     backgroundColor: '#404040',
@@ -740,8 +858,8 @@ export default class Groupchatdetails extends BaseComponent<
                     {i?.fullName.toLocaleUpperCase().charAt(0)}
                   </Text>
                 </Badge>
-            </View>
-              ))}
+              </View>
+            ))}
 
             {/* <View style={styles.bottomLayer}>
               <Image
@@ -875,25 +993,94 @@ export default class Groupchatdetails extends BaseComponent<
                         <View style={styles.messagefrommessage}>
                           <View style={styles.messagefromtext}>
                             {i.lAttchId == 0 ? (
-                              <Text style={styles.messagefromtextcontent}>
-                                {i?.sMsg}
-                              </Text>
-                            ) : (
-                              <View style={styles.messagefromtextcontent}>
-                                <Text>{i?.sMsg}</Text>
-                                <TouchableOpacity
-                                  onPress={() =>
-                                    this.DownloadFile(i?.lAttchId, i?.sMsg)
-                                  }>
-                                  <Image
-                                    source={require('../../assets/download.png')}
+                              <View style={{flexDirection: 'row'}}>
+                                <Badge
+                                  style={{
+                                    backgroundColor: '#404040',
+                                    width: 20,
+                                    height: 20,
+                                    borderRadius: 50,
+                                    alignItems: 'center',
+                                    display: 'flex',
+                                    marginHorizontal: 5,
+                                  }}>
+                                  <Text
                                     style={{
-                                      height: 20,
-                                      width: 19.5,
-                                      marginLeft: 10,
-                                    }}
-                                  />
-                                </TouchableOpacity>
+                                      color: 'white',
+                                      fontSize: 12,
+                                      fontFamily: 'OpenSans_Condensed-Bold',
+                                    }}>
+                                    {i?.userName.toLocaleUpperCase().charAt(0)}
+                                  </Text>
+                                </Badge>
+                                <View style={styles.messagefromtextcontent}>
+                                  <Text
+                                    style={{
+                                      color: 'green',
+                                      fontSize: 12,
+                                      fontFamily:
+                                        'OpenSans-VariableFont_wdth,wght',
+                                    }}>
+                                    {i?.userName}
+                                  </Text>
+                                  <Text
+                                    style={styles.messagefromtextcontenttext}>
+                                    {' '}
+                                    {i?.sMsg}
+                                  </Text>
+                                </View>
+                              </View>
+                            ) : (
+                              <View style={{flexDirection: 'row'}}>
+                                <Badge
+                                  style={{
+                                    backgroundColor: '#404040',
+                                    width: 20,
+                                    height: 20,
+                                    borderRadius: 50,
+                                    alignItems: 'center',
+                                    display: 'flex',
+                                    marginHorizontal: 5,
+                                  }}>
+                                  <Text
+                                    style={{
+                                      color: 'white',
+                                      fontSize: 12,
+                                      fontFamily: 'OpenSans_Condensed-Bold',
+                                    }}>
+                                    {i?.userName.toLocaleUpperCase().charAt(0)}
+                                  </Text>
+                                </Badge>
+                                <View style={styles.messagefromtextcontent}>
+                                  <Text
+                                    style={{
+                                      color: 'green',
+                                      fontSize: 12,
+                                      fontFamily:
+                                        'OpenSans-VariableFont_wdth,wght',
+                                    }}>
+                                    {i?.userName}
+                                  </Text>
+                                  <View style={{flexDirection: 'row'}}>
+                                    <Text
+                                      style={styles.messagefromtextcontenttext}>
+                                      {i?.sMsg}
+                                    </Text>
+                                    <TouchableOpacity
+                                      onPress={() =>
+                                        this.DownloadFile(i?.lAttchId, i?.sMsg)
+                                      }>
+                                      <Image
+                                        source={require('../../assets/download.png')}
+                                        style={{
+                                          height: 20,
+                                          width: 19.5,
+                                          marginLeft: 10,
+                                        }}
+                                      />
+                                    </TouchableOpacity>
+                                  </View>
+                                </View>
                               </View>
                             )}
                           </View>
@@ -1034,8 +1221,14 @@ const styles = StyleSheet.create({
     color: '#000',
     lineHeight: 25,
     fontFamily: 'OpenSans-VariableFont_wdth,wght',
-
-    flexDirection: 'row',
+    // flexWrap: 'wrap'
+  },
+  messagefromtextcontenttext: {
+    fontSize: 15,
+    color: '#000',
+    lineHeight: 25,
+    fontFamily: 'OpenSans-VariableFont_wdth,wght',
+    // flexWrap: 'wrap'
   },
   messagefromtime: {
     // flexDirections: 'row-reverse',

@@ -263,42 +263,34 @@ export default class DeleteGroupMember extends BaseComponent<
           </View>
         </View>
         <View style={{padding: 10}}>
-          <View
-            style={{
-              backgroundColor: '#F1F1F1',
-              // paddingHorizontal: 10,
-              paddingVertical: 5,
-              borderRadius: 6,
-              flexDirection: 'row',
-            }}>
-            <TextInput
-              value={model.GroupName}
-              onChangeText={text => {
-                model.GroupName = text;
-                this.UpdateViewModel();
-              }}
-              style={
-                (styles.input,
-                {
-                  width: Dimensions.get('window').width - 100,
-                  fontFamily: 'OpenSans-Regular',
-                })
-              }
-              placeholder="Enter group name"></TextInput>
-            <View
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                //paddingRight: 5,
-              }}>
-              <TouchableOpacity onPress={() => this.DeleteGroupMember()}>
+        <View
+                style={{
+                  flexDirection: 'row',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                }}>
                 <Text
-                  style={{fontSize: 16, fontWeight: 'bold', marginRight: 10}}>
-                  Update
+                  style={{fontSize: 16, fontWeight: 'bold', color: '#0383FA'}}>
+                  {model.GroupName}
                 </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    //paddingRight: 5,
+                  }}>
+                  <TouchableOpacity onPress={this.DeleteGroupMember}>
+                    <Text
+                      style={{
+                        fontSize: 16,
+                        fontWeight: 'bold',
+                        alignSelf: 'flex-end',
+                      }}>
+                      Update
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
         </View>
         <Content>
           <List>
@@ -400,7 +392,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#F1F1F1',
     borderColor: '#F1F1F1',
     paddingHorizontal: 5,
-    fontFamily: 'OpenSans-Regular',
+    fontFamily: 'OpenSans-Bold',
+    color:"black"
   },
   circle3: {
     width: 20,

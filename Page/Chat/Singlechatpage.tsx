@@ -290,7 +290,7 @@ export default class Singlechatpage extends BaseComponent<
       })
       .catch((err: any) => {
         model.SingleRConnection.start();
-        console.log('Error to invoke: ', err);
+        console.log('Error to Get User List: ', err);
       });
   };
   NextPage = (user: User) => {
@@ -1004,13 +1004,23 @@ export default class Singlechatpage extends BaseComponent<
                                   color: 'black',
                                   fontWeight: '600',
                                   fontFamily: 'OpenSans-SemiBold',
-                                  marginBottom: 17,
+                                  marginBottom: 5,
                                   fontSize: 14.5,
                                   // letterSpacing:0.5
                                 }}>
                                 {i.groupName}
                               </Text>
                             </View>
+                            <Text
+                              style={{
+                                color: i.lastMessage ? '#a6a6a6' : '#0383FA',
+                                fontWeight: '200',
+                                fontFamily: 'OpenSans-SemiBold',
+                                letterSpacing: 0.2,
+                                fontSize: 12,
+                              }}>
+                              {i.lastMessage ? i.lastMessage : 'No message'}
+                            </Text>
                           </Body>
                         </ListItem>
                       </TouchableOpacity>

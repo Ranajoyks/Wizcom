@@ -1,4 +1,5 @@
 export interface Groups {
-    groupId: number
-    groupName: string
+  groupId: number
+  groupName: string
+  lastMessage: string
   }

@@ -15,4 +15,5 @@ export interface GroupChat {
     lTypId: number
     sConnId: string
     sMsg: string
+    userName: string
   }

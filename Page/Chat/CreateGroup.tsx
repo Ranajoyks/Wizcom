@@ -35,7 +35,7 @@ import {GroupDetails} from '../../Entity/GroupDetails';
 
 // const navigation = useNavigation();
 export class CreateGroupViewModel {
-  GroupName?: string;
+  GroupName: string = '';
   index: number = 0;
   FilterUser: User[] = [];
   SingleRConnection: any;
@@ -151,7 +151,7 @@ export default class CreateGroup extends BaseComponent<
 
     var Checking = Model.GroupMembers.find(
       i =>
-        i.memberId == Model.ConnectionCode + '_' + SelectedMemberID.toString()
+        i.memberId == Model.ConnectionCode + '_' + SelectedMemberID.toString(),
     );
 
     if (!Checking) {
@@ -160,8 +160,9 @@ export default class CreateGroup extends BaseComponent<
     }
     if (Checking) {
       Model.GroupMembers = Model.GroupMembers.filter(
-        i =>  i.memberId !=
-        Model.ConnectionCode + '_' + SelectedMemberID.toString(),
+        i =>
+          i.memberId !=
+          Model.ConnectionCode + '_' + SelectedMemberID.toString(),
       );
       this.UpdateViewModel();
     }
@@ -170,33 +171,46 @@ export default class CreateGroup extends BaseComponent<
     var Model = this.state.Model;
     var UserDetails = await SessionHelper.GetUserDetailsSession();
     var myId = `${Model.ConnectionCode}_${UserDetails.lId}`;
-    var Headers = {
-      'Content-Type': 'application/json',
-    };
+    console.log('Model.FroupName: ', Model.GroupName);
+    console.log('Model.FroupName: ', Model.GroupMembers.length);
 
-    var GroupCreateRequest = JSON.stringify({
-      companyId: Model.BranchID,
-      creatorId: myId,
-      groupName: Model.GroupName,
-      members: Model.GroupMembers,
-    });
-    console.log('GroupCreateRequest: ', GroupCreateRequest);
-    axios
-      .post(`https://${Model.URL}/api/user/creategroup`, GroupCreateRequest, {
-        headers: Headers,
-      })
-      .then(res => {
-        console.log('Groupresponse: ', res.data);
-        if (res.data) {
-          this.props.navigation.reset({
-            routes: [{name: 'Singlechatpage'}],
-          });
-        }
-      })
-      .catch((err: any) => {
-        console.log('GroupCreateError: ', err);
-        Alert.alert(err);
+    if (Model.GroupName == '' || Model.GroupMembers.length == 0) {
+      Alert.alert(
+        'Minimum member must be 1',
+        'Please check the group name and minimum member',
+      );
+    } else {
+      var Headers = {
+        'Content-Type': 'application/json',
+      };
+
+      var GroupCreateRequest = JSON.stringify({
+        companyId: Model.BranchID,
+        creatorId: myId,
+        groupName: Model.GroupName,
+        members: Model.GroupMembers,
       });
+      console.log('GroupCreateRequest: ', GroupCreateRequest);
+
+      axios
+        .post(`https://${Model.URL}/api/user/creategroup`, GroupCreateRequest, {
+          headers: Headers,
+        })
+        .then(res => {
+          console.log('Groupresponse: ', res.data);
+          if (res.data) {
+            this.props.navigation.reset({
+              routes: [{name: 'Singlechatpage'}],
+            });
+          }
+        })
+        .catch((err: any) => {
+          console.log('Hi');
+
+          console.log('GroupCreateError: ', err);
+          Alert.alert(err);
+        });
+    }
   };
   GetGroupDetails = async () => {
     var Model = this.state.Model;
@@ -317,52 +331,80 @@ export default class CreateGroup extends BaseComponent<
             />
           </TouchableOpacity>
           <View style={{flex: 1}}>
-            <Text style={styles.title}>Create Group</Text>
+            {model.GroupId ? (
+              <Text style={styles.title}>Add Member</Text>
+            ) : (
+              <Text style={styles.title}>Create Group</Text>
+            )}
           </View>
         </View>
         <View style={{padding: 10}}>
-          <View
-            style={{
-              backgroundColor: '#F1F1F1',
-              // paddingHorizontal: 10,
-              paddingVertical: 5,
-              borderRadius: 6,
-              flexDirection: 'row',
-            }}>
-            <TextInput
-              value={model.GroupName}
-              onChangeText={text => {
-                model.GroupName = text;
-                this.UpdateViewModel();
-              }}
-              style={
-                (styles.input,
-                {
-                  width: Dimensions.get('window').width - 100,
-                  fontFamily: 'OpenSans-Regular',
-                })
-              }
-              placeholder="Enter group name"></TextInput>
+          {model.GroupId ? (
+            model.FilterUser.length > 0 && (
+              <View
+                style={{
+                  flexDirection: 'row',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                }}>
+                <Text
+                  style={{fontSize: 16, fontWeight: 'bold', color: '#0383FA'}}>
+                  {model.GroupName}
+                </Text>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    //paddingRight: 5,
+                  }}>
+                  <TouchableOpacity onPress={this.AddGroupMember}>
+                    <Text
+                      style={{
+                        fontSize: 16,
+                        fontWeight: 'bold',
+                        alignSelf: 'flex-end',
+                      }}>
+                      Update
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            )
+          ) : (
             <View
               style={{
+                backgroundColor: '#F1F1F1',
+                // paddingHorizontal: 10,
+                paddingVertical: 5,
+                borderRadius: 6,
                 flexDirection: 'row',
-                alignItems: 'center',
-                //paddingRight: 5,
               }}>
-              {model?.GroupId ? (
-                <TouchableOpacity onPress={this.AddGroupMember}>
-                  <Text
-                    style={{fontSize: 16, fontWeight: 'bold', marginRight: 10}}>
-                    Update
-                  </Text>
-                </TouchableOpacity>
-              ) : (
+              <TextInput
+                value={model.GroupName}
+                onChangeText={text => {
+                  model.GroupName = text;
+                  this.UpdateViewModel();
+                }}
+                style={
+                  (styles.input,
+                  {
+                    width: Dimensions.get('window').width - 100,
+                    fontFamily: 'OpenSans-Regular',
+                  })
+                }
+                placeholder="Enter group name"></TextInput>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  //paddingRight: 5,
+                }}>
                 <TouchableOpacity onPress={this.CreateGroup}>
                   <Text style={{fontSize: 16, fontWeight: 'bold'}}>Create</Text>
                 </TouchableOpacity>
-              )}
+              </View>
             </View>
-          </View>
+          )}
         </View>
         <Content>
           <List>

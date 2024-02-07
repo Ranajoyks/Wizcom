@@ -348,7 +348,7 @@ export default class CreateGroup extends BaseComponent<
                   justifyContent: 'space-between',
                 }}>
                 <Text
-                  style={{fontSize: 16, fontWeight: 'bold', color: '#0383FA'}}>
+                  style={{fontSize: 16, fontWeight: 'bold', color: '#0383FA',marginLeft:20}}>
                   {model.GroupName}
                 </Text>
                 <View

@@ -263,34 +263,33 @@ export default class DeleteGroupMember extends BaseComponent<
           </View>
         </View>
         <View style={{padding: 10}}>
-        <View
-                style={{
-                  flexDirection: 'row',
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                }}>
+          <View
+            style={{
+              flexDirection: 'row',
+              display: 'flex',
+              justifyContent: 'space-between',
+            }}>
+            <Text style={{fontSize: 16, fontWeight: 'bold', color: '#0383FA',marginLeft:20}}>
+              {model.GroupName}
+            </Text>
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                //paddingRight: 5,
+              }}>
+              <TouchableOpacity onPress={this.DeleteGroupMember}>
                 <Text
-                  style={{fontSize: 16, fontWeight: 'bold', color: '#0383FA'}}>
-                  {model.GroupName}
-                </Text>
-                <View
                   style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    //paddingRight: 5,
+                    fontSize: 16,
+                    fontWeight: 'bold',
+                    alignSelf: 'flex-end',
                   }}>
-                  <TouchableOpacity onPress={this.DeleteGroupMember}>
-                    <Text
-                      style={{
-                        fontSize: 16,
-                        fontWeight: 'bold',
-                        alignSelf: 'flex-end',
-                      }}>
-                      Update
-                    </Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
+                  Update
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
         </View>
         <Content>
           <List>
@@ -393,7 +392,7 @@ const styles = StyleSheet.create({
     borderColor: '#F1F1F1',
     paddingHorizontal: 5,
     fontFamily: 'OpenSans-Bold',
-    color:"black"
+    color: 'black',
   },
   circle3: {
     width: 20,

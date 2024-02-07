@@ -1187,7 +1187,7 @@ export default class Chatdetails extends BaseComponent<
                                       />
                                     </TouchableOpacity>
                                     <Text style={{color: '#C66E12'}}>
-                                      {i?.sMsg}
+                                      {i?.sMsg.slice(0, 25)}.....
                                     </Text>
                                   </View>
                                 )}
@@ -1226,7 +1226,7 @@ export default class Chatdetails extends BaseComponent<
                                   </Text>
                                 ) : (
                                   <View style={styles.messagefromtextcontent}>
-                                    <Text>{i?.sMsg}</Text>
+                                    <Text>{i?.sMsg.slice(0, 25)}.....</Text>
                                     <TouchableOpacity
                                       onPress={() =>
                                         this.DownloadFile(i?.lAttchId, i?.sMsg)

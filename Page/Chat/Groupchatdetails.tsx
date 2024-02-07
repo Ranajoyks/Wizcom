@@ -26,6 +26,7 @@ import Snackbar from 'react-native-snackbar';
 import * as signalR from '@microsoft/signalr';
 import {GroupDetails} from '../../Entity/GroupDetails';
 import DocumentPicker from 'react-native-document-picker';
+import {ActivityIndicator} from 'react-native';
 const memberStyles = [
   {backgroundColor: 'red'}, // Style for index 0
   {backgroundColor: 'blue'}, // Style for index 1
@@ -57,7 +58,7 @@ export class GroupchatdetailsViewModel {
   AppVersion: string = '1.0.0';
   GroupMembers: any[] = [];
   SingleRConnection: any;
-  Groupdetais?: GroupDetails;
+  Groupdetais!: GroupDetails;
   isAdmin: boolean = false;
 }
 export class AllGroupChats {
@@ -117,9 +118,9 @@ export default class Groupchatdetails extends BaseComponent<
     Model.UserName = UserName;
     Model.ReceiverId = ReceiverId;
     this.UpdateViewModel();
+    this.GroupDetails();
     this.GetAllGroupMsg();
     this.MakeSignalRConnection();
-    this.GroupDetails();
     console.log('Groupname: ', this.props.route);
     // console.log("GroupId: ", Model.GroupID);
   }
@@ -127,9 +128,9 @@ export default class Groupchatdetails extends BaseComponent<
     var Model = this.state.Model;
     var UserDetails = await SessionHelper.GetUserDetailsSession();
     var myId = `${Model.ConnectionCode}_${UserDetails.lId}`;
-    console.log("GroupId: ",Model.GroupID);
-    console.log("GroupId: ",Model.GroupName);
-    
+    console.log('GroupId: ', Model.GroupID);
+    console.log('GroupId: ', Model.GroupName);
+
     Model.SingleRConnection = new signalR.HubConnectionBuilder()
       .withUrl(
         `https://wemessanger.azurewebsites.net/chatHub?UserId=${
@@ -138,37 +139,49 @@ export default class Groupchatdetails extends BaseComponent<
       )
       .build();
     this.UpdateViewModel();
-    Model.SingleRConnection.start().then(async () => {
-      console.log('SignalR connected');
-      await Model.SingleRConnection.invoke('JoinChat', `${Model.GroupName}_${Model.GroupID}`)
-     
-    }).catch((err: any) => {
-      Model.SingleRConnection.start();
-      console.error('SignalR connection error:', err);
-    });
+    Model.SingleRConnection.start()
+      .then(async () => {
+        console.log('SignalR connected');
+        await Model.SingleRConnection.invoke(
+          'JoinChat',
+          `${Model.GroupName}_${Model.GroupID}`,
+        );
+      })
+      .catch((err: any) => {
+        Model.SingleRConnection.start();
+        console.error('SignalR connection error:', err);
+      });
     await Model.SingleRConnection.on(
       'ReceiveGroupMessage',
-      async (fromUserId: any,
+      async (
+        fromUserId: any,
         userName: any,
         groupName: any,
-        AttachmentID:any,
-        message: any,) => {
-        console.log('receiveMsg: ', fromUserId,message,AttachmentID,groupName);
+        AttachmentID: any,
+        message: any,
+      ) => {
+        console.log(
+          'receiveMsg: ',
+          fromUserId,
+          message,
+          AttachmentID,
+          groupName,
+        );
         var ReceiveMSg = new GroupChatss();
-        if (message && fromUserId !==myId ) {
+        if (message && fromUserId !== myId) {
           var date = new Date();
           var newDate = new Date(
             date.getTime() - date.getTimezoneOffset() * 60 * 1000,
           );
           var date = new Date();
           ReceiveMSg.sMsg = message;
-          ReceiveMSg.userName = userName
+          ReceiveMSg.userName = userName;
           var newDate = new Date(
             date.getTime() - date.getTimezoneOffset() * 60 * 1000,
           );
           var dt = new Date(newDate);
           ReceiveMSg.dtMsg = dt;
-          ReceiveMSg.lAttchId = AttachmentID
+          ReceiveMSg.lAttchId = AttachmentID;
           var XyzIndex = Model.NewChat.findIndex((i: AllGroupChats) => {
             const itemDate = new Date(newDate);
             const iDate = new Date(i.date);
@@ -824,248 +837,207 @@ export default class Groupchatdetails extends BaseComponent<
             </View>
           )}
         </View>
-        <View style={styles.groupcontainer}>
-          <View>
-            <View style={styles.groupheader}>
-              <Text style={styles.headerText}>{Model.GroupName}</Text>
-            </View>
-            <View style={styles.memberCount}>
-              <Text style={styles.memberCountText}>
-                {Model.Groupdetais?.members.length} Members
-              </Text>
-            </View>
-          </View>
-          <View style={styles.avatarContainer}>
-            {/* Top Layer */}
-            {Model.Groupdetais?.members.map((i, index) => (
-              <View style={styles.topLayer} key={index}>
-                <Badge
-                  style={{
-                    backgroundColor: '#404040',
-                    width: 35,
-                    height: 35,
-                    borderRadius: 50,
-                    alignItems: 'center',
-                    display: 'flex',
-                    marginTop: -5,
-                  }}>
-                  <Text
-                    style={{
-                      color: 'white',
-                      fontSize: 22,
-                      fontFamily: 'OpenSans_Condensed-Bold',
-                    }}>
-                    {i?.fullName.toLocaleUpperCase().charAt(0)}
-                  </Text>
-                </Badge>
-              </View>
-            ))}
-
-            {/* <View style={styles.bottomLayer}>
-              <Image
-                source={{
-                  uri: 'https://filmfare.wwmindia.com/content/2020/nov/hrithik-roshan-411605007858.jpg',
-                }}
-                style={styles.avatar}
-              /> </View>
-            <View style={styles.bottomLayer}>
-              <Image
-                source={{
-                  uri: 'https://filmfare.wwmindia.com/content/2020/nov/hrithik-roshan-411605007858.jpg',
-                }}
-                style={styles.avatar2}
-              />
-            </View>
-            <View style={styles.bottomLayer}>
-              <Image
-                source={{
-                  uri: 'https://filmfare.wwmindia.com/content/2020/nov/hrithik-roshan-411605007858.jpg',
-                }}
-                style={styles.avatar3}
-              />
-            </View> */}
-          </View>
-        </View>
-        <SafeAreaView style={styles.body}>
-          <ScrollView
-            style={styles.scrollView}
-            contentContainerStyle={{
-              flexGrow: 1,
-              justifyContent: 'flex-end',
-              flexDirection: 'column',
-            }}
-            ref="scrollView"
-            onContentSizeChange={(width, height) =>
-              this.refs.scrollView.scrollTo({y: height})
-            }>
-            {Model.NewChat.map((item: AllGroupChats) => (
-              <>
-                <View>
-                  {item.istoday ? (
-                    <Text style={styles.today}>Today</Text>
-                  ) : (
-                    <Text style={styles.today}>
-                      {moment.utc(item.date).format('DD-MM-YYYY')}
-                      {/* {`${item?.date.slice(8, 10)}-${item?.date.slice(5,7)}-${item?.date.slice(0, 4)}`} */}
-                    </Text>
-                  )}
+        {Model.NewChat.length<=0 && (
+          <ActivityIndicator size="large" color="#0000ff" />
+        )}
+        {Model.NewChat.length>0 && (
+          <>
+            <View style={styles.groupcontainer}>
+              <View>
+                <View style={styles.groupheader}>
+                  <Text style={styles.headerText}>{Model.GroupName}</Text>
                 </View>
-                {item.Chat.map((i: GroupChatss) => {
-                  var MsgSplit = i.sMsg.split('||');
-                  return `${Model.ConnectionCode}_${i.lSenderId}` ==
-                    Model.SenderID || i.lSenderId == Model.SenderID ? (
-                    <>
-                      <View style={styles.messageto} key={i?.lSrId}>
-                        <View style={styles.messagetomessage}>
-                          <View style={styles.messagetotext}>
-                            {i.lAttchId == 0 ? (
-                              MsgSplit.length == 2 ? (
-                                <>
-                                  <View style={{flexDirection: 'row', gap: 5}}>
-                                    <Button
-                                      onPress={() => this.Approve(MsgSplit[0])}
-                                      style={styles.buttontest}>
-                                      <Text
-                                        style={{
-                                          color: 'white',
-                                          // fontWeight: '800',
-                                          fontFamily: 'Poppins-Regular',
-                                          fontSize: 12,
-                                          margin: 0,
-                                        }}>
-                                        Approve
-                                      </Text>
-                                    </Button>
-                                    <Button
-                                      onPress={() => this.Approve(MsgSplit[1])}
-                                      style={styles.rejectbuttontest}>
-                                      <Text
-                                        style={{
-                                          color: 'white',
-                                          // fontWeight: '800',
-                                          fontFamily: 'Poppins-Regular',
-                                          fontSize: 12,
-                                        }}>
-                                        Reject
-                                      </Text>
-                                    </Button>
-                                  </View>
-                                </>
-                              ) : (
-                                <Text style={styles.messagetotextcontent}>
-                                  {i?.sMsg}
-                                </Text>
-                              )
-                            ) : (
-                              <View style={styles.messagetotextcontent}>
-                                <TouchableOpacity
-                                  onPress={() =>
-                                    this.DownloadFile(i?.lAttchId, i?.sMsg)
-                                  }>
-                                  <Image
-                                    source={require('../../assets/download.png')}
-                                    style={{
-                                      height: 20,
-                                      width: 19.5,
-                                      marginRight: 10,
-                                    }}
-                                  />
-                                </TouchableOpacity>
-                                <Text style={{color: '#C66E12'}}>
-                                  {i?.sMsg}
-                                </Text>
-                              </View>
-                            )}
-                          </View>
-                        </View>
-                        <View style={styles.messagetotime}>
-                          <Text style={styles.messagefromtimetext}>
-                            {moment.utc(i.dtMsg).format('HH:mm')}
-                            {/* {i.dtMsg.toString()} */}
-                          </Text>
-                          {/* <Text>{item?.istoday}</Text> */}
-                        </View>
-                      </View>
-                    </>
-                  ) : (
-                    <>
-                      <View style={styles.messagefrom}>
-                        <View style={styles.messagefrommessage}>
-                          <View style={styles.messagefromtext}>
-                            {i.lAttchId == 0 ? (
-                              <View style={{flexDirection: 'row'}}>
-                                <Badge
-                                  style={{
-                                    backgroundColor: '#404040',
-                                    width: 20,
-                                    height: 20,
-                                    borderRadius: 50,
-                                    alignItems: 'center',
-                                    display: 'flex',
-                                    marginHorizontal: 5,
-                                  }}>
-                                  <Text
-                                    style={{
-                                      color: 'white',
-                                      fontSize: 12,
-                                      fontFamily: 'OpenSans_Condensed-Bold',
-                                    }}>
-                                    {i?.userName.toLocaleUpperCase().charAt(0)}
-                                  </Text>
-                                </Badge>
-                                <View style={styles.messagefromtextcontent}>
-                                  <Text
-                                    style={{
-                                      color: 'green',
-                                      fontSize: 12,
-                                      fontFamily:
-                                        'OpenSans-VariableFont_wdth,wght',
-                                    }}>
-                                    {i?.userName}
-                                  </Text>
-                                  <Text
-                                    style={styles.messagefromtextcontenttext}>
-                                    {' '}
-                                    {i?.sMsg}
-                                  </Text>
-                                </View>
-                              </View>
-                            ) : (
-                              <View style={{flexDirection: 'row'}}>
-                                <Badge
-                                  style={{
-                                    backgroundColor: '#404040',
-                                    width: 20,
-                                    height: 20,
-                                    borderRadius: 50,
-                                    alignItems: 'center',
-                                    display: 'flex',
-                                    marginHorizontal: 5,
-                                  }}>
-                                  <Text
-                                    style={{
-                                      color: 'white',
-                                      fontSize: 12,
-                                      fontFamily: 'OpenSans_Condensed-Bold',
-                                    }}>
-                                    {i?.userName.toLocaleUpperCase().charAt(0)}
-                                  </Text>
-                                </Badge>
-                                <View style={styles.messagefromtextcontent}>
-                                  <Text
-                                    style={{
-                                      color: 'green',
-                                      fontSize: 12,
-                                      fontFamily:
-                                        'OpenSans-VariableFont_wdth,wght',
-                                    }}>
-                                    {i?.userName}
-                                  </Text>
-                                  <View style={{flexDirection: 'row'}}>
-                                    <Text
-                                      style={styles.messagefromtextcontenttext}>
+                <View style={styles.memberCount}>
+                  <Text style={styles.memberCountText}>
+                    {Model.Groupdetais?.members.length} Members
+                  </Text>
+                </View>
+              </View>
+              <View style={styles.avatarContainer}>
+                {/* Top Layer */}
+                <View style={styles.topLayer}>
+                  <Badge
+                    style={{
+                      backgroundColor: '#404040',
+                      width: 35,
+                      height: 35,
+                      borderRadius: 50,
+                      alignItems: 'center',
+                      display: 'flex',
+                      marginTop: -5,
+                    }}>
+                    <Text
+                      style={{
+                        color: 'white',
+                        fontSize: 22,
+                        fontFamily: 'OpenSans_Condensed-Bold',
+                      }}>
+                      {Model.Groupdetais?.members[0]?.fullName
+                        .toLocaleUpperCase()
+                        .charAt(0)}
+                    </Text>
+                  </Badge>
+                </View>
+                {Model.Groupdetais?.members[1] ? (
+                  <View style={styles.bottomLayer}>
+                    <Badge
+                      style={{
+                        backgroundColor: '#404040',
+                        width: 35,
+                        height: 35,
+                        borderRadius: 50,
+                        alignItems: 'center',
+                        display: 'flex',
+                        marginTop: -5,
+                      }}>
+                      <Text
+                        style={{
+                          color: 'white',
+                          fontSize: 22,
+                          fontFamily: 'OpenSans_Condensed-Bold',
+                        }}>
+                        {Model.Groupdetais?.members[1]?.fullName
+                          .toLocaleUpperCase()
+                          .charAt(0)}
+                      </Text>
+                    </Badge>
+                  </View>
+                ) : null}
+                {Model.Groupdetais?.members[2] ? (
+                  <View style={styles.bottomLayer2}>
+                    <Badge
+                      style={{
+                        backgroundColor: '#404040',
+                        width: 35,
+                        height: 35,
+                        borderRadius: 50,
+                        alignItems: 'center',
+                        display: 'flex',
+                        marginTop: -5,
+                      }}>
+                      <Text
+                        style={{
+                          color: 'white',
+                          fontSize: 22,
+                          fontFamily: 'OpenSans_Condensed-Bold',
+                        }}>
+                        {Model.Groupdetais?.members[2]?.fullName
+                          .toLocaleUpperCase()
+                          .charAt(0)}
+                      </Text>
+                    </Badge>
+                  </View>
+                ) : null}
+                {Model.Groupdetais?.members.length > 3 ? (
+                  <View style={styles.bottomLayer3}>
+                    <Badge
+                      style={{
+                        backgroundColor: '#404040',
+                        width: 35,
+                        height: 35,
+                        borderRadius: 50,
+                        alignItems: 'center',
+                        display: 'flex',
+                        marginTop: -5,
+                      }}>
+                      <Text
+                        style={{
+                          color: 'white',
+                          fontSize: 22,
+                          fontFamily: 'OpenSans_Condensed-Bold',
+                        }}>
+                        +{Model.Groupdetais?.members.length - 3}
+                      </Text>
+                    </Badge>
+                  </View>
+                ) : null}
+                {/* <View style={styles.bottomLayer}>
+      <Image
+        source={{
+          uri: 'https://filmfare.wwmindia.com/content/2020/nov/hrithik-roshan-411605007858.jpg',
+        }}
+        style={styles.avatar3}
+      />
+    </View> */}
+              </View>
+            </View>
+            <SafeAreaView style={styles.body}>
+              <ScrollView
+                style={styles.scrollView}
+                contentContainerStyle={{
+                  flexGrow: 1,
+                  justifyContent: 'flex-end',
+                  flexDirection: 'column',
+                }}
+                ref="scrollView"
+                onContentSizeChange={(width, height) =>
+                  this.refs.scrollView.scrollTo({y: height})
+                }>
+                {Model.NewChat.map((item: AllGroupChats) => (
+                  <>
+                    <View>
+                      {item.istoday ? (
+                        <Text style={styles.today}>Today</Text>
+                      ) : (
+                        <Text style={styles.today}>
+                          {moment.utc(item.date).format('DD-MM-YYYY')}
+                          {/* {`${item?.date.slice(8, 10)}-${item?.date.slice(5,7)}-${item?.date.slice(0, 4)}`} */}
+                        </Text>
+                      )}
+                    </View>
+                    {item.Chat.map((i: GroupChatss) => {
+                      var MsgSplit = i.sMsg.split('||');
+                      return `${Model.ConnectionCode}_${i.lSenderId}` ==
+                        Model.SenderID || i.lSenderId == Model.SenderID ? (
+                        <>
+                          <View style={styles.messageto} key={i?.lSrId}>
+                            <View style={styles.messagetomessage}>
+                              <View style={styles.messagetotext}>
+                                {i.lAttchId == 0 ? (
+                                  MsgSplit.length == 2 ? (
+                                    <>
+                                      <View
+                                        style={{flexDirection: 'row', gap: 5}}>
+                                        <Button
+                                          onPress={() =>
+                                            this.Approve(MsgSplit[0])
+                                          }
+                                          style={styles.buttontest}>
+                                          <Text
+                                            style={{
+                                              color: 'white',
+                                              // fontWeight: '800',
+                                              fontFamily: 'Poppins-Regular',
+                                              fontSize: 12,
+                                              margin: 0,
+                                            }}>
+                                            Approve
+                                          </Text>
+                                        </Button>
+                                        <Button
+                                          onPress={() =>
+                                            this.Approve(MsgSplit[1])
+                                          }
+                                          style={styles.rejectbuttontest}>
+                                          <Text
+                                            style={{
+                                              color: 'white',
+                                              // fontWeight: '800',
+                                              fontFamily: 'Poppins-Regular',
+                                              fontSize: 12,
+                                            }}>
+                                            Reject
+                                          </Text>
+                                        </Button>
+                                      </View>
+                                    </>
+                                  ) : (
+                                    <Text style={styles.messagetotextcontent}>
                                       {i?.sMsg}
                                     </Text>
+                                  )
+                                ) : (
+                                  <View style={styles.messagetotextcontent}>
                                     <TouchableOpacity
                                       onPress={() =>
                                         this.DownloadFile(i?.lAttchId, i?.sMsg)
@@ -1075,70 +1047,192 @@ export default class Groupchatdetails extends BaseComponent<
                                         style={{
                                           height: 20,
                                           width: 19.5,
-                                          marginLeft: 10,
+                                          marginRight: 10,
                                         }}
                                       />
                                     </TouchableOpacity>
+                                    <Text style={{color: '#C66E12'}}>
+                                      {i?.sMsg}
+                                    </Text>
                                   </View>
-                                </View>
+                                )}
                               </View>
-                            )}
+                            </View>
+                            <View style={styles.messagetotime}>
+                              <Text style={styles.messagefromtimetext}>
+                                {moment.utc(i.dtMsg).format('HH:mm')}
+                                {/* {i.dtMsg.toString()} */}
+                              </Text>
+                              {/* <Text>{item?.istoday}</Text> */}
+                            </View>
                           </View>
-                        </View>
-                        <View style={styles.messagefromtime}>
-                          <Text style={styles.messagefromtimetext}>
-                            {moment.utc(i.dtMsg).format('HH:mm')}
-                            {/* {i?.dtMsg} */}
-                          </Text>
-                        </View>
-                      </View>
-                    </>
-                  );
-                })}
-              </>
-            ))}
-          </ScrollView>
-          <View style={{padding: 10}}>
-            <View
-              style={{
-                backgroundColor: '#F1F1F1',
-                paddingHorizontal: 10,
-                paddingVertical: 5,
-                borderRadius: 6,
-                flexDirection: 'row',
-              }}>
-              <TextInput
-                value={Model.GroupMsg}
-                onChangeText={text => {
-                  Model.GroupMsg = text;
-                  this.UpdateViewModel();
-                }}
-                style={
-                  (styles.input, {width: Dimensions.get('window').width - 100})
-                }
-                placeholder="Write your message here"></TextInput>
-              <View
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  paddingRight: 10,
-                }}>
-                <TouchableOpacity onPress={this.UploadFile}>
-                  <Image
-                    source={require('../../assets/attachment.png')}
-                    style={{height: 25, width: 13, marginHorizontal: 10}}
-                  />
-                </TouchableOpacity>
-                <TouchableOpacity onPress={this.SendGroupMsg}>
-                  <Image
-                    source={require('../../assets/send.png')}
-                    style={{height: 25, width: 25}}
-                  />
-                </TouchableOpacity>
+                        </>
+                      ) : (
+                        <>
+                          <View style={styles.messagefrom}>
+                            <View style={styles.messagefrommessage}>
+                              <View style={styles.messagefromtext}>
+                                {i.lAttchId == 0 ? (
+                                  <View style={{flexDirection: 'row'}}>
+                                    <Badge
+                                      style={{
+                                        backgroundColor: '#404040',
+                                        width: 20,
+                                        height: 20,
+                                        borderRadius: 50,
+                                        alignItems: 'center',
+                                        display: 'flex',
+                                        marginHorizontal: 5,
+                                      }}>
+                                      <Text
+                                        style={{
+                                          color: 'white',
+                                          fontSize: 12,
+                                          fontFamily: 'OpenSans_Condensed-Bold',
+                                        }}>
+                                        {i?.userName
+                                          .toLocaleUpperCase()
+                                          .charAt(0)}
+                                      </Text>
+                                    </Badge>
+                                    <View style={styles.messagefromtextcontent}>
+                                      <Text
+                                        style={{
+                                          color: 'green',
+                                          fontSize: 12,
+                                          fontFamily:
+                                            'OpenSans-VariableFont_wdth,wght',
+                                        }}>
+                                        {i?.userName}
+                                      </Text>
+                                      <Text
+                                        style={
+                                          styles.messagefromtextcontenttext
+                                        }>
+                                        {' '}
+                                        {i?.sMsg}
+                                      </Text>
+                                    </View>
+                                  </View>
+                                ) : (
+                                  <View style={{flexDirection: 'row'}}>
+                                    <Badge
+                                      style={{
+                                        backgroundColor: '#404040',
+                                        width: 20,
+                                        height: 20,
+                                        borderRadius: 50,
+                                        alignItems: 'center',
+                                        display: 'flex',
+                                        marginHorizontal: 5,
+                                      }}>
+                                      <Text
+                                        style={{
+                                          color: 'white',
+                                          fontSize: 12,
+                                          fontFamily: 'OpenSans_Condensed-Bold',
+                                        }}>
+                                        {i?.userName
+                                          .toLocaleUpperCase()
+                                          .charAt(0)}
+                                      </Text>
+                                    </Badge>
+                                    <View style={styles.messagefromtextcontent}>
+                                      <Text
+                                        style={{
+                                          color: 'green',
+                                          fontSize: 12,
+                                          fontFamily:
+                                            'OpenSans-VariableFont_wdth,wght',
+                                        }}>
+                                        {i?.userName}
+                                      </Text>
+                                      <View style={{flexDirection: 'row'}}>
+                                        <Text
+                                          style={
+                                            styles.messagefromtextcontenttext
+                                          }>
+                                          {i?.sMsg}
+                                        </Text>
+                                        <TouchableOpacity
+                                          onPress={() =>
+                                            this.DownloadFile(
+                                              i?.lAttchId,
+                                              i?.sMsg,
+                                            )
+                                          }>
+                                          <Image
+                                            source={require('../../assets/download.png')}
+                                            style={{
+                                              height: 20,
+                                              width: 19.5,
+                                              marginLeft: 10,
+                                            }}
+                                          />
+                                        </TouchableOpacity>
+                                      </View>
+                                    </View>
+                                  </View>
+                                )}
+                              </View>
+                            </View>
+                            <View style={styles.messagefromtime}>
+                              <Text style={styles.messagefromtimetext}>
+                                {moment.utc(i.dtMsg).format('HH:mm')}
+                                {/* {i?.dtMsg} */}
+                              </Text>
+                            </View>
+                          </View>
+                        </>
+                      );
+                    })}
+                  </>
+                ))}
+              </ScrollView>
+              <View style={{padding: 10}}>
+                <View
+                  style={{
+                    backgroundColor: '#F1F1F1',
+                    paddingHorizontal: 10,
+                    paddingVertical: 5,
+                    borderRadius: 6,
+                    flexDirection: 'row',
+                  }}>
+                  <TextInput
+                    value={Model.GroupMsg}
+                    onChangeText={text => {
+                      Model.GroupMsg = text;
+                      this.UpdateViewModel();
+                    }}
+                    style={
+                      (styles.input,
+                      {width: Dimensions.get('window').width - 100})
+                    }
+                    placeholder="Write your message here"></TextInput>
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      paddingRight: 10,
+                    }}>
+                    <TouchableOpacity onPress={this.UploadFile}>
+                      <Image
+                        source={require('../../assets/attachment.png')}
+                        style={{height: 25, width: 13, marginHorizontal: 10}}
+                      />
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={this.SendGroupMsg}>
+                      <Image
+                        source={require('../../assets/send.png')}
+                        style={{height: 25, width: 25}}
+                      />
+                    </TouchableOpacity>
+                  </View>
+                </View>
               </View>
-            </View>
-          </View>
-        </SafeAreaView>
+            </SafeAreaView>
+          </>
+        )}
       </View>
     );
   }
@@ -1333,7 +1427,7 @@ const styles = StyleSheet.create({
   },
 
   topLayer: {
-    position: 'relative',
+    position: 'absolute',
     top: 10,
     left: 5,
     flexDirection: 'row',
@@ -1346,7 +1440,24 @@ const styles = StyleSheet.create({
   // },
 
   bottomLayer: {
-    position: 'relative',
+    position: 'absolute',
+    top: 10,
+    left: 25,
+    flexDirection: 'row',
+    //   zIndex: 1,
+  },
+  bottomLayer2: {
+    position: 'absolute',
+    top: 10,
+    left: 45,
+    flexDirection: 'row',
+    //   zIndex: 1,
+  },
+  bottomLayer3: {
+    position: 'absolute',
+    top: 10,
+    left: 65,
+    flexDirection: 'row',
     //   zIndex: 1,
   },
 

@@ -96,7 +96,7 @@ export default class Singlechatpage extends BaseComponent<
     this.GetLocation();
     BackgroundTimer.setInterval(() => {
       this.GetLocation();
-    }, 60000);
+    }, 6000);
     this.UpdateViewModel();
     this.FetchAllUser();
     this.GetAllNotification();
@@ -156,21 +156,18 @@ export default class Singlechatpage extends BaseComponent<
       Lat: Model.currentLocation?.coords?.latitude.toString(),
       Long: Model.currentLocation?.coords?.longitude.toString(),
     });
-    // console.log('LocationData: ', Data);
+    console.log('LocationData: ', Data);
 
-    axios.post(
-      `https://wemessanger.azurewebsites.net/api/user/location`,
-      Data,
-      {
+    axios
+      .post(`https://wemessanger.azurewebsites.net/api/user/location`, Data, {
         headers,
-      },
-    );
-    // .then((res: any) => {
-    //   console.log('Location: ', res.data);
-    // })
-    // .catch((err: any) => {
-    //   console.log('LocationERror: ', err);
-    // });
+      })
+      // .then((res: any) => {
+      //   console.log('Location: ', res.data);
+      // })
+      // .catch((err: any) => {
+      //   console.log('LocationERror: ', err);
+      // });
   };
   CheckAppStatus = async () => {
     var Model = this.state.Model;
@@ -883,10 +880,10 @@ export default class Singlechatpage extends BaseComponent<
               activeTabStyle={{backgroundColor: 'white'}}>
               <Content>
                 <List>
-                  {model.AllNotification.map((i: alluser) => (
+                  {model.AllNotification.map((i: User) => (
                     <TouchableOpacity
                       onPress={() => this.NotificationDetalis(i)}>
-                      <ListItem avatar>
+                      <ListItem avatar key={i?.lId}>
                         <Left>
                           <View>
                             <Badge

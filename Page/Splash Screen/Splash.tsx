@@ -173,6 +173,12 @@ export default class Splash extends BaseComponent<any, SpalshViewModel> {
                     });
                   });
               }
+              if(!DeviceResponse.data){
+                this.props.navigation.reset({
+                  index: 0,
+                  routes: [{name: 'Selectcompanypage'}],
+                });
+              }
             })
             .catch(err => {
               console.log('DeviceResponseError: ', err);

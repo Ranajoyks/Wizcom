@@ -34,8 +34,8 @@ import User from '../../Entity/User';
 import {GroupDetails} from '../../Entity/GroupDetails';
 
 // const navigation = useNavigation();
-export class DeleteGroupMemberViewModel {
-  GroupName: string=""
+export class AllGroupMemberViewModel {
+  GroupName: string = '';
   index: number = 0;
   FilterUser: User[] = [];
   SingleRConnection: any;
@@ -55,14 +55,15 @@ export class DeleteGroupMemberViewModel {
   SelectedUser: User[] = [];
 }
 
-export default class DeleteGroupMember extends BaseComponent<
+export default class AllGroupMember extends BaseComponent<
   any,
-  DeleteGroupMemberViewModel
+  AllGroupMemberViewModel
 > {
   constructor(props: any) {
     super(props);
-    this.state = new BaseState(new DeleteGroupMemberViewModel());
-    this.state.Model.GroupId = props.route.params?.GroupId;
+    this.state = new BaseState(new AllGroupMemberViewModel());
+    this.state.Model.GroupId = props.route.params?.GroupID;
+    this.state.Model.GroupName = props.route.params?.GroupName;
   }
   async componentDidMount() {
     var Model = this.state.Model;
@@ -201,53 +202,6 @@ export default class DeleteGroupMember extends BaseComponent<
         console.log('GroupDetailsError: ', err);
       });
   };
-  DeleteGroupMember = async () => {
-    var Model = this.state.Model;
-    var UserDetails = await SessionHelper.GetUserDetailsSession();
-    var myId = `${Model.ConnectionCode}_${UserDetails.lId}`;
-    var Headers = {
-      'Content-Type': 'application/json',
-    };
-    var GroupMemberDeleteRequest = JSON.stringify({
-      userId: myId,
-      groupId: Model.GroupId,
-      members: Model.GroupMembers,
-    });
-    console.log('GroupCreateRequest: ', GroupMemberDeleteRequest);
-    axios
-      .post(
-        `https://${Model.URL}/api/user/deletemember`,
-        GroupMemberDeleteRequest,
-        {
-          headers: Headers,
-        },
-      )
-      .then(async res => {
-        console.log('DeleteGroupresponse: ', res.data);
-        if (res.data) {
-         await SessionHelper.SetGroupDetailUpdateSession(1);
-          this.props.navigation.navigate('Groupchatdetails', {
-            GroupID: Model.GroupId,
-            GroupName: Model.Groupdetais?.group.groupName,
-          });
-          // this.props.navigation.reset({
-          //   routes: [
-          //     {
-          //       name: 'Groupchatdetails',
-          //       params: {
-          //         GroupID: Model.GroupId,
-          //         GroupName: Model.Groupdetais?.group.groupName,
-          //       },
-          //     },
-          //   ],
-          // });
-        }
-      })
-      .catch((err: any) => {
-        console.log('DeleteGroupCreateError: ', err);
-        Alert.alert(err);
-      });
-  };
   render() {
     var model = this.state.Model;
     return (
@@ -267,7 +221,7 @@ export default class DeleteGroupMember extends BaseComponent<
             />
           </TouchableOpacity>
           <View style={{flex: 1}}>
-            <Text style={styles.title}>Delete Member</Text>
+            <Text style={styles.title}>All Member</Text>
           </View>
         </View>
         <View style={{padding: 10}}>
@@ -277,7 +231,6 @@ export default class DeleteGroupMember extends BaseComponent<
               display: 'flex',
               justifyContent: 'space-between',
             }}>
-            {model.GroupName?.length <= 15 ? (
               <Text
                 style={{
                   fontSize: 16,
@@ -287,34 +240,12 @@ export default class DeleteGroupMember extends BaseComponent<
                 }}>
                 {model.GroupName}
               </Text>
-            ) : (
-              <Text
-                style={{
-                  fontSize: 16,
-                  fontWeight: 'bold',
-                  color: '#0383FA',
-                  marginLeft: 20,
-                }}>
-                {model.GroupName?.slice(0,15)}...
-              </Text>
-            )}
             <View
               style={{
                 flexDirection: 'row',
                 alignItems: 'center',
                 //paddingRight: 5,
-              }}>
-              <TouchableOpacity onPress={this.DeleteGroupMember}>
-                <Text
-                  style={{
-                    fontSize: 16,
-                    fontWeight: 'bold',
-                    alignSelf: 'flex-end',
-                  }}>
-                  Update
-                </Text>
-              </TouchableOpacity>
-            </View>
+              }}></View>
           </View>
         </View>
         <Content>
@@ -367,20 +298,6 @@ export default class DeleteGroupMember extends BaseComponent<
                         }}>
                         {i.userFullName}
                       </Text>
-                      <CheckBox
-                        checked={i?.IsSelected}
-                        color="green"
-                        onPress={() =>
-                          this.ChangeCheckboxValue(i, i.lId.toString())
-                        }
-                        style={{
-                          height: 15,
-                          width: 15,
-                          justifyContent: 'center',
-                          alignItems: 'center',
-                          marginRight: 20,
-                        }}
-                      />
                     </View>
                   </Body>
                 </ListItem>

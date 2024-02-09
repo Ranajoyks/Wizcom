@@ -55,6 +55,7 @@ export class SinglechatpageViewModel {
   BranchID: number = 1;
   ConnectionCode: any;
   AllNotification: User[] = [];
+  FilterAllNotification: User[] = [];
   OnlineUserLength: number = 0;
   AppStatus: any = AppState.currentState;
   currentLocation: any;
@@ -62,6 +63,7 @@ export class SinglechatpageViewModel {
   SingleRConnection: any;
   Url: string = 'wemessanger.azurewebsites.net';
   GroupList: Groups[] = [];
+  FilterGroupList: Groups[] = [];
 }
 export default class Singlechatpage extends BaseComponent<
   any,
@@ -156,18 +158,21 @@ export default class Singlechatpage extends BaseComponent<
       Lat: Model.currentLocation?.coords?.latitude.toString(),
       Long: Model.currentLocation?.coords?.longitude.toString(),
     });
-    console.log('LocationData: ', Data);
+    // console.log('LocationData: ', Data);
 
-    axios
-      .post(`https://wemessanger.azurewebsites.net/api/user/location`, Data, {
+    axios.post(
+      `https://wemessanger.azurewebsites.net/api/user/location`,
+      Data,
+      {
         headers,
-      })
-      // .then((res: any) => {
-      //   console.log('Location: ', res.data);
-      // })
-      // .catch((err: any) => {
-      //   console.log('LocationERror: ', err);
-      // });
+      },
+    );
+    // .then((res: any) => {
+    //   console.log('Location: ', res.data);
+    // })
+    // .catch((err: any) => {
+    //   console.log('LocationERror: ', err);
+    // });
   };
   CheckAppStatus = async () => {
     var Model = this.state.Model;
@@ -204,7 +209,6 @@ export default class Singlechatpage extends BaseComponent<
   Search = async () => {
     var Model = this.state.Model;
     Model.IsShow = !Model.IsShow;
-
     this.UpdateViewModel();
   };
   Cancle = async () => {
@@ -212,6 +216,7 @@ export default class Singlechatpage extends BaseComponent<
     Model.IsShow = !Model.IsShow;
     Model.Message = '';
     Model.FilterUser = Model.alluser;
+    Model.FilterGroupList = Model.GroupList;
     this.UpdateViewModel();
   };
   DropDowmOpen = async () => {
@@ -374,6 +379,13 @@ export default class Singlechatpage extends BaseComponent<
   SearchText = (text: string) => {
     var Model = this.state.Model;
     Model.Message = text;
+    var NewArrayGRoup = Model.GroupList.filter((i: Groups) => {
+      const itemData = `${i.groupName.toLowerCase()}`;
+      const textData = text.toLowerCase();
+      if (textData.toLowerCase()) {
+        return itemData.indexOf(textData) > -1;
+      }
+    });
     var NewArray = Model.alluser.filter((i: User) => {
       const itemData = `${i.userName.toLowerCase()}`;
       const textData = text.toLowerCase();
@@ -381,16 +393,21 @@ export default class Singlechatpage extends BaseComponent<
         return itemData.indexOf(textData) > -1;
       }
     });
+
     console.log('NewArray', NewArray);
-    if (NewArray) {
+    console.log('NewArrayGRoup', NewArrayGRoup);
+    if (NewArray || NewArrayGRoup) {
       Model.FilterUser = NewArray;
+      Model.FilterGroupList = NewArrayGRoup;
       this.UpdateViewModel();
     }
     if (text == '') {
       console.log('Hii');
       Model.FilterUser = Model.alluser;
+      Model.FilterGroupList = Model.GroupList;
       this.UpdateViewModel();
     }
+    console.log('NewArrayGRoup', Model.FilterGroupList);
   };
   Logout = () => {
     var Model = this.state.Model;
@@ -446,14 +463,21 @@ export default class Singlechatpage extends BaseComponent<
       });
   };
   GroupChatPage = async (GroupName: string, GroupID: string) => {
-    this.props.navigation.reset({
-      routes: [
-        {
-          name: 'Groupchatdetails',
-          GroupID: GroupID,
-          GroupName: GroupName,
-        },
-      ],
+    // this.props.navigation.reset({
+    //   index:0,
+    //   routes: [
+    //     {
+    //       name: 'Groupchatdetails',
+    //       params: {
+    //         GroupID: GroupID,
+    //         GroupName: GroupName,
+    //       },
+    //     },
+    //   ],
+    // });
+    this.props.navigation.navigate('Groupchatdetails', {
+      GroupID: GroupID,
+      GroupName: GroupName,
     });
   };
   GetAllGroup = async () => {
@@ -465,6 +489,9 @@ export default class Singlechatpage extends BaseComponent<
       .then(res => {
         // console.log('GroupRes: ', res.data);
         Model.GroupList = res.data;
+        // this.UpdateViewModel()
+        Model.FilterGroupList = res.data;
+        this.UpdateViewModel();
       })
       .catch((err: any) => {
         console.log('GroupErr: ', err);
@@ -955,12 +982,12 @@ export default class Singlechatpage extends BaseComponent<
               activeTabStyle={{backgroundColor: 'white'}}>
               <Content>
                 <List>
-                  {model.GroupList.length <= 0 && (
+                  {model.FilterGroupList.length <= 0 && (
                     <ActivityIndicator size="large" color="#0000ff" />
                   )}
 
-                  {model.GroupList.length > 0 &&
-                    model.GroupList.map((i: Groups, index) => (
+                  {model.FilterGroupList.length > 0 &&
+                    model.FilterGroupList.map((i: Groups, index) => (
                       <TouchableOpacity
                         onPress={() =>
                           this.GroupChatPage(i.groupName, i?.groupId.toString())
@@ -996,17 +1023,31 @@ export default class Singlechatpage extends BaseComponent<
                                 flexDirection: 'row',
                                 justifyContent: 'space-between',
                               }}>
-                              <Text
-                                style={{
-                                  color: 'black',
-                                  fontWeight: '600',
-                                  fontFamily: 'OpenSans-SemiBold',
-                                  marginBottom: 5,
-                                  fontSize: 14.5,
-                                  // letterSpacing:0.5
-                                }}>
-                                {i.groupName}
-                              </Text>
+                              {i?.groupName.length <= 15 ? (
+                                <Text
+                                  style={{
+                                    color: 'black',
+                                    fontWeight: '600',
+                                    fontFamily: 'OpenSans-SemiBold',
+                                    marginBottom: 5,
+                                    fontSize: 14.5,
+                                    // letterSpacing:0.5
+                                  }}>
+                                  {i.groupName}
+                                </Text>
+                              ) : (
+                                <Text
+                                  style={{
+                                    color: 'black',
+                                    fontWeight: '600',
+                                    fontFamily: 'OpenSans-SemiBold',
+                                    marginBottom: 5,
+                                    fontSize: 14.5,
+                                    // letterSpacing:0.5
+                                  }}>
+                                  {i.groupName.slice(0,15)}...
+                                </Text>
+                              )}
                             </View>
                             <Text
                               style={{

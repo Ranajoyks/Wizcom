@@ -257,18 +257,25 @@ export default class CreateGroup extends BaseComponent<
       .post(`https://${Model.URL}/api/user/addmember`, GroupMemberAddRequest, {
         headers: Headers,
       })
-      .then(res => {
+      .then(async res => {
         console.log('Groupresponse: ', res.data);
         if (res.data) {
-          this.props.navigation.reset({
-            routes: [
-              {
-                name: 'Groupchatdetails',
-                GroupID: Model.GroupId,
-                GroupName: Model.Groupdetais?.group.groupName,
-              },
-            ],
+          await SessionHelper.SetGroupDetailUpdateSession(1);
+          this.props.navigation.navigate('Groupchatdetails', {
+            GroupID: Model.GroupId,
+            GroupName: Model.Groupdetais?.group.groupName,
           });
+          // this.props.navigation.reset({
+          //   routes: [
+          //     {
+          //       name: 'Groupchatdetails',
+          //       params: {
+          //         GroupID: Model.GroupId,
+          //         GroupName: Model.Groupdetais?.group.groupName,
+          //       },
+          //     },
+          //   ],
+          // });
         }
       })
       .catch((err: any) => {
@@ -318,25 +325,35 @@ export default class CreateGroup extends BaseComponent<
     return (
       <View style={styles.container}>
         <View style={styles.header}>
-          <TouchableOpacity
-            onPress={() => {
-              this.props.navigation.reset({
-                index: 0,
-                routes: [{name: 'Singlechatpage'}],
-              });
-            }}>
-            <Image
-              source={require('../../assets/backimg.png')}
-              style={{height: 20, width: 20, marginLeft: 10}}
-            />
-          </TouchableOpacity>
-          <View style={{flex: 1}}>
-            {model.GroupId ? (
-              <Text style={styles.title}>Add Member</Text>
-            ) : (
+          {model.GroupId ? (
+            <View style={{flexDirection:'row'}}>
+              <TouchableOpacity
+                onPress={() => {
+                  this.props.navigation.navigate('Groupchatdetails');
+                }}>
+                <Image
+                  source={require('../../assets/backimg.png')}
+                  style={{height: 20, width: 20, marginLeft: 10}}
+                />
+              </TouchableOpacity>
+              <View style={{flex: 1}}>
+                <Text style={styles.title}>Add Member</Text>
+              </View>
+            </View>
+          ) : (
+            <View style={{flexDirection:'row'}}>
+              <TouchableOpacity
+                onPress={() => {
+                  this.props.navigation.navigate('Singlechatpage');
+                }}>
+                <Image
+                  source={require('../../assets/backimg.png')}
+                  style={{height: 20, width: 20, marginLeft: 10}}
+                />
+              </TouchableOpacity>
               <Text style={styles.title}>Create Group</Text>
-            )}
-          </View>
+            </View>
+          )}
         </View>
         <View style={{padding: 10}}>
           {model.GroupId ? (
@@ -347,10 +364,27 @@ export default class CreateGroup extends BaseComponent<
                   display: 'flex',
                   justifyContent: 'space-between',
                 }}>
-                <Text
-                  style={{fontSize: 16, fontWeight: 'bold', color: '#0383FA',marginLeft:20}}>
-                  {model.GroupName}
-                </Text>
+                {model.GroupName?.length <= 15 ? (
+                  <Text
+                    style={{
+                      fontSize: 16,
+                      fontWeight: 'bold',
+                      color: '#0383FA',
+                      marginLeft: 20,
+                    }}>
+                    {model.GroupName}
+                  </Text>
+                ) : (
+                  <Text
+                    style={{
+                      fontSize: 16,
+                      fontWeight: 'bold',
+                      color: '#0383FA',
+                      marginLeft: 20,
+                    }}>
+                    {model.GroupName?.slice(0, 15)}...
+                  </Text>
+                )}
                 <View
                   style={{
                     flexDirection: 'row',

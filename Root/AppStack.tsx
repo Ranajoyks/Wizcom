@@ -33,6 +33,7 @@ import MapPage from '../Page/Map/MapPage';
 import MainPage from '../Page/Chat/MainPage';
 import CreateGroup from '../Page/Chat/CreateGroup';
 import DeleteGroupMember from '../Page/Chat/DeleteGroupMember';
+import AllGroupMember from '../Page/Chat/AllGroupMember';
 
  
 const Stack = createStackNavigator();
@@ -110,6 +111,11 @@ function AppStack() {
          <Stack.Screen
           name="DeleteGroupMember"
           component={DeleteGroupMember}
+          options={{headerShown: false, gestureEnabled: false}}
+        />
+         <Stack.Screen
+          name="AllGroupMember"
+          component={AllGroupMember}
           options={{headerShown: false, gestureEnabled: false}}
         />
       </Stack.Navigator>

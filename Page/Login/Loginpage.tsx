@@ -130,6 +130,7 @@ export default class Loginpage extends BaseComponent<any, LoginViewModel> {
     var Model = this.state.Model;
     console.log('ModelURl: ', Model.URL);
 
+    SessionHelper.SetGroupDetailUpdateSession(0);
     SessionHelper.SetUserNameSession(Model.UserName);
     SessionHelper.SetDeviceIdSession(Model.DeviceId);
     var value = await SessionHelper.GetSession();

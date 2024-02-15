@@ -26,6 +26,7 @@ import {
   StyleSheet,
   TouchableOpacity,
   TextInput,
+  Button,
 } from 'react-native';
 import {ColorCode} from '../../MainStyle';
 import IonIcon from 'react-native-vector-icons/Ionicons';
@@ -306,6 +307,9 @@ const OneToOneChatPage2 = (
       setShowDownloading([...ShowDownloading.filter(i => i != AttachmentId)]);
     }
   };
+  const Approve = async (msg: string) => {
+    console.log('SplitMsg', msg);
+  };
 
   var MessageList = chatUserOptions.AllUserList.find(
     i => i.lId == SecondUser.lId,
@@ -358,12 +362,15 @@ const OneToOneChatPage2 = (
                 ],
               });
             }}>
-            <IonIcon name="location" size={35}></IonIcon>
+            <Image
+              source={require('../../../assets/location.png')}
+              style={{height: 30, width: 23.5, marginRight: 10, marginTop: 3}}
+            />
           </TouchableOpacity>
           <UserProfileScreen userName={UserInfo?.userName ?? ''} />
         </View>
       </View>
-      <View style={{height: '87%', backgroundColor: '#FFFFFF'}}>
+      <View style={{height: '89%', backgroundColor: '#FFFFFF'}}>
         <ProgressBar visible={ShowSilentLoader} indeterminate />
         <FlatList
           automaticallyAdjustKeyboardInsets
@@ -384,6 +391,7 @@ const OneToOneChatPage2 = (
           renderItem={data => {
             var isSenderIsSecondUser = data.item.lSenderId == SecondUser.lId;
             var userName = isSenderIsSecondUser ? SecondUser.userName : '';
+            var MsgSplit = data.item.sMsg.split('||');
             return (
               <View key={data.item.lSrId + data.item.GroupName}>
                 {data.item.GroupName && (
@@ -402,21 +410,66 @@ const OneToOneChatPage2 = (
                 <View
                   style={{
                     flexDirection: isSenderIsSecondUser ? 'row' : 'row-reverse',
-                    marginTop: 10,
+                    marginTop: MsgSplit.length == 2 ? 0 : 10,
                     marginLeft: 10,
                     marginRight: 10,
+                    marginBottom: MsgSplit.length == 2 ? 0 : null,
                   }}>
-                  <ChatAvatar size={40} label={userName} />
+                  {data.item.lSenderId == SecondUser.lId ? (
+                    <View style={localStyle.messagefromicon}>
+                      <Text
+                        style={{
+                          color: '#000',
+                          flex: 1,
+                          fontSize: 15,
+                          textAlign: 'center',
+                        }}>
+                        {userName.toLocaleUpperCase().charAt(0)}
+                      </Text>
+                    </View>
+                  ) : null}
                   <List.Item
-                    style={{
-                      borderRadius: 10,
-                      backgroundColor: isSenderIsSecondUser
-                        ? ColorCode.DimGray
-                        : ColorCode.LightOrange,
-                      marginLeft: 10,
-                      maxWidth: '80%',
-                    }}
-                    title={data.item.sMsg}
+                    style={
+                      MsgSplit.length == 2
+                        ? {paddingRight: 0, paddingVertical: 0}
+                        : {
+                            paddingVertical: 2,
+                            borderRadius: 6,
+                            backgroundColor: isSenderIsSecondUser
+                              ? ColorCode.DimGray
+                              : ColorCode.LightOrange,
+                            marginLeft: 10,
+                            maxWidth: '80%',
+                          }
+                    }
+                    title={
+                      MsgSplit.length == 2 ? (
+                        <View
+                          style={{
+                            flexDirection: 'row',
+                            gap: 5,
+                          }}>
+                          <TouchableOpacity
+                            onPress={() => Approve(MsgSplit[0])}>
+                            <Text style={localStyle.buttontest}>
+                              <Text style={localStyle.ApproveRejectText}>
+                                Approve
+                              </Text>
+                            </Text>
+                          </TouchableOpacity>
+                          <TouchableOpacity
+                            onPress={() => Approve(MsgSplit[1])}>
+                            <Text style={localStyle.rejectbuttontest}>
+                              <Text style={localStyle.ApproveRejectText}>
+                                Reject
+                              </Text>
+                            </Text>
+                          </TouchableOpacity>
+                        </View>
+                      ) : (
+                        data.item.sMsg
+                      )
+                    }
                     titleNumberOfLines={0}
                     titleStyle={{
                       color: isSenderIsSecondUser
@@ -476,8 +529,9 @@ const OneToOneChatPage2 = (
                 <View
                   style={{
                     flexDirection: isSenderIsSecondUser ? 'row' : 'row-reverse',
-                    marginLeft: isSenderIsSecondUser ? '20%' : 10,
+                    marginLeft: isSenderIsSecondUser ? '16%' : 10,
                     marginRight: 10,
+                    marginTop: MsgSplit.length == 2 ? -5 : null,
                   }}>
                   <Text style={{fontSize: 12}}>
                     {UIHelper.GetTimeStamp(data.item.dtMsg)}
@@ -573,5 +627,39 @@ const localStyle = StyleSheet.create({
     borderColor: '#F1F1F1',
     fontFamily: 'OpenSans-Regular',
     width: '100%',
+  },
+  ApproveRejectText: {
+    color: 'white',
+    fontFamily: 'Poppins-Regular',
+    fontSize: 12,
+  },
+  buttontest: {
+    alignSelf: 'center',
+    backgroundColor: '#0383FA',
+    color: 'white',
+    borderRadius: 5,
+    height: 35,
+    justifyContent: 'center',
+    paddingHorizontal: 10,
+    paddingVertical: 7,
+  },
+  rejectbuttontest: {
+    alignSelf: 'center',
+    backgroundColor: 'red',
+    color: 'white',
+    borderRadius: 5,
+    height: 35,
+    justifyContent: 'center',
+    paddingHorizontal: 10,
+    paddingVertical: 7,
+  },
+  messagefromicon: {
+    backgroundColor: '#E9E9E9',
+    width: 30,
+    height: 30,
+    borderRadius: 50,
+    padding: 5,
+    alignItems: 'center',
+    flexDirection: 'row',
   },
 });

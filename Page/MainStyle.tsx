@@ -413,7 +413,13 @@ export const styles = StyleSheet.create({
     flexDirection: 'row',
     //   zIndex: 1,
   },
-
+  GroupMemberBadge:{
+    backgroundColor: '#404040',
+    borderRadius: 50,
+    alignItems: 'center',
+    display: 'flex',
+    fontSize:10,
+  },
   topAvatar: {
     width: 45,
     height: 45,

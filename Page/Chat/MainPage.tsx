@@ -23,6 +23,8 @@ import { Group } from '../../Entity/Group';
 import { ChatUser } from '../../Entity/ChatUser';
 import AppDBHelper from '../../Core/AppDBHelper';
 import { GroupChat } from '../../Entity/GroupChat';
+import NotificationPage from './NotificationDetailsPage';
+import NotificationMainPage from './Notification/NotificationMainPage';
 
 
 
@@ -168,8 +170,10 @@ const MainPage = () => {
         />
         <Tab.Screen
           name="Notifications"
-          component={NotificationsScreen}
           options={{ tabBarLabel: 'Notifications' }}
+          children={() => {
+            return <NotificationMainPage/>;
+          }}
         />
       </Tab.Navigator>
     </SafeAreaView>

@@ -3,6 +3,7 @@ import {Chat} from '../Entity/Chat';
 import {ChatUser} from '../Entity/ChatUser';
 import {Group} from '../Entity/Group';
 import {GroupChat} from '../Entity/GroupChat';
+import { GroupDetails } from '../Entity/GroupDetails';
 import {KSResponse} from '../Entity/JInitializeResponse';
 import User from '../Entity/User';
 import BaseApi from './BaseApi';
@@ -113,5 +114,24 @@ export default class SignalRApi extends BaseApi {
     receiverId?: string;
   }): Promise<KSResponse<boolean>> {
     return await this.Put('SignalR', `user`, ReadMsgOption);
+  }
+  public static async GetNewGroupDetails(
+    chatid: string,
+    GroupId: number,
+  ): Promise<KSResponse< GroupDetails>> {
+    return await this.Get(
+      'SignalR',
+      `user/groupdetail?userId=${chatid}&groupId=${GroupId}`,
+    );
+  }
+  public static async GetAllUserNotification(
+    SenderID: string,
+    CompanyId: number,
+  ): Promise<KSResponse<ChatUser[]>> {
+    //`User/readmessage?companyId=${BranchID}&senderId=${SenderID}&receiverId=${ReceiverID}&lastLSrid=${lSrid}`,
+    return await this.Get(
+      'SignalR',
+      `user/getnotification?companyId=${CompanyId}&userId=${SenderID}`,
+    );
   }
 }

@@ -11,7 +11,9 @@ export interface ChatUserOptionsState {
     IsPageLoading: boolean,
     AllUserList: ChatUser[],
     AllGroupList: Group[],
+    AllUserNotificationList:ChatUser[],
     FilterUserList: ChatUser[],
+    FilterUserNotificationList: ChatUser[],
     FilterGroupList: Group[],
     SearchText?: string,
     OnSearch?: (SearchText: string) => void,
@@ -23,7 +25,9 @@ const initialState: ChatUserOptionsState = {
     AllUserList: [],
     FilterUserList: [],
     AllGroupList: [],
-    FilterGroupList: []
+    FilterGroupList: [],
+    AllUserNotificationList:[],
+    FilterUserNotificationList:[]
 }
 
 
@@ -229,7 +233,7 @@ const ChatUserOptions = createSlice({
                     uniqueMessagaeList[previosMessageWithSameGroupIndex] = OldGroupNameMessage
                 }
 
-                uniqueMessagaeList.unshift(item)
+                uniqueMessagaeList.push(item)
             })
 
 
@@ -249,7 +253,7 @@ const ChatUserOptions = createSlice({
                 Group.AllGroupMsgList = []
             }
 
-            Group.AllGroupMsgList.push(action.payload)
+            Group.AllGroupMsgList.unshift(action.payload)
             state.AllGroupList[GroupIndex] = Group
         },
         UpdateGroupChat: (state, action: PayloadAction<GroupChat>) => {
@@ -259,6 +263,122 @@ const ChatUserOptions = createSlice({
             var chatIndex = Group.AllGroupMsgList?.findIndex(i => i.lSrId == action.payload.lSrId)!
 
             state.AllGroupList[GroupIndex].AllGroupMsgList![chatIndex] = action.payload
+        },
+        UpdateAllNotificationUserList: (state, action: PayloadAction<ChatUser[]>) => {
+            console.log("UpdateAllNotificationUserList: ", action.payload);
+            
+            action.payload.forEach(newUser => {
+                var oldUserIndex = state.AllUserNotificationList.findIndex(i => i.lId == newUser.lId)
+                if (oldUserIndex == -1) {
+                    state.AllUserNotificationList.push(newUser)
+                    return
+                }
+
+                var oldUser = state.AllUserNotificationList[oldUserIndex]
+
+                var AllChatOneToOneList = oldUser.AllChatOneToOneList
+
+
+                newUser = Object.assign(oldUser, newUser)
+
+                newUser.AllChatOneToOneList = AllChatOneToOneList
+
+                state.AllUserNotificationList[oldUserIndex] = newUser
+            });
+        },
+        UpdateFilterNotificationUserList: (state, action: PayloadAction<ChatUser[]>) => {
+            console.log("UpdateFilterNotificationUserList: ",action.payload);
+            
+            if (action.payload.length) {
+                state.FilterUserNotificationList = action.payload
+            }
+        },
+        LoadUserOneToOneNotificationChatList: (state, action: PayloadAction<{
+            messageList: Chat[], SecondUserId: number
+        }>) => {
+            var userIndex = state.AllUserNotificationList.findIndex(i => i.lId == action.payload.SecondUserId)!
+            var user = state.AllUserNotificationList[userIndex]
+
+            if (!user) {
+                console.error("User not found, this should nor happen", action.payload.SecondUserId)
+                return
+            }
+
+            if (!user.AllChatOneToOneList) {
+                user.AllChatOneToOneList = []
+            }
+
+            var payLoadMessageList = [...action.payload.messageList] ?? []
+
+            var sortedIncomingMessageList = payLoadMessageList.sort((a, b) => {
+                return b.lSrId - a.lSrId
+            })
+
+            var newNoProxySortedMessageList: Chat[] = user?.AllChatOneToOneList.filter(i => !i.IsKsProxy)
+            var todayGroupName = CreateGroupNameFromdate(new Date())
+
+            sortedIncomingMessageList.forEach(newMwssage => {
+                var newMessageIndex = newNoProxySortedMessageList.findIndex(i => i.lSrId == newMwssage.lSrId)
+
+                if (newMessageIndex == -1) {
+                    var dt = new Date(newMwssage.dtMsg)
+                    var newGroup = CreateGroupNameFromdate(dt)
+
+                    newMwssage.GroupName = newGroup == todayGroupName ? "Today" : newGroup
+                    newNoProxySortedMessageList.unshift(newMwssage)
+                }
+            });
+
+            newNoProxySortedMessageList = newNoProxySortedMessageList.sort((a, b) => {
+                return b.lSrId - a.lSrId
+            })
+
+
+            var uniqueMessagaeList: Chat[] = []
+            newNoProxySortedMessageList.forEach((item) => {
+                var existItemIndex = uniqueMessagaeList.findIndex(i => i.lSrId == item.lSrId);
+                if (existItemIndex != -1) {
+                    return
+                }
+
+                //Fixing group name
+                var previosMessageWithSameGroupIndex = uniqueMessagaeList.findIndex(i => i.GroupName == item.GroupName);
+                if (previosMessageWithSameGroupIndex != -1) {
+                    var OldGroupNameMessage = uniqueMessagaeList[previosMessageWithSameGroupIndex]
+                    OldGroupNameMessage.GroupName = ""
+                    uniqueMessagaeList[previosMessageWithSameGroupIndex] = OldGroupNameMessage
+                }
+
+                uniqueMessagaeList.push(item)
+            })
+
+
+            user.sMessgeList = []
+            user.AllChatOneToOneList = uniqueMessagaeList
+
+            state.AllUserNotificationList[userIndex] = user
+
+
+        },
+        AddNewOneToOneNotificationChat: (state, action: PayloadAction<Chat>) => {
+            var userIndex = state.AllUserNotificationList.findIndex(i => i.lId == action.payload.lReceiverId
+                || i.lId == action.payload.lSenderId)
+            var user = state.AllUserNotificationList[userIndex]
+
+            if (!user.AllChatOneToOneList?.length) {
+                user.AllChatOneToOneList = []
+            }
+
+            user.AllChatOneToOneList.unshift(action.payload)
+            state.AllUserNotificationList[userIndex] = user
+        },
+        UpdateOneToOneNotificationChat: (state, action: PayloadAction<Chat>) => {
+            var userIndex = state.AllUserNotificationList.findIndex(i => i.lId == action.payload.lReceiverId
+                || i.lId == action.payload.lSenderId)
+            var user = state.AllUserNotificationList[userIndex]
+            var chatIndex = user.AllChatOneToOneList?.findIndex(i => i.lSrId == action.payload.lSrId)!
+
+            state.AllUserNotificationList[userIndex].AllChatOneToOneList![chatIndex] = action.payload
         },
 
     }

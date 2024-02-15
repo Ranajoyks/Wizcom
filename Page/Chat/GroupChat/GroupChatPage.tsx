@@ -224,7 +224,7 @@ const GroupChatPage = () => {
         // console.log('FileUploadheaders: ', FileUploadheaders);
         axios
           .post(
-            `http://eiplutm.eresourceerp.com/AzaaleaR/Sys/Handler2.ashx`,
+            `http://eipl.eresourceerp.com/Sys/Handler2.ashx`,
             FileUploadData,
             { headers: FileUploadheaders },
           )

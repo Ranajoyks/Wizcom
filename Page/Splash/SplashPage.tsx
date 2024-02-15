@@ -1,10 +1,5 @@
 import React from 'react';
-import {
-  View,
-  StatusBar,
-  StyleSheet,
-  Text,
-} from 'react-native';
+import {View, StatusBar, StyleSheet, Text} from 'react-native';
 import AppIconImage from '../../assets/AppIconImage';
 
 import BaseColor from '../../Core/BaseTheme';
@@ -13,18 +8,17 @@ import LinearGradient from 'react-native-linear-gradient';
 import SessionHelper from '../../Core/SessionHelper';
 import BaseComponent from '../../Core/BaseComponent';
 import BaseState from '../../Core/BaseState';
-import { BaseProps, mapDispatchToProps } from '../../Core/BaseProps';
+import {BaseProps, mapDispatchToProps} from '../../Core/BaseProps';
 import BaseViewModel from '../../Core/BaseViewModel';
 import SignalRApi from '../../DataAccess/SignalRApi';
 import ERESApi from '../../DataAccess/ERESApi';
 import BaseApi from '../../DataAccess/BaseApi';
-import { connect } from 'react-redux';
-import { SignalRHubConnection } from '../../DataAccess/SignalRHubConnection';
+import {connect} from 'react-redux';
+import {SignalRHubConnection} from '../../DataAccess/SignalRHubConnection';
 import UIHelper from '../../Core/UIHelper';
 
-
-export class SplashPage extends BaseComponent<"SplashPage", BaseViewModel> {
-  constructor(props: BaseProps<"SplashPage">) {
+export class SplashPage extends BaseComponent<'SplashPage', BaseViewModel> {
+  constructor(props: BaseProps<'SplashPage'>) {
     super(props);
     this.state = new BaseState(new BaseViewModel());
   }
@@ -34,22 +28,22 @@ export class SplashPage extends BaseComponent<"SplashPage", BaseViewModel> {
 
       if (ChatId) {
         this.RedirectToMainScreen(ChatId);
-        return
+        return;
       }
 
       this.props.navigation.reset({
         index: 0,
-        routes: [{ name: 'CompanySelectionPage' }],
+        routes: [{name: 'CompanySelectionPage'}],
       });
     }, 500);
-
   }
   RedirectToMainScreen = async (ChatId: string) => {
-
     var SessionId = await SessionHelper.GetSessionId();
     var companyID = await SessionHelper.GetCompanyID();
 
     var FMCToken = await SessionHelper.GetFCMToken();
+    var userInfo = await SessionHelper.GetUserDetails();
+    var Branch = await SessionHelper.GetBranch();
 
     const Data = JSON.stringify({
       userId: ChatId,
@@ -58,12 +52,11 @@ export class SplashPage extends BaseComponent<"SplashPage", BaseViewModel> {
       code: companyID,
     });
 
-    var userRes = await SignalRApi.UserSetDetail(Data)
-
+    var userRes = await SignalRApi.UserSetDetail(Data);
 
     if (userRes.IsKSError || !userRes.data) {
-      this.ShowToast(userRes.ErrorInfo!)
-      return
+      this.ShowToast(userRes.ErrorInfo!);
+      return;
     }
 
     const SaveUserDevice = JSON.stringify({
@@ -71,40 +64,52 @@ export class SplashPage extends BaseComponent<"SplashPage", BaseViewModel> {
       deviceId: FMCToken,
     });
     console.log('SaveUserDevice: ', SaveUserDevice);
+    const AutologinData = {
+      sConn: `${companyID}`,
+      dOffSet: new Date().getTimezoneOffset(),
+      cPlatForm: 'M',
+      lUsrId: userInfo!.lId,
+      lCompId: Branch!.lId,
+    };
+    console.log('AutologinData: ', AutologinData);
 
-    var DeviceResponse = await SignalRApi.UserSetDevice(SaveUserDevice)
+    var DeviceResponse = await SignalRApi.UserSetDevice(SaveUserDevice);
 
     if (!DeviceResponse) {
-      return
+      return;
     }
 
-    await SignalRHubConnection.JoinChat(ChatId)
-    UIHelper.LogTime("JoinChat", "End")
+    await SignalRHubConnection.JoinChat(ChatId);
+    UIHelper.LogTime('JoinChat', 'End');
 
-
-    var SessionResponse = await ERESApi.JCheckSession()
+    var SessionResponse = await ERESApi.JCheckSession();
     if (SessionResponse.IsKSError || !SessionResponse.data) {
-      this.ShowToast(SessionResponse.ErrorInfo!)
-      return
+      this.ShowToast(SessionResponse.ErrorInfo!);
+      return;
     }
-
 
     if (SessionResponse.data.d.bStatus) {
       this.props.navigation.reset({
         index: 0,
-        routes: [{ name: 'MainPage' }],
+        routes: [{name: 'MainPage'}],
       });
     }
     if (!SessionResponse.data.d.bStatus) {
-      this.props.navigation.reset({
-        index: 0,
-        routes: [{ name: 'CompanySelectionPage' }],
-      });
+      var AutoLoginresponse = await ERESApi.JAutoLogin(AutologinData);
+      if (AutoLoginresponse.data.d.bStatus) {
+        this.props.navigation.reset({
+          index: 0,
+          routes: [{name: 'MainPage'}],
+        });
+      }
+      if (!AutoLoginresponse.data.d.bStatus) {
+        this.props.navigation.reset({
+          index: 0,
+          routes: [{name: 'CompanySelectionPage'}],
+        });
+      }
     }
-  }
-
-
-
+  };
 
   render() {
     return (
@@ -141,7 +146,7 @@ export class SplashPage extends BaseComponent<"SplashPage", BaseViewModel> {
 }
 
 var connector = connect(null, mapDispatchToProps)(SplashPage);
-export default connector
+export default connector;
 const styles = StyleSheet.create({
   gradientContainer: {
     flex: 1,

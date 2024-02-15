@@ -431,15 +431,20 @@ const OneToOneChatPage2 = (
                   <List.Item
                     style={
                       MsgSplit.length == 2
-                        ? {paddingRight: 0, paddingVertical: 0}
+                        ? {
+                            paddingRight: 0,
+                            paddingVertical: 0,
+                            marginVertical: 8,
+                          }
                         : {
-                            paddingVertical: 2,
+                            paddingVertical: 6,
                             borderRadius: 6,
                             backgroundColor: isSenderIsSecondUser
                               ? ColorCode.DimGray
                               : ColorCode.LightOrange,
                             marginLeft: 10,
                             maxWidth: '80%',
+                            marginVertical: 8,
                           }
                     }
                     title={
@@ -476,6 +481,7 @@ const OneToOneChatPage2 = (
                         ? ColorCode.Black
                         : ColorCode.DrakOrange,
                       fontSize: 15,
+                      fontFamily:'OpenSans-Regular'
                     }}
                     right={() => {
                       if (!data.item.lAttchId) return <></>;
@@ -529,11 +535,11 @@ const OneToOneChatPage2 = (
                 <View
                   style={{
                     flexDirection: isSenderIsSecondUser ? 'row' : 'row-reverse',
-                    marginLeft: isSenderIsSecondUser ? '16%' : 10,
+                    marginLeft: isSenderIsSecondUser ? '16%' : 11,
                     marginRight: 10,
                     marginTop: MsgSplit.length == 2 ? -5 : null,
                   }}>
-                  <Text style={{fontSize: 12}}>
+                  <Text style={{fontSize: 12, color: '#a6a6a6'}}>
                     {UIHelper.GetTimeStamp(data.item.dtMsg)}
                   </Text>
                 </View>
@@ -661,5 +667,6 @@ const localStyle = StyleSheet.create({
     padding: 5,
     alignItems: 'center',
     flexDirection: 'row',
+    marginTop:15
   },
 });

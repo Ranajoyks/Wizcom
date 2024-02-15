@@ -75,6 +75,16 @@ export default class SessionHelper extends StorageHelper {
     public static async GetSessionId() {
         return await this.getInternal<string>("SessionId")
     }
+    public static SetGroupDetailUpdateSession(GroupDetailUpdate: any) {
+        AsyncStorage.setItem('GroupDetailUpdate', JSON.stringify(GroupDetailUpdate))
+    }
+    public static async GetGroupDetailUpdateSession() {
+        var item = await AsyncStorage.getItem('GroupDetailUpdate');
+        if (!item) {
+            return item as unknown as any;
+        }
+        return JSON.parse(item) as any;
+    }
 
 
 }

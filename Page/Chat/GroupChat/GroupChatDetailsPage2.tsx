@@ -10,7 +10,7 @@ import {StackScreenProps} from '@react-navigation/stack';
 import SignalRApi from '../../../DataAccess/SignalRApi';
 import SessionHelper from '../../../Core/SessionHelper';
 import {ShowToastMessage} from '../../../Redux/Store';
-import {Group} from '../../../Entity/Group';
+import {Group, GroupMember} from '../../../Entity/Group';
 import {
   Dimensions,
   FlatList,
@@ -19,14 +19,15 @@ import {
   StyleSheet,
   TouchableOpacity,
   View,
+  TextInput,
+  Text,
 } from 'react-native';
 import {
   ActivityIndicator,
+  Avatar,
   Badge,
   Button,
   List,
-  Text,
-  TextInput,
 } from 'react-native-paper';
 import moment from 'moment';
 import MainStyle, {ColorCode, styles} from '../../MainStyle';
@@ -49,6 +50,7 @@ import DocumentPicker, {
 import * as RNFS from 'react-native-fs';
 import RNFetchBlob from 'rn-fetch-blob';
 import FileViewer from 'react-native-file-viewer';
+import axios from 'axios';
 
 const GroupChatDetailsPage2 = (
   props: StackScreenProps<RootStackParamList, 'GroupChatDetailsPage2'>,
@@ -73,11 +75,25 @@ const GroupChatDetailsPage2 = (
   const chatUserOptions = useAppSelector(i => i.ChatUserOptions);
 
   const [SelectedFile, setSelectedFile] = useState<RNFile>();
+  const [GroupMember, setGroupMember] = useState<GroupMember[]>([]);
+  const [isOpen, setisOpen] = useState(false);
+  const [isAdmin, setisAdmin] = useState(false);
+  const [Appversion, setAppversion] = useState('1.0.0');
 
   useEffect(() => {
     Initilize();
+    setInterval(AgainCallGroupdetails, 1000);
   }, []);
+  const AgainCallGroupdetails = async () => {
+    var GroupDetails = await SessionHelper.GetGroupDetailUpdateSession();
+    console.log('GroupDetails', GroupDetails);
 
+    if (GroupDetails == 1) {
+      setisOpen(false);
+      NewGroupDetails();
+      SessionHelper.SetGroupDetailUpdateSession(0);
+    }
+  };
   const Initilize = async () => {
     var chatId = await SessionHelper.GetChatId();
     var CompanyId = await SessionHelper.GetCompanyID();
@@ -92,7 +108,7 @@ const GroupChatDetailsPage2 = (
 
     setCompnanyId(CompanyId);
     setUserInfo(userInfo);
-
+    NewGroupDetails();
     var GroupDetailsResponse = await SignalRApi.GetGroupDetails(
       chatId!,
       props.route.params.Group.groupId,
@@ -122,7 +138,24 @@ const GroupChatDetailsPage2 = (
       false,
     );
   };
-
+  const NewGroupDetails = async () => {
+    var chatId = await SessionHelper.GetChatId();
+    var userInfo = await SessionHelper.GetUserDetails();
+    var GroupDetailsResponse = await SignalRApi.GetNewGroupDetails(
+      chatId!,
+      props.route.params.Group.groupId,
+    );
+    console.log(
+      'NewgroupDetails',
+      JSON.stringify(GroupDetailsResponse.data?.members),
+      GroupDetailsResponse.data?.members.forEach(i => {
+        if (i.memberId == userInfo?.lId.toString() && i.isOwner == true) {
+          setisAdmin(true);
+        }
+      }),
+    );
+    setGroupMember(GroupDetailsResponse.data!.members);
+  };
   const LoadOldMessages = async (
     FromSenderId?: string,
     FromGroupId?: number,
@@ -151,7 +184,7 @@ const GroupChatDetailsPage2 = (
       tempGroupId!,
       tempIndexNo!,
     ).then(res => {
-        console.log(' group chat res', res);
+      console.log(' group chat res', res);
       if (res.data) {
         setCurrentIndex(tempIndexNo);
         dispatch(
@@ -293,7 +326,6 @@ const GroupChatDetailsPage2 = (
     //   },
     // );
   };
-
   const HandleMultiDownloadingLoader = (
     AttachmentId: number,
     IsDownloading: boolean,
@@ -309,11 +341,33 @@ const GroupChatDetailsPage2 = (
       setShowDownloading([...ShowDownloading.filter(i => i != AttachmentId)]);
     }
   };
-
+  const DropDownOpen = async () => {
+    setisOpen(!isOpen);
+  };
+  const DeleteGroup = async () => {
+    console.log('MOdel.GroupId: ', groupDetail?.groupId);
+    var UserDetails = await SessionHelper.GetUserDetails();
+    var chatId = await SessionHelper.GetChatId();
+    axios
+      .get(
+        `http://wemessanger.azurewebsites.net/api/user/deletegroup?userId=${chatId}&groupId=${groupDetail?.groupId}`,
+      )
+      .then(res => {
+        console.log('DeleteResponse: ', res.data);
+        if (!res.data) {
+          return;
+        }
+        navigation.reset({
+          routes: [{name: 'MainPage'}],
+        });
+      })
+      .catch((err: any) => {
+        console.log('DeleteResponseError: ', err);
+      });
+  };
   var MessageList = chatUserOptions.AllGroupList.find(
     i => i.groupId == groupDetail?.groupId,
   )?.AllGroupMsgList;
-  
 
   // useEffect(() => {
   //   console.log("Current data lenth changed", MessageList.length)
@@ -337,45 +391,236 @@ const GroupChatDetailsPage2 = (
           <View style={{flex: 1}}>
             <Text style={styles.Grouptitle}>Group Chat</Text>
           </View>
-          <UserProfileScreen userName={UserInfo?.userName ?? ''} />
+          <TouchableOpacity
+            onPress={() => {
+              DropDownOpen();
+            }}>
+            <Badge style={styles.GroupChatBadge}>
+              {UserInfo?.userFullName.toLocaleUpperCase().charAt(0)}
+            </Badge>
+          </TouchableOpacity>
+          {isOpen && (
+            <View style={styles.dropdownContainer}>
+              <View style={styles.dropdown}>
+                <View>
+                  <View style={{}}>
+                    <Text
+                      style={{
+                        fontFamily: 'OpenSans-SemiBold',
+                        marginTop: 15,
+                        paddingLeft: 20,
+                        color: '#0383FA',
+                        alignSelf: 'flex-start',
+                        fontSize: 12,
+                      }}>
+                      User:
+                    </Text>
+                    <Text
+                      style={{
+                        paddingLeft: 20,
+                        color: 'black',
+                        alignSelf: 'flex-start',
+                        fontSize: 12,
+                        fontFamily: 'OpenSans-SemiBold',
+                      }}>
+                      {UserInfo?.userName ?? ''}
+                    </Text>
+                  </View>
+                  <View style={styles.divider}></View>
+                  <View style={{}}>
+                    <Text
+                      style={{
+                        fontFamily: 'OpenSans-SemiBold',
+                        marginTop: 15,
+                        paddingLeft: 20,
+                        color: '#0383FA',
+                        alignSelf: 'flex-start',
+                        fontSize: 12,
+                      }}>
+                      Designation:
+                    </Text>
+                  </View>
+                  <View style={styles.divider}></View>
+                  <View style={{}}>
+                    <Text
+                      style={{
+                        fontFamily: 'OpenSans-SemiBold',
+                        marginTop: 15,
+                        paddingLeft: 20,
+                        color: '#0383FA',
+                        alignSelf: 'flex-start',
+                        fontSize: 12,
+                      }}>
+                      Connection Code:
+                    </Text>
+                    <Text
+                      style={{
+                        paddingLeft: 20,
+                        color: 'black',
+                        alignSelf: 'flex-start',
+                        fontSize: 12,
+                        fontFamily: 'OpenSans-SemiBold',
+                      }}>
+                      {CompnanyId}
+                    </Text>
+                  </View>
+                  <View style={styles.divider}></View>
+
+                  <View style={{}}>
+                    <Text
+                      style={{
+                        fontFamily: 'OpenSans-SemiBold',
+                        marginTop: 15,
+                        paddingLeft: 20,
+                        color: '#0383FA',
+                        alignSelf: 'flex-start',
+                        fontSize: 12,
+                      }}>
+                      Version:
+                    </Text>
+                    <Text
+                      style={{
+                        paddingLeft: 20,
+                        color: 'black',
+                        alignSelf: 'flex-start',
+                        fontSize: 12,
+                        fontFamily: 'OpenSans-SemiBold',
+                      }}>
+                      {Appversion}
+                    </Text>
+                  </View>
+                  {isAdmin ? (
+                    <>
+                      <View style={styles.divider}></View>
+                      <TouchableOpacity
+                        onPress={() =>
+                          navigation.navigate('CreateGroup', {
+                            GroupID: groupDetail!.groupId.toString(),
+                          })
+                        }>
+                        <Text
+                          style={{
+                            fontFamily: 'OpenSans-SemiBold',
+                            marginTop: 15,
+                            paddingLeft: 20,
+                            color: '#0383FA',
+                            alignSelf: 'flex-start',
+                            fontSize: 12,
+                          }}>
+                          Add Member
+                        </Text>
+                      </TouchableOpacity>
+                      <View style={styles.divider}></View>
+                      <TouchableOpacity
+                        onPress={() =>
+                          navigation.navigate('DeleteGroupMember', {
+                            GroupID: groupDetail!.groupId.toString(),
+                          })
+                        }>
+                        <Text
+                          style={{
+                            fontFamily: 'OpenSans-SemiBold',
+                            marginTop: 15,
+                            paddingLeft: 20,
+                            color: '#0383FA',
+                            alignSelf: 'flex-start',
+                            fontSize: 12,
+                          }}>
+                          Remove Member
+                        </Text>
+                      </TouchableOpacity>
+                      <View style={styles.divider}></View>
+                      <TouchableOpacity onPress={() => DeleteGroup()}>
+                        <Text
+                          style={{
+                            fontFamily: 'OpenSans-SemiBold',
+                            marginTop: 15,
+                            paddingLeft: 20,
+                            color: '#0383FA',
+                            alignSelf: 'flex-start',
+                            fontSize: 12,
+                            marginBottom: 15,
+                          }}>
+                          Delete Group
+                        </Text>
+                      </TouchableOpacity>
+                    </>
+                  ) : null}
+                </View>
+              </View>
+            </View>
+          )}
         </View>
         <View style={styles.groupcontainer}>
           <View>
             <View>
-              <Text style={styles.headerText}>{groupDetail?.groupName}</Text>
+              {groupDetail?.groupName && groupDetail.groupName.length <= 10 ? (
+                <Text style={styles.headerText}>{groupDetail?.groupName}</Text>
+              ) : (
+                <Text style={styles.headerText}>
+                  {groupDetail?.groupName.slice(0, 10)}...
+                </Text>
+              )}
             </View>
             <View style={styles.memberCount}>
               <Text style={styles.memberCountText}>
-                {groupDetail?.members?.length} Members
+                {GroupMember?.length} Members
               </Text>
             </View>
           </View>
 
           <View style={styles.avatarContainer}>
             <TouchableOpacity>
-              {groupDetail?.members &&
-                groupDetail?.members.map((member, index) => {
-                  if (index > 2) return;
-                  return (
-                    <View key={member.memberId} style={styles.topLayer}>
-                      <Badge style={styles.GroupChatBadge}>
-                        {member.fullName}
-                      </Badge>
-                    </View>
-                  );
-                })}
-              {groupDetail?.members && groupDetail?.members?.length > 3 && (
+              {GroupMember[0] ? (
                 <View style={styles.topLayer}>
-                  <Badge style={styles.GroupChatBadge}>
-                    {groupDetail?.members?.length - 3}
-                  </Badge>
+                  <Avatar.Text
+                    style={styles.GroupMemberBadge}
+                    size={35}
+                    label={GroupMember[0].fullName
+                      .toLocaleUpperCase()
+                      .charAt(0)}
+                  />
                 </View>
-              )}
+              ) : null}
+
+              {GroupMember[1] ? (
+                <View style={styles.bottomLayer}>
+                  <Avatar.Text
+                    style={styles.GroupMemberBadge}
+                    size={35}
+                    label={GroupMember[1].fullName
+                      .toLocaleUpperCase()
+                      .charAt(0)}
+                  />
+                </View>
+              ) : null}
+              {GroupMember[2] ? (
+                <View style={styles.bottomLayer2}>
+                  <Avatar.Text
+                    style={styles.GroupMemberBadge}
+                    size={35}
+                    label={GroupMember[2].fullName
+                      .toLocaleUpperCase()
+                      .charAt(0)}
+                  />
+                </View>
+              ) : null}
+              {GroupMember.length > 3 ? (
+                <View style={styles.bottomLayer3}>
+                  <Avatar.Text
+                    style={styles.GroupMemberBadge}
+                    size={35}
+                    label={'+' + (GroupMember.length - 3).toString()}
+                  />
+                </View>
+              ) : null}
             </TouchableOpacity>
           </View>
         </View>
         <FlatList
           automaticallyAdjustKeyboardInsets
+          onEndReachedThreshold={0.8}
+          inverted
           data={MessageList}
           renderItem={({item}) => {
             var isSenderIsSecondUser = item.lSenderId != UserInfo?.lId;
@@ -402,15 +647,30 @@ const GroupChatDetailsPage2 = (
                     marginLeft: 10,
                     marginRight: 10,
                   }}>
-                  <ChatAvatar size={40} label={item.userName} />
+                  {/* <ChatAvatar size={40} label={item.userName} /> */}
+                  {item.lSenderId !== UserInfo?.lId ? (
+                    <View style={localStyle.messagefromicon}>
+                      <Text
+                        style={{
+                          color: '#000',
+                          flex: 1,
+                          fontSize: 15,
+                          textAlign: 'center',
+                        }}>
+                        {item.userName.toLocaleUpperCase().charAt(0)}
+                      </Text>
+                    </View>
+                  ) : null}
                   <List.Item
                     style={{
-                      borderRadius: 10,
+                      paddingVertical: 6,
+                      borderRadius: 6,
                       backgroundColor: isSenderIsSecondUser
                         ? ColorCode.DimGray
                         : ColorCode.LightOrange,
                       marginLeft: 10,
                       maxWidth: '80%',
+                      marginVertical: 8,
                     }}
                     title={item.sMsg}
                     titleNumberOfLines={0}
@@ -419,6 +679,7 @@ const GroupChatDetailsPage2 = (
                         ? ColorCode.Black
                         : ColorCode.DrakOrange,
                       fontSize: 15,
+                      fontFamily: 'OpenSans-Regular',
                     }}
                     right={() => {
                       if (!item.lAttchId) return <></>;
@@ -456,23 +717,10 @@ const GroupChatDetailsPage2 = (
                     }}
                   />
                 </View>
-                {/* {data.item.AttachmentType == 'Image' && (
-                          <View  >
-                            <Image
-                              source={{ uri: "file:///" + data.item.AttahmentLocalPath! }}
-                              style={{
-                                height: 90,
-                                width: 200,
-                                marginEnd: 10,
-                                alignSelf: 'flex-end',
-                                alignItems: 'flex-end',
-                              }}></Image>
-                          </View>
-                        )} */}
                 <View
                   style={{
                     flexDirection: isSenderIsSecondUser ? 'row' : 'row-reverse',
-                    marginLeft: isSenderIsSecondUser ? '20%' : 10,
+                    marginLeft: isSenderIsSecondUser ? '16%' : 11,
                     marginRight: 10,
                   }}>
                   <Text style={{fontSize: 12}}>
@@ -593,12 +841,13 @@ const localStyle = StyleSheet.create({
   messagefrommessage: {flexDirection: 'row'},
   messagefromicon: {
     backgroundColor: '#E9E9E9',
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 30,
+    height: 30,
+    borderRadius: 50,
     padding: 5,
     alignItems: 'center',
     flexDirection: 'row',
+    marginTop: 15,
   },
   messagefromtext: {paddingLeft: 10, paddingRight: 30, paddingVertical: 0},
   messagefromtextcontent: {

@@ -71,3 +71,20 @@ export interface UploadAttachmentResposne extends
     KSResponse<{ lAttchId: number; sFileName: string }> {
 
 }
+export interface JAutoLoginResponse {
+    ErrorInfo: string
+    IsKSError: boolean
+    data: JAutoLoginResponseData
+  }
+  
+  export interface JAutoLoginResponseData {
+    d: D
+  }
+  
+  export interface D {
+    __type: string
+    bStatus: boolean
+    cError: string
+    data: any
+    obj: any
+  }

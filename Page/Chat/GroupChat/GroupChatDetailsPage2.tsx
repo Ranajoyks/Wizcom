@@ -86,8 +86,6 @@ const GroupChatDetailsPage2 = (
   }, []);
   const AgainCallGroupdetails = async () => {
     var GroupDetails = await SessionHelper.GetGroupDetailUpdateSession();
-    console.log('GroupDetails', GroupDetails);
-
     if (GroupDetails == 1) {
       setisOpen(false);
       NewGroupDetails();
@@ -283,39 +281,51 @@ const GroupChatDetailsPage2 = (
       }
       console.log('FileUpload1stREsponse: ', uploadResponse.data);
       var FileUploadRaw = {
-        CompanyId: BrnachId,
-        FromUserId: SenderChatId,
+        companyId: BrnachId!.toString(),
+        fromUserId: SenderChatId!.toString(),
+        userName: UserInfo!.userName,
         AttachmentId: uploadResponse.data.lAttchId,
-        ConnectionId: 'connectionId',
-        FileName: uploadResponse.data.sFileName,
-        Message: '',
+        message: uploadResponse.data.sFileName,
+        groupName: groupDetail?.groupName + '_' + groupDetail?.groupId,
       };
       console.log('FileUploadRaw: ', FileUploadRaw);
 
-      var FileUploadResponse = await SignalRApi.FileUpload(FileUploadRaw);
+      var FileUploadResponse = await SignalRApi.SendGroupMsg(
+        FileUploadRaw,
+      ).then(res => {
+        console.log('SendMsgResponse:', res);
+
+        if (!res) {
+          ShowToastMessage('Message is not sent');
+          return;
+        }
+
+        LoadOldMessages(SenderChatId, groupDetail?.groupId, BrnachId, 0, false);
+      });
 
       chat.lAttchId = uploadResponse.data.lAttchId;
       console.log('FileUploadResponse: ', FileUploadResponse);
       setSelectedFile(undefined);
+    } else {
+      var SendMSgOption = {
+        companyId: BrnachId!.toString(),
+        fromUserId: SenderChatId!.toString(),
+        userName: UserInfo!.userName,
+        message: newSendMessage,
+        groupName: groupDetail?.groupName + '_' + groupDetail?.groupId,
+      };
+
+      SignalRApi.SendGroupMsg(SendMSgOption).then(res => {
+        console.log('SendMsgResponse:', res);
+
+        if (!res) {
+          ShowToastMessage('Message is not sent');
+          return;
+        }
+
+        LoadOldMessages(SenderChatId, groupDetail?.groupId, BrnachId, 0, false);
+      });
     }
-    var SendMSgOption = {
-      companyId: BrnachId!.toString(),
-      fromUserId: SenderChatId!.toString(),
-      userName: UserInfo!.userName,
-      message: newSendMessage,
-      groupName: groupDetail?.groupName + '_' + groupDetail?.groupId,
-    };
-
-    SignalRApi.SendGroupMsg(SendMSgOption).then(res => {
-      console.log('SendMsgResponse:', res);
-
-      if (!res) {
-        ShowToastMessage('Message is not sent');
-        return;
-      }
-
-      LoadOldMessages(SenderChatId, groupDetail?.groupId, BrnachId, 0, false);
-    });
     //   (chat?: GroupChat) => {
     //     if (!chat) {
     //       ShowToastMessage('Message is not sent');
@@ -395,9 +405,11 @@ const GroupChatDetailsPage2 = (
             onPress={() => {
               DropDownOpen();
             }}>
-            <Badge style={styles.GroupChatBadge}>
-              {UserInfo?.userFullName.toLocaleUpperCase().charAt(0)}
-            </Badge>
+            {UserInfo && (
+              <Badge style={styles.GroupChatBadge}>
+                {UserInfo.userFullName.toLocaleUpperCase().charAt(0)}
+              </Badge>
+            )}
           </TouchableOpacity>
           {isOpen && (
             <View style={styles.dropdownContainer}>

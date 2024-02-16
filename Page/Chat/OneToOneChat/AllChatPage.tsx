@@ -82,10 +82,9 @@ const AllChatPage = () => {
   const FetchAllUserAndUnReadMessages = async () => {
     var branch = await SessionHelper.GetBranch()
     var tempSenderChatId = await SessionHelper.GetChatId()
-
-    var cuResponse = await SignalRApi.GetUsersWithMessage(tempSenderChatId!, branch?.lId!)
-
-    if (cuResponse.data) {
+    SignalRApi.GetUsersWithMessage(tempSenderChatId!, branch?.lId!).then((cuResponse)=>{
+      console.log("cuResponse: ",cuResponse);
+       if (cuResponse.data) {
       dispatch(ChatUserOptions.actions.UpdateAllUserList(cuResponse.data))
       cuResponse.data.forEach(user => {
         dispatch(ChatUserOptions.actions.LoadUserOneToOneChatList({
@@ -97,6 +96,23 @@ const AllChatPage = () => {
         AppDBHelper.SetChatUsers(chatUserOptions.AllUserList, CurrentUserChatId!)
       })
     }
+      
+    })
+
+    // var cuResponse = await SignalRApi.GetUsersWithMessage(tempSenderChatId!, branch?.lId!)
+
+    // if (cuResponse.data) {
+    //   dispatch(ChatUserOptions.actions.UpdateAllUserList(cuResponse.data))
+    //   cuResponse.data.forEach(user => {
+    //     dispatch(ChatUserOptions.actions.LoadUserOneToOneChatList({
+    //       messageList: user.sMessgeList || [],
+    //       SecondUserId: user.lId
+    //     }))
+    //   })
+    //   SessionHelper.GetChatId().then((CurrentUserChatId: string | undefined) => {
+    //     AppDBHelper.SetChatUsers(chatUserOptions.AllUserList, CurrentUserChatId!)
+    //   })
+    // }
   }
 
 

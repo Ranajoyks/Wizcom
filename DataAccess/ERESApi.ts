@@ -55,4 +55,7 @@ export default class ERESApi extends BaseApi {
   }): Promise<any> {
     return await this.Post('ERES', `Sys/Sys.aspx/JAutoLogin`,AutologinData);
   }
+  public static async JAcceptReject(ApproveRejectText:string): Promise<any> {
+    return await this.Get('ERES',`${ApproveRejectText}`);
+  }
 }

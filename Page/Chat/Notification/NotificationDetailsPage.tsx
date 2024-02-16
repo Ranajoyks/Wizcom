@@ -20,6 +20,7 @@ import {
   TouchableOpacity,
   TextInput,
   Button,
+  Alert,
 } from 'react-native';
 import IonIcon from 'react-native-vector-icons/Ionicons';
 import MCIcon from 'react-native-vector-icons/MaterialCommunityIcons';
@@ -305,6 +306,10 @@ const NotificationPage = (
   };
   const Approve = async (msg: string) => {
     console.log('SplitMsg', msg);
+    var AcceptRejectResponse = await ERESApi.JAcceptReject(msg)
+    console.log("AcceptRejectResponse: ",AcceptRejectResponse);
+    
+    Alert.alert(AcceptRejectResponse.data)
   };
 
   var MessageList = chatUserOptions.AllUserList.find(

@@ -1,4 +1,4 @@
-import React, {Component} from 'react';
+import React, { Component } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -9,30 +9,20 @@ import {
   View,
 } from 'react-native';
 
-import {TouchableOpacity} from 'react-native-gesture-handler';
-import {Image} from 'react-native';
+import { TouchableOpacity } from 'react-native-gesture-handler';
+import { Image } from 'react-native';
 import DeviceInfo from 'react-native-device-info';
 import * as signalR from '@microsoft/signalr';
 import axios from 'axios';
 import User from '../../../Entity/User';
-import {GroupDetails} from '../../../Entity/GroupDetails';
+import { GroupDetails } from '../../../Entity/GroupDetails';
 import BaseComponent from '../../../Core/BaseComponent';
 import BaseState from '../../../Core/BaseState';
 import SessionHelper from '../../../Core/SessionHelper';
-import {Branch} from '../../../Entity/Branch';
-import {
-  Badge,
-  Body,
-  CheckBox,
-  Container,
-  Content,
-  Left,
-  List,
-  ListItem,
-  Right,
-  Root,
-  Thumbnail,
-} from 'native-base';
+import { Branch } from '../../../Entity/Branch';
+import ChatAvatar from '../ChatAvatar';
+import { Checkbox } from 'react-native-paper';
+
 // const navigation = useNavigation();
 export class DeleteGroupMemberViewModel {
   GroupName: string = '';
@@ -94,8 +84,7 @@ export default class DeleteGroupMember extends BaseComponent<
 
     model.SingleRConnection = new signalR.HubConnectionBuilder()
       .withUrl(
-        `https://wemessanger.azurewebsites.net/chatHub?UserId=${
-          model.ConnectionCode
+        `https://wemessanger.azurewebsites.net/chatHub?UserId=${model.ConnectionCode
         }_${UserDetails?.lId.toString()}`,
       )
       .build();
@@ -255,14 +244,14 @@ export default class DeleteGroupMember extends BaseComponent<
             }}>
             <Image
               source={require('../../../assets/backimg.png')}
-              style={{height: 20, width: 20, marginLeft: 10}}
+              style={{ height: 20, width: 20, marginLeft: 10 }}
             />
           </TouchableOpacity>
-          <View style={{flex: 1}}>
+          <View style={{ flex: 1 }}>
             <Text style={styles.title}>Delete Member</Text>
           </View>
         </View>
-        <View style={{padding: 10}}>
+        <View style={{ padding: 10 }}>
           <View
             style={{
               flexDirection: 'row',
@@ -309,76 +298,51 @@ export default class DeleteGroupMember extends BaseComponent<
             </View>
           </View>
         </View>
-        <View>
-          {model.SelectedUser.length <= 0 && (
-            <ActivityIndicator size="large" color="#0000ff" />
-          )}
 
-          {model.SelectedUser.length > 0 &&
-            model.SelectedUser.map((i: User, index) => (
-              //   <TouchableOpacity onPress={() => this.NextPage(i)}>
-              <ListItem avatar key={index}>
-                <Left>
-                  <View>
-                    <Badge
-                      style={{
-                        backgroundColor: '#E9E9E9',
-                        width: 50,
-                        height: 50,
-                        borderRadius: 25,
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                      }}>
-                      <Text
-                        style={{
-                          color: 'black',
-                          fontSize: 22,
-                          fontWeight: '400',
-                          fontFamily: 'OpenSans-Regular',
-                        }}>
-                        {i.userFullName.toLocaleUpperCase().charAt(0)}
-                      </Text>
-                    </Badge>
-                  </View>
-                </Left>
-                <Body>
-                  <View
-                    style={{
-                      flexDirection: 'row',
-                      justifyContent: 'space-between',
-                    }}>
-                    <Text
-                      style={{
-                        color: 'black',
-                        fontWeight: '600',
-                        fontFamily: 'OpenSans-SemiBold',
-                        marginBottom: 5,
-                        fontSize: 14.5,
-                        // letterSpacing:0.5
-                      }}>
-                      {i.userFullName}
-                    </Text>
-                    <CheckBox
-                      checked={i?.IsSelected}
-                      color="green"
-                      onPress={() =>
-                        this.ChangeCheckboxValue(i, i.lId.toString())
-                      }
-                      style={{
-                        height: 15,
-                        width: 15,
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                        marginRight: 20,
-                      }}
-                    />
-                  </View>
-                </Body>
-              </ListItem>
-            ))}
-        </View>
+        {model.SelectedUser.length <= 0 && (
+          <ActivityIndicator size="large" color="#0000ff" />
+        )}
+
+        {model.SelectedUser.length > 0 &&
+          model.SelectedUser.map((i: User, index) => (
+            //   <TouchableOpacity onPress={() => this.NextPage(i)}>
+            <View key={i.lId + ""}>
+
+              <View>
+                <ChatAvatar label={i.userFullName} />
+              </View>
+
+              <View
+                style={{
+                  flexDirection: 'row',
+                  justifyContent: 'space-between',
+                }}>
+                <Text
+                  style={{
+                    color: 'black',
+                    fontWeight: '600',
+                    fontFamily: 'OpenSans-SemiBold',
+                    marginBottom: 5,
+                    fontSize: 14.5,
+                    // letterSpacing:0.5
+                  }}>
+                  {i.userFullName}
+                </Text>
+                <Checkbox
+                  status={i?.IsSelected ? "checked" : "unchecked"}
+                  color="green"
+                  onPress={() =>
+                    this.ChangeCheckboxValue(i, i.lId.toString())
+                  }
+
+                />
+              </View>
+
+
+            </View>))}
+
       </View>
-    );
+    )
   }
 }
 const styles = StyleSheet.create({

@@ -1,8 +1,8 @@
-import {LoaclFileType} from '../Core/LocalFileHelper';
+import { LoaclFileType } from "../Core/LocalFileHelper";
 
-export type cMsgFlagType = 'U' | 'G' | 'F' | 'N';
+export type cMsgFlagType = "F" | "N" 
 
-export interface Chat {
+export interface Notification {
   lId: number;
   lCompId: number;
   sMsg: string;

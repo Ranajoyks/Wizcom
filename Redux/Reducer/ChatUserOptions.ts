@@ -4,17 +4,19 @@ import { ChatUser } from '../../Entity/ChatUser'
 import { Group } from '../../Entity/Group'
 import UIHelper from '../../Core/UIHelper'
 import { GroupChat } from '../../Entity/GroupChat'
+import { NotificationUser } from '../../Entity/NotificationUser'
+import { Notification } from '../../Entity/Notification'
 
 
 
 export interface ChatUserOptionsState {
     IsPageLoading: boolean,
     AllUserList: ChatUser[],
-    AllGroupList: Group[],
-    AllUserNotificationList:ChatUser[],
     FilterUserList: ChatUser[],
-    FilterUserNotificationList: ChatUser[],
+    AllGroupList: Group[],
     FilterGroupList: Group[],
+    AllUserNotificationList:NotificationUser[],
+    FilterUserNotificationList: NotificationUser[],
     SearchText?: string,
     OnSearch?: (SearchText: string) => void,
 
@@ -264,7 +266,7 @@ const ChatUserOptions = createSlice({
 
             state.AllGroupList[GroupIndex].AllGroupMsgList![chatIndex] = action.payload
         },
-        UpdateAllNotificationUserList: (state, action: PayloadAction<ChatUser[]>) => {
+        UpdateAllNotificationUserList: (state, action: PayloadAction<NotificationUser[]>) => {
             console.log("UpdateAllNotificationUserList: ", action.payload);
             
             action.payload.forEach(newUser => {
@@ -276,17 +278,17 @@ const ChatUserOptions = createSlice({
 
                 var oldUser = state.AllUserNotificationList[oldUserIndex]
 
-                var AllChatOneToOneList = oldUser.AllChatOneToOneList
+                var AllNotificatonOneToOneList = oldUser.AllNotificatonOneToOneList
 
 
                 newUser = Object.assign(oldUser, newUser)
 
-                newUser.AllChatOneToOneList = AllChatOneToOneList
+                newUser.AllNotificatonOneToOneList = AllNotificatonOneToOneList
 
                 state.AllUserNotificationList[oldUserIndex] = newUser
             });
         },
-        UpdateFilterNotificationUserList: (state, action: PayloadAction<ChatUser[]>) => {
+        UpdateFilterNotificationUserList: (state, action: PayloadAction<NotificationUser[]>) => {
             console.log("UpdateFilterNotificationUserList: ",action.payload);
             
             if (action.payload.length) {
@@ -294,7 +296,7 @@ const ChatUserOptions = createSlice({
             }
         },
         LoadUserOneToOneNotificationChatList: (state, action: PayloadAction<{
-            messageList: Chat[], SecondUserId: number
+            messageList: Notification[], SecondUserId: number
         }>) => {
             var userIndex = state.AllUserNotificationList.findIndex(i => i.lId == action.payload.SecondUserId)!
             var user = state.AllUserNotificationList[userIndex]
@@ -304,8 +306,8 @@ const ChatUserOptions = createSlice({
                 return
             }
 
-            if (!user.AllChatOneToOneList) {
-                user.AllChatOneToOneList = []
+            if (!user.AllNotificatonOneToOneList) {
+                user.AllNotificatonOneToOneList = []
             }
 
             var payLoadMessageList = [...action.payload.messageList] ?? []
@@ -314,7 +316,7 @@ const ChatUserOptions = createSlice({
                 return b.lSrId - a.lSrId
             })
 
-            var newNoProxySortedMessageList: Chat[] = user?.AllChatOneToOneList.filter(i => !i.IsKsProxy)
+            var newNoProxySortedMessageList: Notification[] = user?.AllNotificatonOneToOneList.filter(i => !i.IsKsProxy)
             var todayGroupName = CreateGroupNameFromdate(new Date())
 
             sortedIncomingMessageList.forEach(newMwssage => {
@@ -334,7 +336,7 @@ const ChatUserOptions = createSlice({
             })
 
 
-            var uniqueMessagaeList: Chat[] = []
+            var uniqueMessagaeList: Notification[] = []
             newNoProxySortedMessageList.forEach((item) => {
                 var existItemIndex = uniqueMessagaeList.findIndex(i => i.lSrId == item.lSrId);
                 if (existItemIndex != -1) {
@@ -354,31 +356,31 @@ const ChatUserOptions = createSlice({
 
 
             user.sMessgeList = []
-            user.AllChatOneToOneList = uniqueMessagaeList
+            user.AllNotificatonOneToOneList = uniqueMessagaeList
 
             state.AllUserNotificationList[userIndex] = user
 
 
         },
-        AddNewOneToOneNotificationChat: (state, action: PayloadAction<Chat>) => {
+        AddNewOneToOneNotificationChat: (state, action: PayloadAction<Notification>) => {
             var userIndex = state.AllUserNotificationList.findIndex(i => i.lId == action.payload.lReceiverId
                 || i.lId == action.payload.lSenderId)
             var user = state.AllUserNotificationList[userIndex]
 
-            if (!user.AllChatOneToOneList?.length) {
-                user.AllChatOneToOneList = []
+            if (!user.AllNotificatonOneToOneList?.length) {
+                user.AllNotificatonOneToOneList = []
             }
 
-            user.AllChatOneToOneList.unshift(action.payload)
+            user.AllNotificatonOneToOneList.unshift(action.payload)
             state.AllUserNotificationList[userIndex] = user
         },
-        UpdateOneToOneNotificationChat: (state, action: PayloadAction<Chat>) => {
+        UpdateOneToOneNotificationChat: (state, action: PayloadAction<Notification>) => {
             var userIndex = state.AllUserNotificationList.findIndex(i => i.lId == action.payload.lReceiverId
                 || i.lId == action.payload.lSenderId)
             var user = state.AllUserNotificationList[userIndex]
-            var chatIndex = user.AllChatOneToOneList?.findIndex(i => i.lSrId == action.payload.lSrId)!
+            var chatIndex = user.AllNotificatonOneToOneList?.findIndex(i => i.lSrId == action.payload.lSrId)!
 
-            state.AllUserNotificationList[userIndex].AllChatOneToOneList![chatIndex] = action.payload
+            state.AllUserNotificationList[userIndex].AllNotificatonOneToOneList![chatIndex] = action.payload
         },
 
     }

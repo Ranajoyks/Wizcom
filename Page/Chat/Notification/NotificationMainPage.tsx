@@ -30,6 +30,7 @@ import SignalRApi from '../../../DataAccess/SignalRApi';
 import { SignalRHubConnection } from '../../../DataAccess/SignalRHubConnection';
 import { Chat } from '../../../Entity/Chat';
 import ChatUserOptions from '../../../Redux/Reducer/ChatUserOptions';
+import { NotificationUser } from '../../../Entity/NotificationUser';
 
 
 
@@ -63,13 +64,13 @@ const NotificationMainPage = () => {
     FetchAllUserNotificationMessages()
 
     FetchMessageInterval = setInterval(() => {
-      FetchAllUserNotificationMessages(),
-        SignalRHubConnection.GetUserList().then(res => { UpdateAllOnlineUser(res) })
+      FetchAllUserNotificationMessages()
+        // SignalRHubConnection.GetUserList().then(res => { UpdateAllOnlineUser(res) })
     }, 1000 * 60)
 
   }
 
-  const UpdateAllOnlineUser = async (allUsers: ChatUser[]) => {
+  const UpdateAllOnlineUser = async (allUsers: NotificationUser[]) => {
     dispatch(ChatUserOptions.actions.UpdateAllNotificationUserList(allUsers));
     console.log("filterIsCalled", filterIsCalled)
     //Filter data will call only once
@@ -97,7 +98,7 @@ const NotificationMainPage = () => {
         }))
       })
       SessionHelper.GetChatId().then((CurrentUserChatId: string | undefined) => {
-        AppDBHelper.SetChatUsers(chatUserOptions.AllUserNotificationList, CurrentUserChatId!)
+        AppDBHelper.SetNotificationUsers(chatUserOptions.AllUserNotificationList, CurrentUserChatId!)
       })
     }
   }
@@ -126,13 +127,13 @@ const NotificationMainPage = () => {
 }
 
 
-const ChatUserScreen = (props: { data: ChatUser, OnUserListRefresRequest: () => void }) => {
+const ChatUserScreen = (props: { data: NotificationUser, OnUserListRefresRequest: () => void }) => {
   const users = useAppSelector(i => i.ChatUserOptions.AllUserNotificationList)
   const user = users.find(i => i.lId == props.data.lId)!
 
   const navigate = useNavigation<NavigationProps>()
-  var unreadMessageList = user.AllChatOneToOneList?.filter(i => !i.bStatus && i.lReceiverId != user.lId)
-  var lastMessage = user.AllChatOneToOneList?.length ? user.AllChatOneToOneList[0] : undefined
+  var unreadMessageList = user.AllNotificatonOneToOneList?.filter(i => !i.bStatus && i.lReceiverId != user.lId)
+  var lastMessage = user.AllNotificatonOneToOneList?.length ? user.AllNotificatonOneToOneList[0] : undefined
 
   return (
 

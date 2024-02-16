@@ -32,24 +32,24 @@ import axios from 'axios';
 import * as RNFS from 'react-native-fs';
 import RNFetchBlob from 'rn-fetch-blob';
 import FileViewer from 'react-native-file-viewer';
-import { UserProfileScreen } from '../../Control/MHeader';
-import AppDBHelper from '../../Core/AppDBHelper';
-import { NavigationProps } from '../../Core/BaseProps';
-import LocalFileHelper from '../../Core/LocalFileHelper';
-import RNFile from '../../Core/RNFile';
-import UIHelper from '../../Core/UIHelper';
-import ERESApi from '../../DataAccess/ERESApi';
-import { Chat } from '../../Entity/Chat';
-import User from '../../Entity/User';
-import { useAppDispatch, useAppSelector } from '../../Redux/Hooks';
-import ChatUserOptions from '../../Redux/Reducer/ChatUserOptions';
-import { ColorCode } from '../MainStyle';
-import { RootStackParamList } from '../../Root/AppStack';
+import { UserProfileScreen } from '../../../Control/MHeader';
+import AppDBHelper from '../../../Core/AppDBHelper';
+import { NavigationProps } from '../../../Core/BaseProps';
+import LocalFileHelper from '../../../Core/LocalFileHelper';
+import RNFile from '../../../Core/RNFile';
+import UIHelper from '../../../Core/UIHelper';
+import ERESApi from '../../../DataAccess/ERESApi';
+import { Chat } from '../../../Entity/Chat';
+import User from '../../../Entity/User';
+import { useAppDispatch, useAppSelector } from '../../../Redux/Hooks';
+import ChatUserOptions from '../../../Redux/Reducer/ChatUserOptions';
+import { ColorCode } from '../../MainStyle';
+import { RootStackParamList } from '../../../Root/AppStack';
 import { StackScreenProps } from '@react-navigation/stack';
-import SessionHelper from '../../Core/SessionHelper';
-import SignalRApi from '../../DataAccess/SignalRApi';
-import { SignalRHubConnection } from '../../DataAccess/SignalRHubConnection';
-import { ShowPageLoader, ShowToastMessage } from '../../Redux/Store';
+import SessionHelper from '../../../Core/SessionHelper';
+import SignalRApi from '../../../DataAccess/SignalRApi';
+import { SignalRHubConnection } from '../../../DataAccess/SignalRHubConnection';
+import { ShowPageLoader, ShowToastMessage } from '../../../Redux/Store';
 
 const NotificationPage = (
   props: StackScreenProps<RootStackParamList, 'NotificationPage'>,
@@ -265,7 +265,7 @@ const NotificationPage = (
         SenderChatId!,
         ReceiverChatId!,
         newSendMessage,
-        'U',
+        'N',
       ).then((chat?: Chat) => {
         if (!chat) {
           ShowToastMessage('Message is not sent');
@@ -331,7 +331,7 @@ const NotificationPage = (
             navigation.popToTop();
           }}>
           <Image
-            source={require('../../assets/backimg.png')}
+            source={require('../../../assets/backimg.png')}
             style={{height: 20, width: 20, marginLeft: 10}}
           />
         </TouchableOpacity>
@@ -361,7 +361,7 @@ const NotificationPage = (
               });
             }}>
             <Image
-              source={require('../../assets/location.png')}
+              source={require('../../../assets/location.png')}
               style={{height: 30, width: 23.5, marginRight: 10, marginTop: 3}}
             />
           </TouchableOpacity>
@@ -570,7 +570,7 @@ const NotificationPage = (
               }}>
               <TouchableOpacity onPress={AttachFileToChat}>
                 <Image
-                  source={require('../../assets/attachment.png')}
+                  source={require('../../../assets/attachment.png')}
                   style={{height: 25, width: 13, marginHorizontal: 10}}
                 />
               </TouchableOpacity>
@@ -580,7 +580,7 @@ const NotificationPage = (
                   HandleSendMessage();
                 }}>
                 <Image
-                  source={require('../../assets/send.png')}
+                  source={require('../../../assets/send.png')}
                   style={{height: 25, width: 25}}
                 />
               </TouchableOpacity>

@@ -15,7 +15,7 @@ import SessionHelper from '../../Core/SessionHelper';
 import { Button } from 'react-native-paper';
 
 export class SettingsViewModel {
-  URL: string = 'eiplutm.eresourceerp.com/AzaaleaR';
+  URL: string = 'eipl.eresourceerp.com';
 }
 export default class SettingsPage extends BaseComponent<
   "SettingsPage",

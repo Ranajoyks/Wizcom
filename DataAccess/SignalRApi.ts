@@ -5,6 +5,7 @@ import {Group} from '../Entity/Group';
 import {GroupChat} from '../Entity/GroupChat';
 import { GroupDetails } from '../Entity/GroupDetails';
 import {KSResponse} from '../Entity/JInitializeResponse';
+import { NotificationUser } from '../Entity/NotificationUser';
 import User from '../Entity/User';
 import BaseApi from './BaseApi';
 
@@ -127,7 +128,7 @@ export default class SignalRApi extends BaseApi {
   public static async GetAllUserNotification(
     SenderID: string,
     CompanyId: number,
-  ): Promise<KSResponse<ChatUser[]>> {
+  ): Promise<KSResponse<NotificationUser[]>> {
     //`User/readmessage?companyId=${BranchID}&senderId=${SenderID}&receiverId=${ReceiverID}&lastLSrid=${lSrid}`,
     return await this.Get(
       'SignalR',

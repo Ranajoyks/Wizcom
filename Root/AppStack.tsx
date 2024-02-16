@@ -18,7 +18,7 @@ import MainPage from '../Page/Chat/MainPage';
 
 import SettingsPage from '../Page/Settings/SettingsPage';
 import { Branch } from '../Entity/Branch';
-import NotificationDetailsPage from '../Page/Chat/NotificationDetailsPage';
+import NotificationDetailsPage from '../Page/Chat/Notification/NotificationDetailsPage';
 import { navigationRef } from '../App';
 import OneToOneChatPage2 from '../Page/Chat/OneToOneChat/OneToOneChatPage2';
 import { ChatUser } from '../Entity/ChatUser';
@@ -27,7 +27,8 @@ import CreateGroup from '../Page/Chat/GroupChat/CreateGroupPage';
 import DeleteGroupMember from '../Page/Chat/GroupChat/DeleteGroupMember';
 import AllGroupMember from '../Page/Chat/OneToOneChat/AllGroupMember';
 import GroupChatDetailsPage2 from '../Page/Chat/GroupChat/GroupChatDetailsPage2';
-import NotificationPage from '../Page/Chat/NotificationDetailsPage';
+import NotificationPage from '../Page/Chat/Notification/NotificationDetailsPage';
+import { NotificationUser } from '../Entity/NotificationUser';
 
 
 
@@ -53,7 +54,7 @@ export type RootStackParamList = {
   CreateGroup: { GroupID: string }
   DeleteGroupMember: { GroupID: string }
   AllGroupMember: { GroupID: string }
-  NotificationPage: { SecondUser: ChatUser, OnUserListRefresRequest?: () => void }
+  NotificationPage: { SecondUser: NotificationUser, OnUserListRefresRequest?: () => void }
   // OneToOneChatDetailsPage: { OnReturn: (isSuccess: boolean) => void };
   // AnalysisPage: { licenseNo: string },
 

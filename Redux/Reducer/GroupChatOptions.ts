@@ -10,11 +10,8 @@ export interface GroupChatOptionsState {
 }
 
 const initialState: GroupChatOptionsState = {
-
-
     AllGroupList: [],
     FilterGroupList: [],
-
 }
 
 

@@ -82,7 +82,7 @@ export default class BaseApi {
                 headers: headers,
             })
                 .then(res => {
-                    //console.log("Get data Resposne-->", JSON.stringify(res.data, null, 2))
+                    console.log("Get data Resposne-->", JSON.stringify(res.data, null, 2))
                     response.data = res.data
                     resolve(response)
                 })
@@ -107,7 +107,7 @@ export default class BaseApi {
                 headers: headers,
             })
                 .then(res => {
-                    //console.log("Post data Resposne-->", JSON.stringify(res.data, null, 2))
+                    console.log("Post data Resposne-->", JSON.stringify(res.data, null, 2))
                     response.data = res.data
                     resolve(response)
                 })

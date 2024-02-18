@@ -100,7 +100,7 @@ export class BranchPage extends BaseComponent<"BranchPage", BranchPageViewModel>
     UIHelper.LogTime("JoinChat", "End")
     UIHelper.LogTime("IsConnected", "Start")
     var IsConnected = await SignalRHubConnection.IsConnected()
-    UIHelper.LogTime("IsConnected", "End")
+    UIHelper.LogTime("IsConnected ", "End")
 
     if (!IsConnected) {
       this.ShowPageLoader(false)

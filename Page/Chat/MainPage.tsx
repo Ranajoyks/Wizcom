@@ -17,6 +17,8 @@ import { Chat } from '../../Entity/Chat';
 import { GroupChat } from '../../Entity/GroupChat';
 import OneToOneChatOptions from '../../Redux/Reducer/OneToOneChatOptions';
 import GroupChatOptions from '../../Redux/Reducer/GroupChatOptions';
+import NotificationMainPage from './Notification/NotificationMainPage';
+import GroupMainPage2 from './GroupChat/GroupMainPage2';
 
 const MainPage = () => {
   const Tab = createMaterialTopTabNavigator()
@@ -98,7 +100,7 @@ const MainPage = () => {
           name="Group"
           options={{ tabBarLabel: 'Group' }}
           children={() => {
-            return <GroupPage OnGroupListRefresRequest={() => { }} />;
+            return <GroupMainPage2   />;
           }}
         />
         <Tab.Screen

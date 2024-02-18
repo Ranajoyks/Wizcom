@@ -14,11 +14,12 @@ import SignalRApi from '../../../DataAccess/SignalRApi';
 import ChatUserOptions from '../../../Redux/Reducer/NotificationOptions';
 import { ShowToastMessage } from '../../../Redux/Store';
 import { ChatUser } from '../../../Entity/ChatUser';
+import GroupChatOptions from '../../../Redux/Reducer/GroupChatOptions';
 
-const GroupMainPage2 = (props: { OnGroupListRefresRequest: () => void }) => {
+const GroupMainPage2 = () => {
 
   const dispatch = useAppDispatch()
-  const chatUserOptions = useAppSelector(i => i.ChatUserOptions)
+  const groupData = useAppSelector(i => i.GroupChatOptions.FilterGroupList)
   var FetchMessageInterval: NodeJS.Timeout;
   const [filteredUserList, setFilteredUserList] = useState<ChatUser[]>([]);
   useEffect(() => {
@@ -37,7 +38,7 @@ const GroupMainPage2 = (props: { OnGroupListRefresRequest: () => void }) => {
         return
       }
 
-      dispatch(ChatUserOptions.actions.UpdateAllGroupList(groupListRes.data || []));
+      dispatch(GroupChatOptions.actions.UpdateAllGroupList(groupListRes.data || []));
     });
 
   };

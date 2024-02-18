@@ -85,14 +85,19 @@ export class SignalRHubConnection {
   public static async GetUserList(): Promise<ChatUser[]> {
     var connection = await SignalRHubConnection.GetConnection();
     var chatId = await SignalRHubConnection.GetChatId();
-    return connection.invoke<ChatUser[]>('GetAllUser', chatId, 0);
+    var res = connection.invoke<ChatUser[]>('GetAllUser', chatId, 0);
+    console.log("GetAllUser", res);
+    return res
+
   }
 
 
   public static async IsConnected(): Promise<boolean> {
     var connection = await SignalRHubConnection.GetConnection();
     var chatId = await SignalRHubConnection.GetChatId();
-    return connection.invoke<boolean>('IsUserConnected', chatId);
+    var res = connection.invoke<boolean>('IsUserConnected', chatId);
+    //console.log("IsConnected res", res)
+    return res != undefined
   }
   public static async IsDisconnected(): Promise<boolean> {
     var connection = await SignalRHubConnection.GetConnection();
@@ -104,6 +109,8 @@ export class SignalRHubConnection {
       chatId = await SignalRHubConnection.GetChatId();
     }
     var connection = await SignalRHubConnection.GetConnection(chatId);
+    console.log("JoinChat chatId" + chatId);
+
     return await connection.invoke('JoinChat', chatId);
   }
   public static async OnReceiveMessege(callback: (newMessage: Chat) => void) {
@@ -159,7 +166,7 @@ export class SignalRHubConnection {
     cMsgFlag: cMsgFlagType
   ): Promise<Chat | undefined> {
 
-    //console.log(BrnachId, SenderId, receiverId, Message)
+    console.log(BrnachId, SenderId, receiverId, Message)
 
     var connection = await SignalRHubConnection.GetConnection();
 

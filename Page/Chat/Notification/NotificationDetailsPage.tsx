@@ -1,6 +1,6 @@
-import {useEffect, useState} from 'react';
-import {View} from 'react-native-animatable';
-import {SafeAreaView} from 'react-native-safe-area-context';
+import { useEffect, useState } from 'react';
+import { View } from 'react-native-animatable';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   ActivityIndicator,
   Card,
@@ -24,7 +24,7 @@ import {
 } from 'react-native';
 import IonIcon from 'react-native-vector-icons/Ionicons';
 import MCIcon from 'react-native-vector-icons/MaterialCommunityIcons';
-import {useNavigation} from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import React from 'react';
 import DocumentPicker, {
   DocumentPickerResponse,
@@ -43,7 +43,7 @@ import ERESApi from '../../../DataAccess/ERESApi';
 import { Chat } from '../../../Entity/Chat';
 import User from '../../../Entity/User';
 import { useAppDispatch, useAppSelector } from '../../../Redux/Hooks';
-import ChatUserOptions from '../../../Redux/Reducer/ChatUserOptions';
+import ChatUserOptions from '../../../Redux/Reducer/NotificationOptions';
 import { ColorCode } from '../../MainStyle';
 import { RootStackParamList } from '../../../Root/AppStack';
 import { StackScreenProps } from '@react-navigation/stack';
@@ -186,7 +186,7 @@ const NotificationPage = (
       HandleMultiDownloadingLoader(item.lAttchId, true);
       var res = await ERESApi.DownloadAttachment(item.lAttchId);
 
-      const {config, fs} = RNFetchBlob;
+      const { config, fs } = RNFetchBlob;
       var cacheDir = fs.dirs.DownloadDir;
       var binaryData = res.data.d.data.mAttch;
       var fullLocalFileName = `${cacheDir}/${item.sMsg}`;
@@ -307,16 +307,16 @@ const NotificationPage = (
   const Approve = async (msg: string) => {
     console.log('SplitMsg', msg);
     var AcceptRejectResponse = await ERESApi.JAcceptReject(msg)
-    console.log("AcceptRejectResponse: ",AcceptRejectResponse);
-    
+    console.log("AcceptRejectResponse: ", AcceptRejectResponse);
+
     Alert.alert(AcceptRejectResponse.data)
   };
 
   var MessageList = chatUserOptions.AllUserList.find(
     i => i.lId == SecondUser.lId,
   )?.AllChatOneToOneList;
-  var NotificationMessageList = MessageList?.filter((i: any) => i.cMsgFlg === 'F'|| i.cMsgFlg === 'N');
-  
+  var NotificationMessageList = MessageList?.filter((i: any) => i.cMsgFlg === 'F' || i.cMsgFlg === 'N');
+
 
   // useEffect(() => {
   //   console.log("Current data lenth changed", MessageList.length)
@@ -328,7 +328,7 @@ const NotificationPage = (
 
   return (
     <SafeAreaView
-      style={{flexDirection: 'column', flex: 1, flexWrap: 'nowrap'}}>
+      style={{ flexDirection: 'column', flex: 1, flexWrap: 'nowrap' }}>
       <View style={localStyle.header}>
         <TouchableOpacity
           onPress={() => {
@@ -337,10 +337,10 @@ const NotificationPage = (
           }}>
           <Image
             source={require('../../../assets/backimg.png')}
-            style={{height: 20, width: 20, marginLeft: 10}}
+            style={{ height: 20, width: 20, marginLeft: 10 }}
           />
         </TouchableOpacity>
-        <View style={{width: '55%'}}>
+        <View style={{ width: '55%' }}>
           <Text style={localStyle.title}>{SecondUser?.userName}</Text>
           <Text
             style={{
@@ -361,19 +361,19 @@ const NotificationPage = (
               navigation.reset({
                 index: 0,
                 routes: [
-                  {name: 'MapPage', params: {ReceiverId: ReceiverChatId}},
+                  { name: 'MapPage', params: { ReceiverId: ReceiverChatId } },
                 ],
               });
             }}>
             <Image
               source={require('../../../assets/location.png')}
-              style={{height: 30, width: 23.5, marginRight: 10, marginTop: 3}}
+              style={{ height: 30, width: 23.5, marginRight: 10, marginTop: 3 }}
             />
           </TouchableOpacity>
           <UserProfileScreen userName={UserInfo?.userName ?? ''} />
         </View>
       </View>
-      <View style={{height: '89%', backgroundColor: '#FFFFFF'}}>
+      <View style={{ height: '89%', backgroundColor: '#FFFFFF' }}>
         <ProgressBar visible={ShowSilentLoader} indeterminate />
         <FlatList
           automaticallyAdjustKeyboardInsets
@@ -435,20 +435,20 @@ const NotificationPage = (
                     style={
                       MsgSplit.length == 2
                         ? {
-                            paddingRight: 0,
-                            paddingVertical: 0,
-                            marginVertical: 8,
-                          }
+                          paddingRight: 0,
+                          paddingVertical: 0,
+                          marginVertical: 8,
+                        }
                         : {
-                            paddingVertical: 6,
-                            borderRadius: 6,
-                            backgroundColor: isSenderIsSecondUser
-                              ? ColorCode.DimGray
-                              : ColorCode.LightOrange,
-                            marginLeft: 10,
-                            maxWidth: '80%',
-                            marginVertical: 8,
-                          }
+                          paddingVertical: 6,
+                          borderRadius: 6,
+                          backgroundColor: isSenderIsSecondUser
+                            ? ColorCode.DimGray
+                            : ColorCode.LightOrange,
+                          marginLeft: 10,
+                          maxWidth: '80%',
+                          marginVertical: 8,
+                        }
                     }
                     title={
                       MsgSplit.length == 2 ? (
@@ -484,7 +484,7 @@ const NotificationPage = (
                         ? ColorCode.Black
                         : ColorCode.DrakOrange,
                       fontSize: 15,
-                      fontFamily:'OpenSans-Regular'
+                      fontFamily: 'OpenSans-Regular'
                     }}
                     right={() => {
                       if (!data.item.lAttchId) return <></>;
@@ -495,7 +495,7 @@ const NotificationPage = (
                       return (
                         <MCIcon
                           size={30}
-                          style={{marginLeft: 5}}
+                          style={{ marginLeft: 5 }}
                           name="download-circle-outline"
                           onPress={async () => {
                             var dataReceived = await DownloadFile(data.item);
@@ -505,7 +505,7 @@ const NotificationPage = (
                             }
 
                             dataReceived = Object.assign(
-                              {...data.item},
+                              { ...data.item },
                               dataReceived,
                             );
                             console.log('dataReceived', dataReceived);
@@ -542,14 +542,14 @@ const NotificationPage = (
                     marginRight: 10,
                     marginTop: MsgSplit.length == 2 ? -5 : null,
                   }}>
-                  <Text style={{fontSize: 12, color: '#a6a6a6'}}>
+                  <Text style={{ fontSize: 12, color: '#a6a6a6' }}>
                     {UIHelper.GetTimeStamp(data.item.dtMsg)}
                   </Text>
                 </View>
               </View>
             );
           }}></FlatList>
-        <View style={{padding: 10}}>
+        <View style={{ padding: 10 }}>
           <View
             style={{
               backgroundColor: '#e9e9e9',
@@ -560,7 +560,7 @@ const NotificationPage = (
             <TextInput
               style={
                 (localStyle.input,
-                {width: Dimensions.get('window').width - 100})
+                  { width: Dimensions.get('window').width - 100 })
               }
               value={newSendMessage}
               onChangeText={e => {
@@ -576,7 +576,7 @@ const NotificationPage = (
               <TouchableOpacity onPress={AttachFileToChat}>
                 <Image
                   source={require('../../../assets/attachment.png')}
-                  style={{height: 25, width: 13, marginHorizontal: 10}}
+                  style={{ height: 25, width: 13, marginHorizontal: 10 }}
                 />
               </TouchableOpacity>
               <TouchableOpacity
@@ -586,7 +586,7 @@ const NotificationPage = (
                 }}>
                 <Image
                   source={require('../../../assets/send.png')}
-                  style={{height: 25, width: 25}}
+                  style={{ height: 25, width: 25 }}
                 />
               </TouchableOpacity>
             </View>
@@ -670,6 +670,6 @@ const localStyle = StyleSheet.create({
     padding: 5,
     alignItems: 'center',
     flexDirection: 'row',
-    marginTop:15
+    marginTop: 15
   },
 });

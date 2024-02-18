@@ -12,7 +12,7 @@ import {
 
 import { } from '@react-navigation/native';
 
-import { ColorCode, styles } from '../../MainStyle';
+import { ColorCode } from '../../MainStyle';
 import { useNavigation } from '@react-navigation/native';
 import { NavigationProps } from '../../../Core/BaseProps';
 import { Avatar, Badge, List } from 'react-native-paper';
@@ -20,27 +20,34 @@ import { useAppDispatch, useAppSelector } from '../../../Redux/Hooks';
 
 import { EmptyListMessage } from '../../../Control/EmptyListMessage';
 import { MDivider } from '../../../Control/MDivider';
-import { StackScreenProps } from '@react-navigation/stack';
-import { RootStackParamList } from '../../../Root/AppStack';
 import { ChatUser } from '../../../Entity/ChatUser';
-import { ShowPageLoader } from '../../../Redux/Store';
 import SessionHelper from '../../../Core/SessionHelper';
 import AppDBHelper from '../../../Core/AppDBHelper';
 import SignalRApi from '../../../DataAccess/SignalRApi';
 import { SignalRHubConnection } from '../../../DataAccess/SignalRHubConnection';
-import { Chat } from '../../../Entity/Chat';
-import ChatUserOptions from '../../../Redux/Reducer/ChatUserOptions';
-
-
-
+import ChatUserOptions from '../../../Redux/Reducer/NotificationOptions';
+import KSUtility from '../../../Core/KSUtility';
+import { MHeader } from '../../../Control/MHeader';
+import MHeaderOptions from '../../../Redux/Reducer/MHeaderOptions';
+import OneToOneChatOptions from '../../../Redux/Reducer/OneToOneChatOptions';
+import UIHelper from '../../../Core/UIHelper';
+import { ShowPageLoader } from '../../../Redux/Store';
 
 
 const AllChatPage = () => {
 
   const dispatch = useAppDispatch()
-  const chatUserOptions = useAppSelector(i => i.ChatUserOptions)
+  const filteredUserList = useAppSelector(i => i.OneToOneChatOptions.FilterUserList)
+  const pageData = useAppSelector(i => i.PageOptions)
+
+  const [isPageRefreshing, setIsPageRefreshing] = useState(false)
+
+
   var FetchMessageInterval: NodeJS.Timeout;
-  const [filterIsCalled, setFilterIsCalled] = useState(false);
+
+
+
+
   useEffect(() => {
     InitilizeOnce()
     return () => {
@@ -49,87 +56,68 @@ const AllChatPage = () => {
   }, [])
 
 
+
   const InitilizeOnce = async () => {
-
-    setFilterIsCalled(false)
-
     //If no data found in local storage then page need to wait for network data
+    var chatId = await SessionHelper.GetChatId()
 
-    console.log("GetUserList", "start");
-    SignalRHubConnection.GetUserList().then((res) => {
-      UpdateAllOnlineUser(res)
+    AppDBHelper.GetChatUsers(chatId!).then(res => {
+      dispatch(OneToOneChatOptions.actions.UpdateAllUserList(res ?? []))
     })
 
     FetchAllUserAndUnReadMessages()
 
     FetchMessageInterval = setInterval(() => {
-      FetchAllUserAndUnReadMessages(),
-        SignalRHubConnection.GetUserList().then(res => { UpdateAllOnlineUser(res) })
+      FetchAllUserAndUnReadMessages()
     }, 1000 * 60)
 
   }
 
   const UpdateAllOnlineUser = async (allUsers: ChatUser[]) => {
-    dispatch(ChatUserOptions.actions.UpdateAllUserList(allUsers));
-    console.log("filterIsCalled", filterIsCalled)
-    //Filter data will call only once
-
-    dispatch(ChatUserOptions.actions.UpdateFilterUserList(allUsers));
-    setFilterIsCalled(true)
+    dispatch(OneToOneChatOptions.actions.UpdateAllUserList(allUsers));
 
   };
 
   const FetchAllUserAndUnReadMessages = async () => {
+
     var branch = await SessionHelper.GetBranch()
     var tempSenderChatId = await SessionHelper.GetChatId()
-    SignalRApi.GetUsersWithMessage(tempSenderChatId!, branch?.lId!).then((cuResponse)=>{
-      console.log("cuResponse: ",cuResponse);
-       if (cuResponse.data) {
-      dispatch(ChatUserOptions.actions.UpdateAllUserList(cuResponse.data))
-      cuResponse.data.forEach(user => {
-        dispatch(ChatUserOptions.actions.LoadUserOneToOneChatList({
-          messageList: user.sMessgeList || [],
-          SecondUserId: user.lId
-        }))
-      })
-      SessionHelper.GetChatId().then((CurrentUserChatId: string | undefined) => {
-        AppDBHelper.SetChatUsers(chatUserOptions.AllUserList, CurrentUserChatId!)
-      })
-    }
-      
+
+    setIsPageRefreshing(true)
+    SignalRHubConnection.GetUserList().then((res) => {
+      setIsPageRefreshing(false)
+      UpdateAllOnlineUser(res)
     })
 
-    // var cuResponse = await SignalRApi.GetUsersWithMessage(tempSenderChatId!, branch?.lId!)
+    SignalRApi.GetUsersWithMessage(tempSenderChatId!, branch?.lId!).then((cuResponse) => {
+      if (!cuResponse.data) {
+        console.error("No data inside GetUsersWithMessage ")
+        return
+      }
 
-    // if (cuResponse.data) {
-    //   dispatch(ChatUserOptions.actions.UpdateAllUserList(cuResponse.data))
-    //   cuResponse.data.forEach(user => {
-    //     dispatch(ChatUserOptions.actions.LoadUserOneToOneChatList({
-    //       messageList: user.sMessgeList || [],
-    //       SecondUserId: user.lId
-    //     }))
-    //   })
-    //   SessionHelper.GetChatId().then((CurrentUserChatId: string | undefined) => {
-    //     AppDBHelper.SetChatUsers(chatUserOptions.AllUserList, CurrentUserChatId!)
-    //   })
-    // }
+      dispatch(OneToOneChatOptions.actions.UpdateAllUserList(cuResponse.data))
+      dispatch(OneToOneChatOptions.actions.LoadUserOneToOneChatList(cuResponse.data))
+      AppDBHelper.SetChatUsers(cuResponse.data, tempSenderChatId!)
+    })
+
+
   }
 
 
+  console.log("Re render, all chat page " + filteredUserList.length + new Date())
   return (
     <React.Fragment>
       <SafeAreaView>
         <View style={{ marginTop: 10 }}>
           <FlatList
-            data={chatUserOptions.FilterUserList}
+            data={filteredUserList}
             keyExtractor={e => e.lId + ''}
-            refreshing={chatUserOptions.IsPageLoading}
-            
+            refreshing={isPageRefreshing}
             onRefresh={FetchAllUserAndUnReadMessages}
             renderItem={((d) => {
               return <ChatUserScreen data={d.item} OnUserListRefresRequest={FetchAllUserAndUnReadMessages} />
             })}
-            ListEmptyComponent={EmptyListMessage(chatUserOptions.FilterUserList.length == 0)}
+            ListEmptyComponent={EmptyListMessage}
 
           />
         </View>
@@ -140,7 +128,7 @@ const AllChatPage = () => {
 
 
 const ChatUserScreen = (props: { data: ChatUser, OnUserListRefresRequest: () => void }) => {
-  const users = useAppSelector(i => i.ChatUserOptions.AllUserList)
+  const users = useAppSelector(i => i.OneToOneChatOptions.AllUserList)
   const user = users.find(i => i.lId == props.data.lId)!
 
   const navigate = useNavigation<NavigationProps>()
@@ -152,9 +140,9 @@ const ChatUserScreen = (props: { data: ChatUser, OnUserListRefresRequest: () => 
     <List.Item onPress={() => {
       navigate.navigate("OneToOneChatPage2", { SecondUser: user, OnUserListRefresRequest: props.OnUserListRefresRequest })
     }}
-      style={{ marginLeft: 5,paddingTop:0,paddingBottom:0, }}
+      style={{ marginLeft: 5, paddingTop: 0, paddingBottom: 0, }}
       title={user.userName}
-      titleStyle={{ fontFamily: 'OpenSans-Regular', fontSize: 15,marginTop:0 }}
+      titleStyle={{ fontFamily: 'OpenSans-Regular', fontSize: 15, marginTop: 0 }}
       description={() => {
         return (
           <View>
@@ -174,16 +162,16 @@ const ChatUserScreen = (props: { data: ChatUser, OnUserListRefresRequest: () => 
               </Badge>}
 
             <Text style={{
-              color: unreadMessageList?.length > 0 ? '#0383FA' : '#A6A6A6',
+              color: !KSUtility.IsEmpty(unreadMessageList) ? '#0383FA' : '#A6A6A6',
               fontFamily: 'OpenSans-Regular',
               letterSpacing: 0.2,
               fontSize: 12,
               marginTop: 5,
-              marginBottom:9,
+              marginBottom: 9,
             }} numberOfLines={1}>{lastMessage?.sMsg || user.message || "No message"}
             </Text>
             <View>
-              <MDivider style={{marginTop:10}}></MDivider>
+              <MDivider marginPadingTopButom={10}></MDivider>
             </View>
           </View>
         );

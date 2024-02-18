@@ -10,6 +10,7 @@ import { type } from 'os';
 import { RootState } from '../Redux/Store';
 import React from 'react';
 
+
 export interface BaseProps<RouteName extends keyof RootStackParamList> extends StackScreenProps<RootStackParamList, RouteName> {
     dispatch: Dispatch;
 }
@@ -21,7 +22,6 @@ export const mapDispatchToProps = (dispatch: Dispatch) => {
         dispatch
     }
 }
-
 
 
 

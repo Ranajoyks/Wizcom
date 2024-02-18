@@ -12,7 +12,7 @@ import {
 
 import { } from '@react-navigation/native';
 
-import { ColorCode, styles } from '../../MainStyle';
+import { ColorCode } from '../../MainStyle';
 import { useNavigation } from '@react-navigation/native';
 import { NavigationProps } from '../../../Core/BaseProps';
 import { Avatar, Badge, List } from 'react-native-paper';
@@ -20,17 +20,12 @@ import { useAppDispatch, useAppSelector } from '../../../Redux/Hooks';
 
 import { EmptyListMessage } from '../../../Control/EmptyListMessage';
 import { MDivider } from '../../../Control/MDivider';
-import { StackScreenProps } from '@react-navigation/stack';
-import { RootStackParamList } from '../../../Root/AppStack';
-import { ChatUser } from '../../../Entity/ChatUser';
-import { ShowPageLoader } from '../../../Redux/Store';
 import SessionHelper from '../../../Core/SessionHelper';
 import AppDBHelper from '../../../Core/AppDBHelper';
 import SignalRApi from '../../../DataAccess/SignalRApi';
-import { SignalRHubConnection } from '../../../DataAccess/SignalRHubConnection';
-import { Chat } from '../../../Entity/Chat';
-import ChatUserOptions from '../../../Redux/Reducer/ChatUserOptions';
+import ChatUserOptions from '../../../Redux/Reducer/NotificationOptions';
 import { NotificationUser } from '../../../Entity/NotificationUser';
+import KSUtility from '../../../Core/KSUtility';
 
 
 
@@ -65,7 +60,7 @@ const NotificationMainPage = () => {
 
     FetchMessageInterval = setInterval(() => {
       FetchAllUserNotificationMessages()
-        // SignalRHubConnection.GetUserList().then(res => { UpdateAllOnlineUser(res) })
+      // SignalRHubConnection.GetUserList().then(res => { UpdateAllOnlineUser(res) })
     }, 1000 * 60)
 
   }
@@ -85,8 +80,8 @@ const NotificationMainPage = () => {
     var tempSenderChatId = await SessionHelper.GetChatId()
 
     var cuResponse = await SignalRApi.GetAllUserNotification(tempSenderChatId!, branch?.lId!)
-    console.log("NotificatinDetails: ",cuResponse.data);
-    
+    console.log("NotificatinDetails: ", cuResponse.data);
+
 
     if (cuResponse.data) {
       UpdateAllOnlineUser(cuResponse.data)
@@ -112,12 +107,12 @@ const NotificationMainPage = () => {
             data={chatUserOptions.FilterUserNotificationList}
             keyExtractor={e => e.lId + ''}
             refreshing={chatUserOptions.IsPageLoading}
-            
+
             onRefresh={FetchAllUserNotificationMessages}
             renderItem={((d) => {
               return <ChatUserScreen data={d.item} OnUserListRefresRequest={FetchAllUserNotificationMessages} />
             })}
-            ListEmptyComponent={EmptyListMessage(chatUserOptions.FilterUserList.length == 0)}
+            ListEmptyComponent={EmptyListMessage(chatUserOptions.FilterUserNotificationList.length == 0)}
 
           />
         </View>
@@ -140,9 +135,9 @@ const ChatUserScreen = (props: { data: NotificationUser, OnUserListRefresRequest
     <List.Item onPress={() => {
       navigate.navigate("NotificationPage", { SecondUser: user, OnUserListRefresRequest: props.OnUserListRefresRequest })
     }}
-      style={{ marginLeft: 5,paddingTop:0,paddingBottom:0, }}
+      style={{ marginLeft: 5, paddingTop: 0, paddingBottom: 0, }}
       title={user.userName}
-      titleStyle={{ fontFamily: 'OpenSans-Regular', fontSize: 15,marginTop:0 }}
+      titleStyle={{ fontFamily: 'OpenSans-Regular', fontSize: 15, marginTop: 0 }}
       description={() => {
         return (
           <View>
@@ -162,16 +157,16 @@ const ChatUserScreen = (props: { data: NotificationUser, OnUserListRefresRequest
               </Badge>}
 
             <Text style={{
-              color: unreadMessageList?.length > 0 ? '#0383FA' : '#A6A6A6',
+              color: !KSUtility.IsEmpty(unreadMessageList) ? '#0383FA' : '#A6A6A6',
               fontFamily: 'OpenSans-Regular',
               letterSpacing: 0.2,
               fontSize: 12,
               marginTop: 5,
-              marginBottom:9,
+              marginBottom: 9,
             }} numberOfLines={1}>{lastMessage?.sMsg || user.message || "No message"}
             </Text>
             <View>
-              <MDivider style={{marginTop:10}}></MDivider>
+              <MDivider marginPadingTopButom={10}></MDivider>
             </View>
           </View>
         );

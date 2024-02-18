@@ -1,10 +1,7 @@
-import {useNavigation} from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import {
   Appbar,
   AppbarHeaderProps,
-  Badge,
-  Button,
-  Divider,
   Menu,
   Searchbar,
   Text,
@@ -14,7 +11,6 @@ import AppIconImage from '../assets/AppIconImage';
 import {
   Alert,
   GestureResponderEvent,
-  Image,
   StatusBar,
   StatusBarProps,
   StyleSheet,
@@ -22,24 +18,26 @@ import {
   View,
 } from 'react-native';
 
-import React, {useEffect, useState} from 'react';
-import {ColorCode} from '../Page/MainStyle';
-import {NavigationProps} from '../Core/BaseProps';
+import React, { useEffect, useState } from 'react';
+import { ColorCode } from '../Page/MainStyle';
+import { NavigationProps } from '../Core/BaseProps';
 import SessionHelper from '../Core/SessionHelper';
 import User from '../Entity/User';
-import {useAppDispatch, useAppSelector} from '../Redux/Hooks';
-import ChatUserOptions from '../Redux/Reducer/ChatUserOptions';
-import {SignalRHubConnection} from '../DataAccess/SignalRHubConnection';
+import { useAppDispatch, useAppSelector } from '../Redux/Hooks';
 import IonIcon from 'react-native-vector-icons/Ionicons';
 import ChatAvatar from '../Page/Chat/ChatAvatar';
 import AuthenticationHelper from '../Core/AuthenticationHelper';
+import MHeaderOptions, { UserShowMode } from '../Redux/Reducer/MHeaderOptions';
+
+
+
 
 export interface MHeaderProps {
   Title?: string;
   AppBarProps?: AppbarHeaderProps;
   ShowSearchIcon?: boolean;
-  OnSearchDataChange?: (value: string) => void;
-  OnSeachClose?: (value: string) => void;
+  //OnSearchDataChange?: (value: string) => void;
+  //OnSeachClose?: (value: string) => void;
   RightSideIcon?: 'Setting' | 'UserProfile' | 'None';
 }
 export const MHeader = (props: MHeaderProps) => {
@@ -47,6 +45,8 @@ export const MHeader = (props: MHeaderProps) => {
 
   const [userName, setUserName] = React.useState('');
   const navigation = useNavigation<NavigationProps>();
+
+  const dispatch = useAppDispatch()
 
   useEffect(() => {
     (async function () {
@@ -70,8 +70,8 @@ export const MHeader = (props: MHeaderProps) => {
             zIndex: 1000,
             flexDirection: 'row',
           }}>
-          <View style={{width: '30%'}}>
-            <AppIconImage style={{width: 35, height: 35}}></AppIconImage>
+          <View style={{ width: '30%' }}>
+            <AppIconImage style={{ width: 35, height: 35 }}></AppIconImage>
           </View>
 
           <Text
@@ -86,7 +86,7 @@ export const MHeader = (props: MHeaderProps) => {
             {props.Title}
           </Text>
           {props.ShowSearchIcon && (
-            <View style={{width: '15%', alignSelf: 'center'}}>
+            <View style={{ width: '15%', alignSelf: 'center' }}>
               <TouchableOpacity onPress={() => setShowSearch(!ShowSearch)}>
                 <Appbar.Action
                   icon="magnify"
@@ -122,10 +122,10 @@ export const MHeader = (props: MHeaderProps) => {
         <>
           <MSerachBar
             onIconPress={() => {
-              props.OnSeachClose && props.OnSeachClose('');
+              dispatch(MHeaderOptions.actions.UpdateSearchText(""));
               setShowSearch(!ShowSearch);
             }}
-            OnSearchDataChange={props.OnSearchDataChange}
+            OnSearchDataChange={(e) => { dispatch(MHeaderOptions.actions.UpdateSearchText(e)) }}
           />
         </>
       )}
@@ -169,7 +169,7 @@ const MSerachBar = (props: MSearchBarProps) => {
           setSearchQuery('');
           props.onIconPress && props.onIconPress();
         }}
-        inputStyle={{paddingLeft: 2, paddingRight: 2}}
+        inputStyle={{ paddingLeft: 2, paddingRight: 2 }}
       />
     </View>
   );
@@ -188,9 +188,9 @@ export const MStatusBar = (props: StatusBarProps) => {
 //     OnUserLableChange?: (Users: ChatUser[]) => void
 // }
 
-export const UserProfileScreen = (props: {userName: string}) => {
+export const UserProfileScreen = (props: { userName: string }) => {
   const [visible, setVisible] = React.useState(false);
-  const chatUserOptions = useAppSelector(i => i.ChatUserOptions);
+  const chatUserOptions = useAppSelector(i => i.OneToOneChatOptions);
   const [info, setInfo] = useState<{
     userName?: string;
     companyId?: string;
@@ -202,9 +202,7 @@ export const UserProfileScreen = (props: {userName: string}) => {
   const AllUserList = chatUserOptions.AllUserList;
   const onlineUsers = AllUserList?.filter(i => i.isUserLive);
   const offlineUsers = AllUserList.filter(i => !i.isUserLive);
-  const [showMode, setshowMode] = useState<'Online User' | 'All User'>(
-    'Online User',
-  );
+  const [showMode, setshowMode] = useState<UserShowMode>('Online User');
   const dispatch = useAppDispatch();
   useEffect(() => {
     (async function () {
@@ -229,10 +227,10 @@ export const UserProfileScreen = (props: {userName: string}) => {
       'Exit!!',
       'Do you want to logout?',
       [
-        {text: 'No'},
-        {text: 'Yes', onPress: () => AuthenticationHelper.OnLogOut(navigation)},
+        { text: 'No' },
+        { text: 'Yes', onPress: () => AuthenticationHelper.OnLogOut(navigation) },
       ],
-      {cancelable: false},
+      { cancelable: false },
     );
   };
   const CreateGroup = async () => {
@@ -244,20 +242,18 @@ export const UserProfileScreen = (props: {userName: string}) => {
 
   const HandleUserlabelClicked = (event: GestureResponderEvent) => {
     var isOnLineUser = showMode == 'Online User';
-    setshowMode(isOnLineUser ? 'All User' : 'Online User');
+    var newMode: UserShowMode = isOnLineUser ? 'All User' : 'Online User'
+    setshowMode(newMode);
 
-    var allUsers = AllUserList;
-    if (isOnLineUser) {
-      allUsers = allUsers?.filter(i => i.isUserLive);
-    }
-    dispatch(ChatUserOptions.actions.UpdateFilterUserList(allUsers));
+
+    dispatch(MHeaderOptions.actions.UpdateUserShowMode(newMode));
   };
   return (
     <View>
       <Menu
         visible={visible}
         elevation={5}
-        contentStyle={{backgroundColor: ColorCode.White, marginTop: 50}}
+        contentStyle={{ backgroundColor: ColorCode.White, marginTop: 50 }}
         onDismiss={() => setVisible(false)}
         anchor={
           <ChatAvatar
@@ -266,7 +262,7 @@ export const UserProfileScreen = (props: {userName: string}) => {
             onPress={() => setVisible(true)}
           />
         }>
-        <View style={{...localStyles.dropdownContainer}}>
+        <View style={{ ...localStyles.dropdownContainer }}>
           <MenuItem2 HearderText="User:" ItemText={info?.userName} />
           <View style={localStyles.divider}></View>
           <MenuItem2 HearderText="Designation:" ItemText={''} />
@@ -297,7 +293,7 @@ export const UserProfileScreen = (props: {userName: string}) => {
           <View style={localStyles.divider}></View>
           <View style={localStyles.dividerView}>
             <TouchableOpacity onPress={Logout}>
-              <Text style={{...localStyles.InfoItemHeader}}>Logout</Text>
+              <Text style={{ ...localStyles.InfoItemHeader }}>Logout</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -335,7 +331,7 @@ const localStyles = StyleSheet.create({
   },
 });
 
-const MenuItem2 = (props: {HearderText?: string; ItemText?: string}) => {
+const MenuItem2 = (props: { HearderText?: string; ItemText?: string }) => {
   return (
     <View style={localStyles.dividerView}>
       <Text style={localStyles.InfoItemHeader}>{props.HearderText}</Text>

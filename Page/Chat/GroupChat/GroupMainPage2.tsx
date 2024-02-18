@@ -11,15 +11,16 @@ import { EmptyListMessage } from '../../../Control/EmptyListMessage';
 import { MDivider } from '../../../Control/MDivider';
 import { Group } from '../../../Entity/Group';
 import SignalRApi from '../../../DataAccess/SignalRApi';
-import ChatUserOptions from '../../../Redux/Reducer/ChatUserOptions';
+import ChatUserOptions from '../../../Redux/Reducer/NotificationOptions';
 import { ShowToastMessage } from '../../../Redux/Store';
+import { ChatUser } from '../../../Entity/ChatUser';
 
 const GroupMainPage2 = (props: { OnGroupListRefresRequest: () => void }) => {
 
   const dispatch = useAppDispatch()
   const chatUserOptions = useAppSelector(i => i.ChatUserOptions)
   var FetchMessageInterval: NodeJS.Timeout;
-  const [filterIsCalled, setFilterIsCalled] = useState(false);
+  const [filteredUserList, setFilteredUserList] = useState<ChatUser[]>([]);
   useEffect(() => {
     InitilizeOnce()
     return () => {
@@ -43,7 +44,7 @@ const GroupMainPage2 = (props: { OnGroupListRefresRequest: () => void }) => {
 
   const InitilizeOnce = async () => {
 
-    setFilterIsCalled(false)
+
 
     GetAllGroups()
 
@@ -74,7 +75,7 @@ const GroupMainPage2 = (props: { OnGroupListRefresRequest: () => void }) => {
               );
             }}
             ListEmptyComponent={EmptyListMessage(
-              chatUserOptions.FilterUserList.length == 0,
+              filteredUserList.length == 0,
             )}
           />
         </View>
@@ -99,9 +100,9 @@ const ChatGroupScreen = (props: {
       onPress={() => {
         navigate.navigate('GroupChatDetailsPage2', { Group: group! });
       }}
-      style={{ marginLeft: 5,paddingTop:0,paddingBottom:0, }}
+      style={{ marginLeft: 5, paddingTop: 0, paddingBottom: 0, }}
       title={group?.groupName}
-      titleStyle={{ fontFamily: 'OpenSans-Regular', fontSize: 15,marginTop:0 }}
+      titleStyle={{ fontFamily: 'OpenSans-Regular', fontSize: 15, marginTop: 0 }}
       description={() => {
         return (
           <View>
@@ -113,7 +114,7 @@ const ChatGroupScreen = (props: {
                 letterSpacing: 0.2,
                 fontSize: 12,
                 marginTop: 5,
-                marginBottom:9,
+                marginBottom: 9,
 
               }}>
               {txtLastMessage || 'No message'}

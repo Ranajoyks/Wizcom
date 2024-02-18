@@ -87,4 +87,12 @@ export default class UIHelper {
   public static OnetoTwoDigitString(number: number) {
     return ("0" + number).slice(-2)
   }
+  public static CreateGroupNameFromdate(date: Date) {
+
+    return UIHelper.OnetoTwoDigitString(date.getDate()) +
+      "-" + UIHelper.OnetoTwoDigitString(date.getMonth() + 1) +
+      "-" + date.getFullYear()
+  }
+
+
 }

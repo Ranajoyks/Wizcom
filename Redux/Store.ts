@@ -1,8 +1,11 @@
 import { configureStore } from '@reduxjs/toolkit'
 import SnackbarOptions from './Reducer/SnackbarOptions'
 import PageOptions from './Reducer/PageOptions'
-import ChatUserOptions from './Reducer/ChatUserOptions'
+import NotificationOptions from './Reducer/NotificationOptions'
 import DialogOptions from './Reducer/DialogOptions'
+import MHeaderOptions from './Reducer/MHeaderOptions'
+import OneToOneChatOptions from './Reducer/OneToOneChatOptions'
+import GroupChatOptions from './Reducer/GroupChatOptions'
 
 
 
@@ -11,8 +14,11 @@ export const store = configureStore({
   reducer: {
     SnackbarOptions: SnackbarOptions.reducer,
     PageOptions: PageOptions.reducer,
-    ChatUserOptions: ChatUserOptions.reducer,
-    DialogOptions: DialogOptions.reducer
+    GroupChatOptions: GroupChatOptions.reducer,
+    OneToOneChatOptions: OneToOneChatOptions.reducer,
+    NotificationOptions: NotificationOptions.reducer,
+    DialogOptions: DialogOptions.reducer,
+    MHeaderOptions: MHeaderOptions.reducer
   }
 })
 

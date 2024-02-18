@@ -1,65 +1,28 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import SessionHelper from '../../Core/SessionHelper';
-import { View, Text, SafeAreaView } from 'react-native';
+import { SafeAreaView } from 'react-native';
 
 import { styles } from '../MainStyle';
 import { SignalRHubConnection } from '../../DataAccess/SignalRHubConnection';
 import { MHeader } from '../../Control/MHeader';
 
 import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
-import { ShowPageLoader, ShowToastMessage } from '../../Redux/Store';
+import { ShowToastMessage } from '../../Redux/Store';
 import AllChatPage from './OneToOneChat/AllChatPage';
-import { useAppDispatch, useAppSelector } from '../../Redux/Hooks';
-import ChatUserOptions from '../../Redux/Reducer/ChatUserOptions';
-import SnackbarOptions from '../../Redux/Reducer/SnackbarOptions';
+import { useAppDispatch } from '../../Redux/Hooks';
 import Geolocation from '@react-native-community/geolocation';
-import ERESApi from '../../DataAccess/ERESApi';
 import SignalRApi from '../../DataAccess/SignalRApi';
-import UIHelper from '../../Core/UIHelper';
-import GroupPage from './GroupChat/GroupMainPage2';
 import { Chat } from '../../Entity/Chat';
-import { Group } from '../../Entity/Group';
 
-import { ChatUser } from '../../Entity/ChatUser';
-import AppDBHelper from '../../Core/AppDBHelper';
 import { GroupChat } from '../../Entity/GroupChat';
-import NotificationPage from './Notification/NotificationDetailsPage';
-import NotificationMainPage from './Notification/NotificationMainPage';
-
-
-
-
-function FeedScreen() {
-  return (
-    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-      <Text>Feed!</Text>
-    </View>
-  );
-}
-function NotificationsScreen() {
-  return (
-    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-      <Text>Notifications!</Text>
-    </View>
-  );
-}
-
-function GroupScreen() {
-  return (
-    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-      <Text>Group!</Text>
-    </View>
-  );
-}
+import OneToOneChatOptions from '../../Redux/Reducer/OneToOneChatOptions';
+import GroupChatOptions from '../../Redux/Reducer/GroupChatOptions';
 
 const MainPage = () => {
-  const Tab = createMaterialTopTabNavigator();
+  const Tab = createMaterialTopTabNavigator()
 
-
-  var chatId: string | undefined;
-
-  const chatUserOptions = useAppSelector(i => i.ChatUserOptions)
   const dispatch = useAppDispatch()
+
 
   useEffect(() => {
     IniTilizeOnce(true);
@@ -68,7 +31,7 @@ const MainPage = () => {
   }, []);
 
   const IniTilizeOnce = async (showPageLoader: boolean) => {
-    ShowPageLoader(true);
+
     var IsConnected = await SignalRHubConnection.IsConnected();
 
     if (!IsConnected) {
@@ -76,38 +39,17 @@ const MainPage = () => {
       return;
     }
 
-    var chatId = await SessionHelper.GetChatId()
+
 
     SignalRHubConnection.OnReceiveMessege((newMessage: Chat) => {
       console.log("MessageReceive", newMessage)
-      dispatch(ChatUserOptions.actions.AddNewOneToOneChat(newMessage))
+      dispatch(OneToOneChatOptions.actions.AddNewOneToOneChat(newMessage))
     });
 
     SignalRHubConnection.OnReceiveGroupMessage((newMessage: GroupChat) => {
       console.log("OnReceiveGroupMessage", newMessage)
-      dispatch(ChatUserOptions.actions.AddNewGroupChat(newMessage))
+      dispatch(GroupChatOptions.actions.AddNewGroupChat(newMessage))
     })
-
-    console.log("chatId", chatId)
-    //populating screen using localData
-    var localChatUserList = await AppDBHelper.GetChatUsers(chatId!)
-    var localGroupList = await AppDBHelper.GetGroups(chatId!)
-
-    console.log("localChatUserList", localChatUserList?.length)
-    console.log("localGroupList", localGroupList?.length)
-
-    ShowPageLoader(false);
-
-    if (localChatUserList) {
-      dispatch(ChatUserOptions.actions.UpdateAllUserList(localChatUserList));
-      dispatch(ChatUserOptions.actions.UpdateFilterUserList(localChatUserList));
-    }
-
-    if (localGroupList) {
-      dispatch(ChatUserOptions.actions.UpdateAllGroupList(localGroupList));
-      dispatch(ChatUserOptions.actions.UpdateFilterGroupList(localGroupList));
-    }
-
   };
 
   const GetLocation = async () => {
@@ -119,37 +61,28 @@ const MainPage = () => {
         Long: info?.coords?.latitude.toString(),
       };
       // console.log('Location Data: ', LocationData);
-      var LocationResponse = await SignalRApi.SetLocation(LocationData);
-      console.log('LocationResponse: ', LocationResponse);
+      SignalRApi.SetLocation(LocationData).then(locRes => console.log('LocationResponse: ', locRes));
+
     });
   };
-  const HandlehearchTextChange = (searchText: string) => {
 
-    var allUserList = chatUserOptions.AllUserList;
-    var FilterUserList = allUserList.filter(i =>
-      i.userName.toLowerCase().includes(searchText.toLowerCase()),
-    );
-    dispatch(ChatUserOptions.actions.UpdateFilterUserList(FilterUserList));
-  };
-
+  console.log("re render Mainpage", new Date())
 
   return (
     <SafeAreaView style={styles.container}>
       <MHeader
         ShowSearchIcon
         RightSideIcon="UserProfile"
-        OnSearchDataChange={HandlehearchTextChange}
-        OnSeachClose={HandlehearchTextChange}
       />
 
       <Tab.Navigator
         initialRouteName="AllChat"
-        sceneContainerStyle={{backgroundColor:'#ffffff'}}
+        sceneContainerStyle={{ backgroundColor: '#ffffff' }}
         screenOptions={{
           tabBarStyle: { position: 'relative' },
           tabBarActiveTintColor: '#000000',
-          tabBarInactiveTintColor:'#A6A6A6',
-          tabBarLabelStyle: { fontSize: 13, fontFamily: 'Poppins-Regular',textTransform:'capitalize' },
+          tabBarInactiveTintColor: '#A6A6A6',
+          tabBarLabelStyle: { fontSize: 13, fontFamily: 'Poppins-Regular', textTransform: 'capitalize' },
           tabBarScrollEnabled: true,
         }}>
         <Tab.Screen
@@ -161,7 +94,7 @@ const MainPage = () => {
           }}
         />
 
-        <Tab.Screen
+        {/* <Tab.Screen
           name="Group"
           options={{ tabBarLabel: 'Group' }}
           children={() => {
@@ -172,9 +105,9 @@ const MainPage = () => {
           name="Notifications"
           options={{ tabBarLabel: 'Notifications' }}
           children={() => {
-            return <NotificationMainPage/>;
+            return <NotificationMainPage />;
           }}
-        />
+        /> */}
       </Tab.Navigator>
     </SafeAreaView>
   );

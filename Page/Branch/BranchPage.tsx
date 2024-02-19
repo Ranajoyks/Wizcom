@@ -70,15 +70,18 @@ export class BranchPage extends BaseComponent<"BranchPage", BranchPageViewModel>
     var chatId = `${CompanyID}_${companyRes.data.d.obj.lUsrId}`
     await SessionHelper.SetChatId(chatId)
 
-    const Data = JSON.stringify({
-      userId: chatId,
-      url: BaseApi.BaseUrlEresourceerp,
-      session: await SessionHelper.GetSessionId(),
-      code: CompanyID,
-    });
+
+    // var tempUrl = (await BaseApi.getFinalUrl("ERES", "", false)).replace("/api", "")
+
+    // const Data = JSON.stringify({
+    //   userId: chatId,
+    //   url: tempUrl,
+    //   session: await SessionHelper.GetSessionId(),
+    //   code: CompanyID,
+    // });
 
     UIHelper.LogTime("UserSetDetail", "Start")
-    var isValidUserSetDetail = await SignalRApi.UserSetDetail(Data)
+    var isValidUserSetDetail = await SignalRApi.UserSetDetail()
     UIHelper.LogTime("UserSetDetail", "End")
     if (isValidUserSetDetail.IsKSError || !isValidUserSetDetail.data) {
       this.ShowPageLoader(false)

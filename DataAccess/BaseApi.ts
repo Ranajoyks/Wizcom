@@ -21,16 +21,18 @@ export default class BaseApi {
     };
 
 
-    private static async getFinalUrl(DomainUrl: BaseUrlType, relativeUrl: string, IsMultiPart: boolean): Promise<string> {
+    public static async getFinalUrl(DomainUrl: BaseUrlType, relativeUrl: string, IsMultiPart: boolean): Promise<string> {
 
-        //console.log('DomainUrl Type-->', DomainUrl)
-        //console.log('Relative URl-->', relativeUrl)
+        console.log('DomainUrl Type-->', DomainUrl)
+        console.log('Relative URl-->', relativeUrl)
         var value;
         switch (DomainUrl) {
             case "ERES":
                 var url = BaseApi.BaseUrlEresourceerp
 
                 var storedUrl = await SessionHelper.GetURL()
+                console.log("storedUrl ", storedUrl);
+
                 if (storedUrl) {
                     if (!storedUrl.startsWith("http")) {
                         storedUrl = "http://" + storedUrl
@@ -82,7 +84,7 @@ export default class BaseApi {
                 headers: headers,
             })
                 .then(res => {
-                    console.log("Get data Resposne-->", JSON.stringify(res.data, null, 2))
+                    //console.log("Get data Resposne-->", JSON.stringify(res.data, null, 2))
                     response.data = res.data
                     resolve(response)
                 })
@@ -100,14 +102,14 @@ export default class BaseApi {
         var url = await BaseApi.getFinalUrl(DomainUrl, url, IsMultiPart)
         console.log("Post url-->", url)
         console.log("Post headers-->", headers)
-
+        console.log("Post body-->", JSON.stringify(Model ?? "", undefined, 1))
         var response: KSResponse<T> = { data: undefined, IsKSError: false, ErrorInfo: "" }
         return new Promise((resolve) => {
             axios.post<T>(url, Model, {
                 headers: headers,
             })
                 .then(res => {
-                    console.log("Post data Resposne-->", JSON.stringify(res.data, null, 2))
+                    //console.log("Post data Resposne-->", JSON.stringify(res.data, null, 2))
                     response.data = res.data
                     resolve(response)
                 })

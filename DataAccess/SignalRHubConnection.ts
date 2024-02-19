@@ -27,6 +27,30 @@ export class SignalRHubConnection {
     return SignalRHubConnection._chatId;
   }
 
+  private static async HandleConnectionState(_tempConnection: signalR.HubConnection): Promise<signalR.HubConnection> {
+    return new Promise((resolve, reject) => {
+      switch (_tempConnection.state) {
+        case signalR.HubConnectionState.Disconnected:
+          _tempConnection.start().then(res => {
+            SignalRHubConnection._connection = _tempConnection;
+            return resolve(_tempConnection);
+          });
+          break;
+        case signalR.HubConnectionState.Disconnecting:
+          _tempConnection.onclose = () => {
+            _tempConnection.start().then(res => {
+              _tempConnection.onclose = () => { } //setting it not to recursively call connection
+              SignalRHubConnection._connection = _tempConnection;
+              return resolve(_tempConnection);
+            });
+          };
+          break;
+        default:
+          return resolve(SignalRHubConnection._connection);
+          break;
+      }
+    });
+  }
 
   private static async GetConnection(tempChatId?: string): Promise<signalR.HubConnection> {
     var _tempConnection: signalR.HubConnection;
@@ -57,29 +81,11 @@ export class SignalRHubConnection {
       })
     }
 
-    SignalRHubConnection._connection = _tempConnection;
-    return new Promise((resolve, reject) => {
-      switch (_tempConnection.state) {
-        case signalR.HubConnectionState.Disconnected:
-          _tempConnection.start().then(res => {
-            SignalRHubConnection._connection = _tempConnection;
-            return resolve(_tempConnection);
-          });
-          break;
-        case signalR.HubConnectionState.Disconnecting:
-          _tempConnection.onclose = () => {
-            _tempConnection.start().then(res => {
-              _tempConnection.onclose = () => { } //setting it not to recursively call connection
-              SignalRHubConnection._connection = _tempConnection;
-              return resolve(_tempConnection);
-            });
-          };
-          break;
-        default:
-          return resolve(SignalRHubConnection._connection);
-          break;
-      }
-    });
+    var resolveStateConnection = await SignalRHubConnection.HandleConnectionState(_tempConnection)
+
+    SignalRHubConnection._connection = resolveStateConnection;
+    return resolveStateConnection
+
   }
 
   public static async GetUserList(): Promise<ChatUser[]> {

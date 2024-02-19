@@ -164,11 +164,16 @@ const OneToOneChatPage2 = (
       if (res.data) {
         setCurrentIndex(tempIndexNo);
 
-        console.log("sMessgeList", res.data);
+        console.log("sMessgeList", res.data.length);
 
         SecondUser.sMessgeList = res.data
 
-        dispatch(OneToOneChatOptions.actions.LoadUserOneToOneChatList([SecondUser]));
+        var proxyChatUser: ChatUser = {
+          lId: SecondUser.lId,
+          sMessgeList: res.data
+        } as unknown as ChatUser
+
+        dispatch(OneToOneChatOptions.actions.LoadUserOneToOneChatList([proxyChatUser]));
 
         AppDBHelper.SetChatUsers(
           chatUserOptions.AllUserList,
@@ -187,6 +192,7 @@ const OneToOneChatPage2 = (
 
         FileViewer.open(item.AttahmentLocalPath);
         resolve(undefined);
+        return
       }
       HandleMultiDownloadingLoader(item.lAttchId, true);
       var res = await ERESApi.DownloadAttachment(item.lAttchId);
@@ -323,7 +329,7 @@ const OneToOneChatPage2 = (
 
   var lastMessage = MessageList?.length ? MessageList[0] : undefined;
 
-  //console.log("MessageList", MessageList)
+  console.log("re-render one to one chat page of " + SecondUser?.userName, MessageList?.length)
 
   return (
     <SafeAreaView
@@ -379,9 +385,7 @@ const OneToOneChatPage2 = (
           data={MessageList}
           keyExtractor={i => i.lSrId + ''}
           onEndReachedThreshold={0.8}
-          refreshing={isPageRefreshing}
-          refreshControl={<ActivityIndicator animating={false} />}
-          onRefresh={() => LoadOldMessages(undefined, undefined, undefined, 0, true)}
+
           inverted
           onEndReached={async () => {
             var nextIndex = currentIndex + 1;

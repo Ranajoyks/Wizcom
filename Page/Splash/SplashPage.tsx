@@ -1,5 +1,5 @@
 import React from 'react';
-import {View, StatusBar, StyleSheet, Text} from 'react-native';
+import { View, StatusBar, StyleSheet, Text } from 'react-native';
 import AppIconImage from '../../assets/AppIconImage';
 
 import BaseColor from '../../Core/BaseTheme';
@@ -8,13 +8,13 @@ import LinearGradient from 'react-native-linear-gradient';
 import SessionHelper from '../../Core/SessionHelper';
 import BaseComponent from '../../Core/BaseComponent';
 import BaseState from '../../Core/BaseState';
-import {BaseProps, mapDispatchToProps} from '../../Core/BaseProps';
+import { BaseProps, mapDispatchToProps } from '../../Core/BaseProps';
 import BaseViewModel from '../../Core/BaseViewModel';
 import SignalRApi from '../../DataAccess/SignalRApi';
 import ERESApi from '../../DataAccess/ERESApi';
 import BaseApi from '../../DataAccess/BaseApi';
-import {connect} from 'react-redux';
-import {SignalRHubConnection} from '../../DataAccess/SignalRHubConnection';
+import { connect } from 'react-redux';
+import { SignalRHubConnection } from '../../DataAccess/SignalRHubConnection';
 import UIHelper from '../../Core/UIHelper';
 
 export class SplashPage extends BaseComponent<'SplashPage', BaseViewModel> {
@@ -33,7 +33,7 @@ export class SplashPage extends BaseComponent<'SplashPage', BaseViewModel> {
 
       this.props.navigation.reset({
         index: 0,
-        routes: [{name: 'CompanySelectionPage'}],
+        routes: [{ name: 'CompanySelectionPage' }],
       });
     }, 500);
   }
@@ -45,14 +45,14 @@ export class SplashPage extends BaseComponent<'SplashPage', BaseViewModel> {
     var userInfo = await SessionHelper.GetUserDetails();
     var Branch = await SessionHelper.GetBranch();
 
-    const Data = JSON.stringify({
-      userId: ChatId,
-      url: BaseApi.BaseUrlEresourceerp,
-      session: SessionId,
-      code: companyID,
-    });
+    // const Data = JSON.stringify({
+    //   userId: ChatId,
+    //   url: BaseApi.BaseUrlEresourceerp,
+    //   session: SessionId,
+    //   code: companyID,
+    // });
 
-    var userRes = await SignalRApi.UserSetDetail(Data);
+    var userRes = await SignalRApi.UserSetDetail();
 
     if (userRes.IsKSError || !userRes.data) {
       this.ShowToast(userRes.ErrorInfo!);
@@ -91,7 +91,7 @@ export class SplashPage extends BaseComponent<'SplashPage', BaseViewModel> {
     if (SessionResponse.data.d.bStatus) {
       this.props.navigation.reset({
         index: 0,
-        routes: [{name: 'MainPage'}],
+        routes: [{ name: 'MainPage' }],
       });
     }
     if (!SessionResponse.data.d.bStatus) {
@@ -99,13 +99,13 @@ export class SplashPage extends BaseComponent<'SplashPage', BaseViewModel> {
       if (AutoLoginresponse.data.d.bStatus) {
         this.props.navigation.reset({
           index: 0,
-          routes: [{name: 'MainPage'}],
+          routes: [{ name: 'MainPage' }],
         });
       }
       if (!AutoLoginresponse.data.d.bStatus) {
         this.props.navigation.reset({
           index: 0,
-          routes: [{name: 'CompanySelectionPage'}],
+          routes: [{ name: 'CompanySelectionPage' }],
         });
       }
     }

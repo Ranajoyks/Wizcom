@@ -45,7 +45,7 @@ const OneToOneChatOptions = createSlice({
             state.AllUserList = currentUserList
 
             //If no data 
-            if (!state.FilterUserList.length && state.AllUserList.length) {
+            if (!state.FilterUserList.length) {
                 state.FilterUserList = state.AllUserList
             }
 
@@ -63,29 +63,32 @@ const OneToOneChatOptions = createSlice({
             }
         },
         LoadUserOneToOneChatList: (state, action: PayloadAction<ChatUser[]>) => {
-            var currentUserList = state.AllUserList
+            console.log("payloadUser.sMessgeList", action.payload)
+            action.payload.forEach(payloadUser => {
 
-            action.payload.forEach(user => {
 
-                var secondUserId = user.lId
+                var secondUserId = payloadUser.lId
 
-                var userIndex = currentUserList.findIndex(i => i.lId == secondUserId)!
-                var user = currentUserList[userIndex]
+                var userIndex = state.AllUserList.findIndex(i => i.lId == secondUserId)!
+                var user = state.AllUserList[userIndex]
 
-                if (!user || !user.sMessgeList) {
-                    console.error("User or smessage not found, this should nor happen", secondUserId)
+                if (!user) {
+                    console.error("User not found, this should nor happen", secondUserId)
                     return
                 }
+
 
                 if (!user.AllChatOneToOneList) {
                     user.AllChatOneToOneList = []
                 }
 
-                var payLoadMessageList = [...user.sMessgeList] ?? []
-
-                var sortedIncomingMessageList = payLoadMessageList.sort((a, b) => {
+                //below one is required as sMessgeList is readonly here
+                var nonReadonlyList = [...payloadUser.sMessgeList ?? []]
+                var sortedIncomingMessageList = nonReadonlyList.sort((a, b) => {
                     return b.lSrId - a.lSrId
                 })
+
+                console.log("sortedIncomingMessageList", sortedIncomingMessageList.length)
 
                 var newNoProxySortedMessageList: Chat[] = user?.AllChatOneToOneList.filter(i => !i.IsKsProxy)
                 var todayGroupName = UIHelper.CreateGroupNameFromdate(new Date())
@@ -129,13 +132,18 @@ const OneToOneChatOptions = createSlice({
                 user.sMessgeList = []
                 user.AllChatOneToOneList = uniqueMessagaeList
 
-                currentUserList[userIndex] = user
+                state.AllUserList[userIndex] = user
             })
 
-            state.AllUserList = currentUserList
 
-            var allFilteredUserList = state.FilterUserList
-            state.FilterUserList = currentUserList.filter(i => allFilteredUserList.findIndex(f => f.lId == i.lId))
+            if (!state.FilterUserList.length) {
+                state.FilterUserList = state.AllUserList
+            }
+            else {
+                state.FilterUserList.forEach((element, index) => {
+                    state.FilterUserList[index] = state.AllUserList.find(i => i.lId == element.lId)!
+                });
+            }
 
         },
         AddNewOneToOneChat: (state, action: PayloadAction<Chat>) => {

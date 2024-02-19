@@ -91,6 +91,8 @@ export class SignalRHubConnection {
   public static async GetUserList(): Promise<ChatUser[]> {
     var connection = await SignalRHubConnection.GetConnection();
     var chatId = await SignalRHubConnection.GetChatId();
+    console.log("GetAllUser chatId-->", chatId);
+
     var res = connection.invoke<ChatUser[]>('GetAllUser', chatId, 0);
     console.log("GetAllUser", res);
     return res

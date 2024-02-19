@@ -34,7 +34,7 @@ import KSUtility from '../../../Core/KSUtility';
 const NotificationMainPage = () => {
 
   const dispatch = useAppDispatch()
-  const chatUserOptions = useAppSelector(i => i.ChatUserOptions)
+  const notificationData = useAppSelector(i => i.NotificationOptions)
   var FetchMessageInterval: NodeJS.Timeout;
   const [filterIsCalled, setFilterIsCalled] = useState(false);
   useEffect(() => {
@@ -86,15 +86,13 @@ const NotificationMainPage = () => {
     if (cuResponse.data) {
       UpdateAllOnlineUser(cuResponse.data)
       dispatch(ChatUserOptions.actions.UpdateAllNotificationUserList(cuResponse.data))
-      cuResponse.data.forEach(user => {
-        dispatch(ChatUserOptions.actions.LoadUserOneToOneNotificationChatList({
-          messageList: user.sMessgeList || [],
-          SecondUserId: user.lId
-        }))
-      })
-      SessionHelper.GetChatId().then((CurrentUserChatId: string | undefined) => {
-        AppDBHelper.SetNotificationUsers(chatUserOptions.AllUserNotificationList, CurrentUserChatId!)
-      })
+
+
+      dispatch(ChatUserOptions.actions.LoadUserOneToOneNotificationChatList(cuResponse.data))
+
+
+      AppDBHelper.SetNotificationUsers(chatUserOptions.AllUserNotificationList, tempSenderChatId!)
+
     }
   }
 

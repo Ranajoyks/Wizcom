@@ -36,7 +36,6 @@ const OneToOneChatOptions = createSlice({
 
                 var AllChatOneToOneList = oldUser.AllChatOneToOneList
 
-
                 newUser = Object.assign(oldUser, newUser)
 
                 newUser.AllChatOneToOneList = AllChatOneToOneList

@@ -134,7 +134,7 @@ const ChatUserScreen = (props: { data: ChatUser, OnUserListRefresRequest: () => 
   const navigate = useNavigation<NavigationProps>()
   var unreadMessageList = user.AllChatOneToOneList?.filter(i => !i.bStatus && i.lReceiverId != user.lId)
   var lastMessage = user.AllChatOneToOneList?.length ? user.AllChatOneToOneList[0] : undefined
-
+  //console.log("Re render, ChatUserScreen " + new Date())
   return (
 
     <List.Item onPress={() => {

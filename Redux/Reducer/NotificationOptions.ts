@@ -3,18 +3,17 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit'
 import UIHelper from '../../Core/UIHelper'
 import { NotificationUser } from '../../Entity/NotificationUser'
 import { Notification } from '../../Entity/Notification'
+import { ChatUser } from '../../Entity/ChatUser'
 
 
 
 export interface NotificationOptionsState {
-    IsPageLoading: boolean,
+
     AllUserNotificationList: NotificationUser[],
     FilterUserNotificationList: NotificationUser[],
 }
 
 const initialState: NotificationOptionsState = {
-    IsPageLoading: false,
-
 
     AllUserNotificationList: [],
     FilterUserNotificationList: [],
@@ -29,16 +28,15 @@ const NotificationOptions = createSlice({
     reducers: {
 
         UpdateAllNotificationUserList: (state, action: PayloadAction<NotificationUser[]>) => {
-            var tempList = state.AllUserNotificationList
 
             action.payload.forEach(newUser => {
-                var oldUserIndex = tempList.findIndex(i => i.lId == newUser.lId)
+                var oldUserIndex = state.AllUserNotificationList.findIndex(i => i.lId == newUser.lId)
                 if (oldUserIndex == -1) {
-                    tempList.push(newUser)
+                    state.AllUserNotificationList.push(newUser)
                     return
                 }
 
-                var oldUser = tempList[oldUserIndex]
+                var oldUser = state.AllUserNotificationList[oldUserIndex]
 
                 var AllNotificatonOneToOneList = oldUser.AllNotificatonOneToOneList
 
@@ -47,76 +45,80 @@ const NotificationOptions = createSlice({
 
                 newUser.AllNotificatonOneToOneList = AllNotificatonOneToOneList
 
-                tempList[oldUserIndex] = newUser
+                state.AllUserNotificationList[oldUserIndex] = newUser
             });
-            state.AllUserNotificationList = tempList
+
         },
 
-        LoadUserOneToOneNotificationChatList: (state, action: PayloadAction<{
-            messageList: Notification[], SecondUserId: number
-        }>) => {
-            var userIndex = state.AllUserNotificationList.findIndex(i => i.lId == action.payload.SecondUserId)!
-            var user = state.AllUserNotificationList[userIndex]
+        LoadUserOneToOneNotificationChatList: (state, action: PayloadAction<NotificationUser[]>) => {
 
-            if (!user) {
-                console.error("User not found, this should nor happen", action.payload.SecondUserId)
-                return
-            }
+            action.payload.forEach(payloadUser => {
 
-            if (!user.AllNotificatonOneToOneList) {
-                user.AllNotificatonOneToOneList = []
-            }
+                var secondUserId = payloadUser.lId
 
-            var payLoadMessageList = [...action.payload.messageList] ?? []
-
-            var sortedIncomingMessageList = payLoadMessageList.sort((a, b) => {
-                return b.lSrId - a.lSrId
-            })
-
-            var newNoProxySortedMessageList: Notification[] = user?.AllNotificatonOneToOneList.filter(i => !i.IsKsProxy)
-            var todayGroupName = UIHelper.CreateGroupNameFromdate(new Date())
-
-            sortedIncomingMessageList.forEach(newMwssage => {
-                var newMessageIndex = newNoProxySortedMessageList.findIndex(i => i.lSrId == newMwssage.lSrId)
-
-                if (newMessageIndex == -1) {
-                    var dt = new Date(newMwssage.dtMsg)
-                    var newGroup = UIHelper.CreateGroupNameFromdate(dt)
-
-                    newMwssage.GroupName = newGroup == todayGroupName ? "Today" : newGroup
-                    newNoProxySortedMessageList.unshift(newMwssage)
-                }
-            });
-
-            newNoProxySortedMessageList = newNoProxySortedMessageList.sort((a, b) => {
-                return b.lSrId - a.lSrId
-            })
+                var userIndex = state.AllUserNotificationList.findIndex(i => i.lId == secondUserId)!
+                var user = state.AllUserNotificationList[userIndex]
 
 
-            var uniqueMessagaeList: Notification[] = []
-            newNoProxySortedMessageList.forEach((item) => {
-                var existItemIndex = uniqueMessagaeList.findIndex(i => i.lSrId == item.lSrId);
-                if (existItemIndex != -1) {
+                if (!user) {
+                    console.error("User not found, this should nor happen", payloadUser)
                     return
                 }
 
-                //Fixing group name
-                var previosMessageWithSameGroupIndex = uniqueMessagaeList.findIndex(i => i.GroupName == item.GroupName);
-                if (previosMessageWithSameGroupIndex != -1) {
-                    var OldGroupNameMessage = uniqueMessagaeList[previosMessageWithSameGroupIndex]
-                    OldGroupNameMessage.GroupName = ""
-                    uniqueMessagaeList[previosMessageWithSameGroupIndex] = OldGroupNameMessage
+                if (!user.AllNotificatonOneToOneList) {
+                    user.AllNotificatonOneToOneList = []
                 }
 
-                uniqueMessagaeList.push(item)
+                var payLoadMessageList = [...payloadUser.sMessgeList ?? []]
+
+                var sortedIncomingMessageList = payLoadMessageList.sort((a, b) => {
+                    return b.lSrId - a.lSrId
+                })
+
+                var newNoProxySortedMessageList: Notification[] = user?.AllNotificatonOneToOneList.filter(i => !i.IsKsProxy)
+                var todayGroupName = UIHelper.CreateGroupNameFromdate(new Date())
+
+                sortedIncomingMessageList.forEach(newMwssage => {
+                    var newMessageIndex = newNoProxySortedMessageList.findIndex(i => i.lSrId == newMwssage.lSrId)
+
+                    if (newMessageIndex == -1) {
+                        var dt = new Date(newMwssage.dtMsg)
+                        var newGroup = UIHelper.CreateGroupNameFromdate(dt)
+
+                        newMwssage.GroupName = newGroup == todayGroupName ? "Today" : newGroup
+                        newNoProxySortedMessageList.unshift(newMwssage)
+                    }
+                });
+
+                newNoProxySortedMessageList = newNoProxySortedMessageList.sort((a, b) => {
+                    return b.lSrId - a.lSrId
+                })
+
+
+                var uniqueMessagaeList: Notification[] = []
+                newNoProxySortedMessageList.forEach((item) => {
+                    var existItemIndex = uniqueMessagaeList.findIndex(i => i.lSrId == item.lSrId);
+                    if (existItemIndex != -1) {
+                        return
+                    }
+
+                    //Fixing group name
+                    var previosMessageWithSameGroupIndex = uniqueMessagaeList.findIndex(i => i.GroupName == item.GroupName);
+                    if (previosMessageWithSameGroupIndex != -1) {
+                        var OldGroupNameMessage = uniqueMessagaeList[previosMessageWithSameGroupIndex]
+                        OldGroupNameMessage.GroupName = ""
+                        uniqueMessagaeList[previosMessageWithSameGroupIndex] = OldGroupNameMessage
+                    }
+
+                    uniqueMessagaeList.push(item)
+                })
+
+
+                user.sMessgeList = []
+                user.AllNotificatonOneToOneList = uniqueMessagaeList
+
+                state.AllUserNotificationList[userIndex] = user
             })
-
-
-            user.sMessgeList = []
-            user.AllNotificatonOneToOneList = uniqueMessagaeList
-
-            state.AllUserNotificationList[userIndex] = user
-
 
         },
         AddNewOneToOneNotificationChat: (state, action: PayloadAction<Notification>) => {

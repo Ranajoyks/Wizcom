@@ -27,11 +27,11 @@ export type RootState = ReturnType<typeof store.getState>
 // Inferred type: {posts: PostsState, comments: CommentsState, users: UsersState}
 export type AppDispatch = typeof store.dispatch
 
-export const ShowPageLoader = (show: boolean) => Promise.resolve(store.dispatch(PageOptions.actions.ShowPageLoader(show)));
+export const ShowPageLoader = (show: boolean) => store.dispatch(PageOptions.actions.ShowPageLoader(show))
 
-export const ShowToastMessage = (message: string) => Promise.resolve(() => {
+export const ShowToastMessage = (message: string) => {
   store.dispatch(SnackbarOptions.actions.Show(message))
   setTimeout(() => {
     store.dispatch(SnackbarOptions.actions.Close())
   }, 5000)
-});
+} 

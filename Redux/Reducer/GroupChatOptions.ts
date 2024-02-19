@@ -10,8 +10,11 @@ export interface GroupChatOptionsState {
 }
 
 const initialState: GroupChatOptionsState = {
+
+
     AllGroupList: [],
     FilterGroupList: [],
+
 }
 
 
@@ -46,78 +49,108 @@ const GroupChatOptions = createSlice({
             });
 
             state.AllGroupList = currentGroupList
+            if (!state.FilterGroupList.length) {
+                state.FilterGroupList = state.AllGroupList
+            }
+
+            //When no search string 
+            if (state.FilterGroupList.length == state.AllGroupList.length) {
+                state.FilterGroupList = state.AllGroupList
+            }
+
+            if (state.FilterGroupList.length && state.FilterGroupList.length != state.AllGroupList.length) {
+                var allFilteredUser = state.FilterGroupList
+                allFilteredUser.forEach((item, itemIndex) => {
+                    allFilteredUser[itemIndex] = currentGroupList.find(i => i.groupId == item.groupId)!
+                })
+                state.FilterGroupList = allFilteredUser
+            }
         },
         UpdateFilterGroupList: (state, action: PayloadAction<Group[]>) => {
             state.FilterGroupList = action.payload
         },
-        LoadGroupOneToOneChatList: (state, action: PayloadAction<{
-            messageList: GroupChat[], GroupId: number
-        }>) => {
+        LoadGroupOneToOneChatList: (state, action: PayloadAction<Group[]>) => {
 
-            var currentGroupList = state.AllGroupList
-
-            var GroupIndex = currentGroupList.findIndex(i => i.groupId == action.payload.GroupId)!
-            var Group = currentGroupList[GroupIndex]
-
-            if (!Group) {
-                console.error("Group not found, this should nor happen", action.payload.GroupId)
-                return
-            }
-
-            if (!Group.AllGroupMsgList) {
-                Group.AllGroupMsgList = []
-            }
-
-            var payLoadMessageList = [...action.payload.messageList] ?? []
-
-            var sortedIncomingMessageList = payLoadMessageList.sort((a, b) => {
-                return b.lSrId - a.lSrId
-            })
-
-            var newNoProxySortedMessageList: GroupChat[] = Group?.AllGroupMsgList.filter(i => !i.IsKsProxy)
-            var todayGroupName = UIHelper.CreateGroupNameFromdate(new Date())
-
-            sortedIncomingMessageList.forEach(newMwssage => {
-                var newMessageIndex = newNoProxySortedMessageList.findIndex(i => i.lSrId == newMwssage.lSrId)
-
-                if (newMessageIndex == -1) {
-                    var dt = new Date(newMwssage.dtMsg)
-                    var newGroup = UIHelper.CreateGroupNameFromdate(dt)
-
-                    newMwssage.DayDisplayGroupName = newGroup == todayGroupName ? "Today" : newGroup
-                    newNoProxySortedMessageList.unshift(newMwssage)
-                }
-            });
-
-            newNoProxySortedMessageList = newNoProxySortedMessageList.sort((a, b) => {
-                return b.lSrId - a.lSrId
-            })
+            action.payload.forEach(payloadUser => {
 
 
-            var uniqueMessagaeList: GroupChat[] = []
-            newNoProxySortedMessageList.forEach((item) => {
-                var existItemIndex = uniqueMessagaeList.findIndex(i => i.lSrId == item.lSrId);
-                if (existItemIndex != -1) {
+                var GroupID = payloadUser.groupId
+
+                var userIndex = state.AllGroupList.findIndex(i => i.groupId == GroupID)!
+                var user = state.AllGroupList[userIndex]
+
+                if (!user) {
+                    console.error("User not found, this should nor happen", GroupID)
                     return
                 }
 
-                //Fixing group name
-                var previosMessageWithSameGroupIndex = uniqueMessagaeList.findIndex(i => i.DayDisplayGroupName == item.DayDisplayGroupName);
-                if (previosMessageWithSameGroupIndex != -1) {
-                    var OldGroupNameMessage = uniqueMessagaeList[previosMessageWithSameGroupIndex]
-                    OldGroupNameMessage.DayDisplayGroupName = ""
-                    uniqueMessagaeList[previosMessageWithSameGroupIndex] = OldGroupNameMessage
+
+                if (!user.AllGroupMsgList) {
+                    user.AllGroupMsgList = []
                 }
 
-                uniqueMessagaeList.push(item)
+                //below one is required as sMessgeList is readonly here
+                var nonReadonlyList = [...payloadUser.sMessgeList ?? []]
+                var sortedIncomingMessageList = nonReadonlyList.sort((a, b) => {
+                    return b.lSrId - a.lSrId
+                })
+
+
+
+                var newNoProxySortedMessageList: GroupChat[] = user?.AllGroupMsgList.filter(i => !i.IsKsProxy)
+                var todayGroupName = UIHelper.CreateGroupNameFromdate(new Date())
+
+                sortedIncomingMessageList.forEach(newMwssage => {
+                    var newMessageIndex = newNoProxySortedMessageList.findIndex(i => i.lSrId == newMwssage.lSrId)
+
+                    if (newMessageIndex == -1) {
+                        var dt = new Date(newMwssage.dtMsg)
+                        var newGroup = UIHelper.CreateGroupNameFromdate(dt)
+
+                        newMwssage.DayDisplayGroupName = newGroup == todayGroupName ? "Today" : newGroup
+                        newNoProxySortedMessageList.unshift(newMwssage)
+                    }
+                });
+
+                newNoProxySortedMessageList = newNoProxySortedMessageList.sort((a, b) => {
+                    return b.lSrId - a.lSrId
+                })
+
+
+                var uniqueMessagaeList: GroupChat[] = []
+                newNoProxySortedMessageList.forEach((item) => {
+                    var existItemIndex = uniqueMessagaeList.findIndex(i => i.lSrId == item.lSrId);
+                    if (existItemIndex != -1) {
+                        return
+                    }
+
+                    //Fixing group name
+                    var previosMessageWithSameGroupIndex = uniqueMessagaeList.findIndex(i => i.DayDisplayGroupName == item.DayDisplayGroupName);
+                    if (previosMessageWithSameGroupIndex != -1) {
+                        var OldGroupNameMessage = uniqueMessagaeList[previosMessageWithSameGroupIndex]
+                        OldGroupNameMessage.DayDisplayGroupName = ""
+                        uniqueMessagaeList[previosMessageWithSameGroupIndex] = OldGroupNameMessage
+                    }
+
+                    uniqueMessagaeList.push(item)
+                })
+
+
+                user.sMessgeList = []
+                user.AllGroupMsgList = uniqueMessagaeList
+
+                state.AllGroupList[userIndex] = user
             })
 
 
-            Group.sMessgeList = []
-            Group.AllGroupMsgList = uniqueMessagaeList
-
-            state.AllGroupList[GroupIndex] = Group
-
+            if (!state.FilterGroupList.length) {
+                state.FilterGroupList = state.AllGroupList
+            }
+            else {
+                state.FilterGroupList.forEach((element, index) => {
+                    state.FilterGroupList[index] = state.AllGroupList.find(i => i.groupId == element.groupId)!
+                });
+            }
 
         },
         AddNewGroupChat: (state, action: PayloadAction<GroupChat>) => {

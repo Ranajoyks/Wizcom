@@ -51,11 +51,13 @@ import * as RNFS from 'react-native-fs';
 import RNFetchBlob from 'rn-fetch-blob';
 import FileViewer from 'react-native-file-viewer';
 import axios from 'axios';
+import GroupChatOptions from '../../../Redux/Reducer/GroupChatOptions';
 
 const GroupChatDetailsPage2 = (
   props: StackScreenProps<RootStackParamList, 'GroupChatDetailsPage2'>,
 ) => {
   const OnBackRefresRequest = props.route.params.OnBackRefresRequest;
+  const SelectedGroup = props.route.params.Group;
   const navigation = useNavigation<NavigationProps>();
   const dispatch = useAppDispatch();
 
@@ -72,7 +74,7 @@ const GroupChatDetailsPage2 = (
 
   const [ShowDownloading, setShowDownloading] = useState<number[]>([]);
   const [singleFileDownloadId, setSingleFileDownloadId] = useState<number>(0);
-  const chatUserOptions = useAppSelector(i => i.ChatUserOptions);
+  const GroupchatUserOptions = useAppSelector(i => i.GroupChatOptions);
 
   const [SelectedFile, setSelectedFile] = useState<RNFile>();
   const [GroupMember, setGroupMember] = useState<GroupMember[]>([]);
@@ -118,14 +120,14 @@ const GroupChatDetailsPage2 = (
       return;
     }
     dispatch(
-      ChatUserOptions.actions.UpdateAllGroupList([
+      GroupChatOptions.actions.UpdateAllGroupList([
         GroupDetailsResponse.data.group,
       ]),
     );
     setGroupDetail(GroupDetailsResponse.data.group);
     console.log(
-      'GroupDetailsResponse.data.groupId',
-      GroupDetailsResponse.data.group.groupId,
+      'GroupDetailsResponse.data',
+      GroupDetailsResponse.data.group,
     );
 
     LoadOldMessages(
@@ -182,17 +184,16 @@ const GroupChatDetailsPage2 = (
       tempGroupId!,
       tempIndexNo!,
     ).then(res => {
-      console.log(' group chat res', res);
+      // console.log('group chat res', res);
       if (res.data) {
         setCurrentIndex(tempIndexNo);
-        dispatch(
-          ChatUserOptions.actions.LoadGroupOneToOneChatList({
-            messageList: res.data,
-            GroupId: tempGroupId!,
-          }),
-        );
+        var GroupChat: Group = {
+          groupId: SelectedGroup.groupId,
+          sMessgeList: res.data
+        } as unknown as Group
+        dispatch(GroupChatOptions.actions.LoadGroupOneToOneChatList([GroupChat]));
 
-        AppDBHelper.SetGroups(chatUserOptions.AllGroupList, tempSenderChatId!);
+        AppDBHelper.SetGroups(GroupchatUserOptions.AllGroupList, tempSenderChatId!);
       }
       setShowSilentLoader(false);
     });
@@ -264,7 +265,7 @@ const GroupChatDetailsPage2 = (
     chat.sConnId = 'connectionId';
 
     setNewSendMessage('');
-    dispatch(ChatUserOptions.actions.AddNewGroupChat(chat));
+    dispatch(GroupChatOptions.actions.AddNewGroupChat(chat));
 
     console.log('SendMsg: ', chat);
 
@@ -375,7 +376,7 @@ const GroupChatDetailsPage2 = (
         console.log('DeleteResponseError: ', err);
       });
   };
-  var MessageList = chatUserOptions.AllGroupList.find(
+  var MessageList = GroupchatUserOptions.AllGroupList.find(
     i => i.groupId == groupDetail?.groupId,
   )?.AllGroupMsgList;
 
@@ -401,7 +402,8 @@ const GroupChatDetailsPage2 = (
           <View style={{ flex: 1 }}>
             <Text style={styles.Grouptitle}>Group Chat</Text>
           </View>
-          <TouchableOpacity
+          <UserProfileScreen userName={UserInfo?.userName ?? ''} Admin={isAdmin} GroupId={SelectedGroup.groupId} />
+          {/* <TouchableOpacity
             onPress={() => {
               DropDownOpen();
             }}>
@@ -561,7 +563,7 @@ const GroupChatDetailsPage2 = (
                 </View>
               </View>
             </View>
-          )}
+          )} */}
         </View>
         <View style={styles.groupcontainer}>
           <View>
@@ -719,7 +721,7 @@ const GroupChatDetailsPage2 = (
 
                             ShowToastMessage('Downloaded');
                             dispatch(
-                              ChatUserOptions.actions.UpdateGroupChat(
+                              GroupChatOptions.actions.UpdateGroupChat(
                                 dataReceived,
                               ),
                             );

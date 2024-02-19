@@ -96,14 +96,14 @@ const MainPage = () => {
           }}
         />
 
-        {/* <Tab.Screen
+        <Tab.Screen
           name="Group"
           options={{ tabBarLabel: 'Group' }}
           children={() => {
             return <GroupMainPage2   />;
           }}
         />
-        <Tab.Screen
+         {/*<Tab.Screen
           name="Notifications"
           options={{ tabBarLabel: 'Notifications' }}
           children={() => {

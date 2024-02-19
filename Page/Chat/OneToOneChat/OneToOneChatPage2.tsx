@@ -375,7 +375,7 @@ const OneToOneChatPage2 = (
               style={{ height: 30, width: 23.5, marginRight: 10, marginTop: 3 }}
             />
           </TouchableOpacity>
-          <UserProfileScreen userName={UserInfo?.userName ?? ''} />
+          <UserProfileScreen userName={UserInfo?.userName ?? ''} Admin={false} GroupId={0} />
         </View>
       </View>
       <View style={{ height: '89%', backgroundColor: '#FFFFFF' }}>

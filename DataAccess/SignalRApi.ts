@@ -27,6 +27,8 @@ export default class SignalRApi extends BaseApi {
       code: companyID,
     });
 
+    console.log("user/set", Data)
+
     return this.Post('SignalR', 'user/set', Data);
   }
   public static UserSetDevice(userData: string): Promise<KSResponse<boolean>> {

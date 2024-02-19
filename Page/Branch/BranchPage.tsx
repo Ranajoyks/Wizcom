@@ -66,8 +66,8 @@ export class BranchPage extends BaseComponent<"BranchPage", BranchPageViewModel>
     }
 
     var CompanyID = await SessionHelper.GetCompanyID()
-
-    var chatId = `${CompanyID}_${companyRes.data.d.obj.lUsrId}`
+    var chatId = await UIHelper.GetChatId(companyRes.data.d.obj.lUsrId)
+    //var chatId = `${CompanyID}_${companyRes.data.d.obj.lUsrId}`
     await SessionHelper.SetChatId(chatId)
 
 

@@ -63,7 +63,7 @@ const OneToOneChatOptions = createSlice({
             }
         },
         LoadUserOneToOneChatList: (state, action: PayloadAction<ChatUser[]>) => {
-            console.log("payloadUser.sMessgeList", action.payload)
+
             action.payload.forEach(payloadUser => {
 
 
@@ -88,7 +88,7 @@ const OneToOneChatOptions = createSlice({
                     return b.lSrId - a.lSrId
                 })
 
-                console.log("sortedIncomingMessageList", sortedIncomingMessageList.length)
+
 
                 var newNoProxySortedMessageList: Chat[] = user?.AllChatOneToOneList.filter(i => !i.IsKsProxy)
                 var todayGroupName = UIHelper.CreateGroupNameFromdate(new Date())

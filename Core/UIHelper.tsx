@@ -68,7 +68,7 @@ export default class UIHelper {
 
   public static async GetChatId(UserId: number) {
     var CompanyId = await SessionHelper.GetCompanyID()
-    return `${CompanyId}_${UserId}`;
+    return `U000${CompanyId}_${UserId}`;
   }
   public static GetProxySrId(lastNumber?: number) {
     return Math.floor(Math.random() * 10000000) + 100000 + (lastNumber ?? 0)

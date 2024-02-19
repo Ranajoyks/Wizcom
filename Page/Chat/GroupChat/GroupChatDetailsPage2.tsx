@@ -392,7 +392,7 @@ const GroupChatDetailsPage2 = (
           <TouchableOpacity
             onPress={() => {
               OnBackRefresRequest && OnBackRefresRequest();
-              navigation.popToTop();
+              navigation.pop();
             }}>
             <Image
               source={require('../../../assets/backimg.png')}

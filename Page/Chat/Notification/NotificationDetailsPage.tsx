@@ -333,7 +333,7 @@ const NotificationPage = (
         <TouchableOpacity
           onPress={() => {
             OnUserListRefresRequest && OnUserListRefresRequest();
-            navigation.popToTop();
+            navigation.pop();
           }}>
           <Image
             source={require('../../../assets/backimg.png')}

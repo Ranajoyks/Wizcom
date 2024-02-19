@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 
 import AppStack, { RootStackParamList } from './Root/AppStack';
-import { DefaultTheme, PaperProvider, Snackbar } from 'react-native-paper';
+import { DefaultTheme, PaperProvider, Portal, Snackbar } from 'react-native-paper';
 import { Alert, BackHandler } from 'react-native';
 import { Provider } from 'react-redux';
 import { store } from './Redux/Store';
@@ -65,25 +65,27 @@ const App = (props: any) => {
   };
 
   const theme = lightTheme;
-
+  console.log("snackbarOptions.State ", snackbarOptions.State, "-->", snackbarOptions.Text)
   return (
     <PaperProvider theme={theme}>
       <MPopUpLoader mode='Square' visible={pageOptions.IsPageLoading}></MPopUpLoader>
       <AppStack />
-      <Snackbar
-        style={{ zIndex: 1001 }}
-        visible={snackbarOptions.State == "Open"}
-        onDismiss={() => dispatch(SnackbarOptions.actions.Close())}
-        duration={5000}
-        elevation={1}
+      <Portal>
+        <Snackbar
 
-        action={{
-          label: 'Dismiss',
-          onPress: () => dispatch(SnackbarOptions.actions.Close())
-        }}
-      >
-        {snackbarOptions.Text}
-      </Snackbar>
+          visible={snackbarOptions.State == "Open"}
+          onDismiss={() => dispatch(SnackbarOptions.actions.Close())}
+          duration={5000}
+          elevation={1}
+
+          action={{
+            label: 'Dismiss',
+            onPress: () => dispatch(SnackbarOptions.actions.Close())
+          }}
+        >
+          {snackbarOptions.Text}
+        </Snackbar>
+      </Portal>
     </PaperProvider>
   );
 }

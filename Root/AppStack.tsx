@@ -29,6 +29,7 @@ import AllGroupMember from '../Page/Chat/OneToOneChat/AllGroupMember';
 import GroupChatDetailsPage2 from '../Page/Chat/GroupChat/GroupChatDetailsPage2';
 import NotificationPage from '../Page/Chat/Notification/NotificationDetailsPage';
 import { NotificationUser } from '../Entity/NotificationUser';
+import AddGroupMember from '../Page/Chat/GroupChat/AddGroupMemberPage';
 
 
 
@@ -52,6 +53,7 @@ export type RootStackParamList = {
   GroupMainPage: undefined,
   GroupChatDetailsPage2: { Group: Group, OnBackRefresRequest?: () => void },
   CreateGroup: { GroupID: string }
+  AddGroupMember: { GroupID: string }
   DeleteGroupMember: { GroupID: string }
   AllGroupMember: { GroupID: string }
   NotificationPage: { SecondUser: NotificationUser, OnUserListRefresRequest?: () => void }
@@ -124,6 +126,11 @@ function AppStack() {
         <Stack.Screen
           name="CreateGroup"
           component={CreateGroup}
+          options={{ headerShown: false, gestureEnabled: false }}
+        />
+        <Stack.Screen
+          name="AddGroupMember"
+          component={AddGroupMember}
           options={{ headerShown: false, gestureEnabled: false }}
         />
         <Stack.Screen

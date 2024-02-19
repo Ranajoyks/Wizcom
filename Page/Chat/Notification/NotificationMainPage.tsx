@@ -26,6 +26,7 @@ import SignalRApi from '../../../DataAccess/SignalRApi';
 import ChatUserOptions from '../../../Redux/Reducer/NotificationOptions';
 import { NotificationUser } from '../../../Entity/NotificationUser';
 import KSUtility from '../../../Core/KSUtility';
+import NotificationOptions from '../../../Redux/Reducer/NotificationOptions';
 
 
 
@@ -34,9 +35,13 @@ import KSUtility from '../../../Core/KSUtility';
 const NotificationMainPage = () => {
 
   const dispatch = useAppDispatch()
-  const notificationData = useAppSelector(i => i.NotificationOptions)
+  const filteredNotificationList = useAppSelector(i => i.NotificationOptions.FilterUserNotificationList)
+  const pageData = useAppSelector(i => i.PageOptions)
+
+  const [isPageRefreshing, setIsPageRefreshing] = useState(false)
+
+
   var FetchMessageInterval: NodeJS.Timeout;
-  const [filterIsCalled, setFilterIsCalled] = useState(false);
   useEffect(() => {
     InitilizeOnce()
     return () => {
@@ -46,15 +51,11 @@ const NotificationMainPage = () => {
 
 
   const InitilizeOnce = async () => {
+    var chatId = await SessionHelper.GetChatId()
 
-    setFilterIsCalled(false)
-
-    //If no data found in local storage then page need to wait for network data
-
-    console.log("GetUserList", "start");
-    // SignalRHubConnection.GetUserList().then((res) => {
-    //   UpdateAllOnlineUser(res)
-    // })
+    AppDBHelper.GetNotificationUsers(chatId!).then(res => {
+      dispatch(NotificationOptions.actions.UpdateAllNotificationUserList(res ?? []))
+    })
 
     FetchAllUserNotificationMessages()
 
@@ -66,13 +67,7 @@ const NotificationMainPage = () => {
   }
 
   const UpdateAllOnlineUser = async (allUsers: NotificationUser[]) => {
-    dispatch(ChatUserOptions.actions.UpdateAllNotificationUserList(allUsers));
-    console.log("filterIsCalled", filterIsCalled)
-    //Filter data will call only once
-
-    dispatch(ChatUserOptions.actions.UpdateFilterNotificationUserList(allUsers));
-    setFilterIsCalled(true)
-
+    dispatch(NotificationOptions.actions.UpdateAllNotificationUserList(allUsers));
   };
 
   const FetchAllUserNotificationMessages = async () => {
@@ -81,17 +76,11 @@ const NotificationMainPage = () => {
 
     var cuResponse = await SignalRApi.GetAllUserNotification(tempSenderChatId!, branch?.lId!)
     console.log("NotificatinDetails: ", cuResponse.data);
-
-
     if (cuResponse.data) {
       UpdateAllOnlineUser(cuResponse.data)
-      dispatch(ChatUserOptions.actions.UpdateAllNotificationUserList(cuResponse.data))
-
-
-      dispatch(ChatUserOptions.actions.LoadUserOneToOneNotificationChatList(cuResponse.data))
-
-
-      AppDBHelper.SetNotificationUsers(chatUserOptions.AllUserNotificationList, tempSenderChatId!)
+      dispatch(NotificationOptions.actions.UpdateAllNotificationUserList(cuResponse.data))
+      dispatch(NotificationOptions.actions.LoadUserOneToOneNotificationChatList(cuResponse.data))
+      AppDBHelper.SetNotificationUsers(cuResponse.data, tempSenderChatId!)
 
     }
   }
@@ -102,15 +91,15 @@ const NotificationMainPage = () => {
       <SafeAreaView>
         <View style={{ marginTop: 10 }}>
           <FlatList
-            data={chatUserOptions.FilterUserNotificationList}
+            data={filteredNotificationList}
             keyExtractor={e => e.lId + ''}
-            refreshing={chatUserOptions.IsPageLoading}
+            refreshing={isPageRefreshing}
 
             onRefresh={FetchAllUserNotificationMessages}
             renderItem={((d) => {
               return <ChatUserScreen data={d.item} OnUserListRefresRequest={FetchAllUserNotificationMessages} />
             })}
-            ListEmptyComponent={EmptyListMessage(chatUserOptions.FilterUserNotificationList.length == 0)}
+            ListEmptyComponent={EmptyListMessage}
 
           />
         </View>
@@ -121,7 +110,7 @@ const NotificationMainPage = () => {
 
 
 const ChatUserScreen = (props: { data: NotificationUser, OnUserListRefresRequest: () => void }) => {
-  const users = useAppSelector(i => i.ChatUserOptions.AllUserNotificationList)
+  const users = useAppSelector(i => i.NotificationOptions.AllUserNotificationList)
   const user = users.find(i => i.lId == props.data.lId)!
 
   const navigate = useNavigation<NavigationProps>()
@@ -135,7 +124,7 @@ const ChatUserScreen = (props: { data: NotificationUser, OnUserListRefresRequest
     }}
       style={{ marginLeft: 5, paddingTop: 0, paddingBottom: 0, }}
       title={user.userName}
-      titleStyle={{ fontFamily: 'OpenSans-Regular', fontSize: 15, marginTop: 0 }}
+      titleStyle={{ fontFamily: 'OpenSans-SemiBold', fontSize: 15, marginTop: 0 }}
       description={() => {
         return (
           <View>
@@ -164,7 +153,7 @@ const ChatUserScreen = (props: { data: NotificationUser, OnUserListRefresRequest
             }} numberOfLines={1}>{lastMessage?.sMsg || user.message || "No message"}
             </Text>
             <View>
-              <MDivider marginPadingTopButom={10}></MDivider>
+              <MDivider></MDivider>
             </View>
           </View>
         );
@@ -186,8 +175,8 @@ const ChatUserScreen = (props: { data: NotificationUser, OnUserListRefresRequest
             style={{
               backgroundColor: user?.isUserLive ? 'green' : 'orange',
               position: 'absolute',
-              bottom: 15,
-              right: 5,
+              bottom: 20,
+              right:0,
             }}></Badge>
         </View>
       )}

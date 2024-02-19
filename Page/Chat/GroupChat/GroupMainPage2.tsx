@@ -37,7 +37,7 @@ const GroupMainPage2 = () => {
 
   const GetAllGroups = async () => {
     SignalRApi.GetAllGroup().then(groupListRes => {
-      console.log('GroupResponse: ', groupListRes);
+      // console.log('GroupResponse: ', groupListRes);
       if (groupListRes.IsKSError) {
         ShowToastMessage(groupListRes.ErrorInfo || 'Some issue happening');
         return;
@@ -111,7 +111,7 @@ const ChatGroupScreen = (props: {
       }}
       style={{marginLeft: 5, paddingTop: 0, paddingBottom: 0}}
       title={group?.groupName}
-      titleStyle={{fontFamily: 'OpenSans-Regular', fontSize: 15, marginTop: 0}}
+      titleStyle={{fontFamily: 'OpenSans-SemiBold', fontSize: 15, marginTop: 0}}
       description={() => {
         return (
           <View>

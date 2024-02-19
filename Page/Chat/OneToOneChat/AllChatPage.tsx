@@ -79,16 +79,13 @@ const AllChatPage = () => {
   };
 
   const FetchAllUserAndUnReadMessages = async () => {
-
     var branch = await SessionHelper.GetBranch()
     var tempSenderChatId = await SessionHelper.GetChatId()
-
     setIsPageRefreshing(true)
     SignalRHubConnection.GetUserList().then((res) => {
       setIsPageRefreshing(false)
       UpdateAllOnlineUser(res)
     })
-
     SignalRApi.GetUsersWithMessage(tempSenderChatId!, branch?.lId!).then((cuResponse) => {
       if (!cuResponse.data) {
         console.error("No data inside GetUsersWithMessage ")
@@ -142,7 +139,7 @@ const ChatUserScreen = (props: { data: ChatUser, OnUserListRefresRequest: () => 
     }}
       style={{ marginLeft: 5, paddingTop: 0, paddingBottom: 0, }}
       title={user.userName}
-      titleStyle={{ fontFamily: 'OpenSans-Regular', fontSize: 15, marginTop: 0 }}
+      titleStyle={{ fontFamily: 'OpenSans-SemiBold', fontSize: 15, marginTop: 0 }}
       description={() => {
         return (
           <View>
@@ -171,7 +168,7 @@ const ChatUserScreen = (props: { data: ChatUser, OnUserListRefresRequest: () => 
             }} numberOfLines={1}>{lastMessage?.sMsg || user.message || "No message"}
             </Text>
             <View>
-              <MDivider marginPadingTopButom={10}></MDivider>
+              <MDivider></MDivider>
             </View>
           </View>
         );
@@ -193,8 +190,8 @@ const ChatUserScreen = (props: { data: ChatUser, OnUserListRefresRequest: () => 
             style={{
               backgroundColor: user?.isUserLive ? 'green' : 'orange',
               position: 'absolute',
-              bottom: 15,
-              right: 5,
+              bottom: 20,
+              right:0,
             }}></Badge>
         </View>
       )}

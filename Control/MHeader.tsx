@@ -247,6 +247,12 @@ export const UserProfileScreen = (props: {
       GroupID: '',
     });
   };
+  const AddMember = async () => {
+    setVisible(false);
+    navigation.navigate('AddGroupMember', {
+      GroupID: props.GroupId.toString(),
+    });
+  };
 
   const HandleUserlabelClicked = (event: GestureResponderEvent) => {
     var isOnLineUser = showMode == 'Online User';
@@ -300,12 +306,7 @@ export const UserProfileScreen = (props: {
           <View style={localStyles.divider}></View>
           {props.Admin && (
             <>
-              <TouchableOpacity
-                onPress={() =>
-                  navigation.navigate('CreateGroup', {
-                    GroupID: props.GroupId.toString(),
-                  })
-                }>
+              <TouchableOpacity onPress={AddMember}>
                 <MenuItem2 HearderText="Add Member" />
               </TouchableOpacity>
               <View style={localStyles.divider}></View>

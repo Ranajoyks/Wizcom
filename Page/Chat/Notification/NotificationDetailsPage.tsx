@@ -51,6 +51,9 @@ import SessionHelper from '../../../Core/SessionHelper';
 import SignalRApi from '../../../DataAccess/SignalRApi';
 import { SignalRHubConnection } from '../../../DataAccess/SignalRHubConnection';
 import { ShowPageLoader, ShowToastMessage } from '../../../Redux/Store';
+import { NotificationUser } from '../../../Entity/NotificationUser';
+import NotificationOptions from '../../../Redux/Reducer/NotificationOptions';
+import { Notification } from '../../../Entity/Notification';
 
 const NotificationPage = (
   props: StackScreenProps<RootStackParamList, 'NotificationPage'>,
@@ -72,7 +75,7 @@ const NotificationPage = (
 
   const [ShowDownloading, setShowDownloading] = useState<number[]>([]);
   const [singleFileDownloadId, setSingleFileDownloadId] = useState<number>(0);
-  const chatUserOptions = useAppSelector(i => i.ChatUserOptions);
+  const chatUserOptions = useAppSelector(i => i.NotificationOptions);
 
   const [SelectedFile, setSelectedFile] = useState<RNFile>();
 
@@ -158,23 +161,28 @@ const NotificationPage = (
     ).then(res => {
       if (res.data) {
         setCurrentIndex(tempIndexNo);
-        dispatch(
-          ChatUserOptions.actions.LoadUserOneToOneChatList({
-            messageList: res.data,
-            SecondUserId: SecondUser.lId,
-          }),
-        );
+       
+        console.log("sMessgeList", res.data.length);
 
-        AppDBHelper.SetChatUsers(
-          chatUserOptions.AllUserList,
+        SecondUser.sMessgeList = res.data
+
+        var proxyChatUser: NotificationUser = {
+          lId: SecondUser.lId,
+          sMessgeList: res.data
+        } as unknown as NotificationUser
+
+        dispatch(NotificationOptions.actions.LoadUserOneToOneNotificationChatList([proxyChatUser]));
+
+        AppDBHelper.SetNotificationUsers(
+          chatUserOptions.AllUserNotificationList,
           tempSenderChatId!,
         );
       }
       setShowSilentLoader(false);
     });
   };
-  const DownloadFile = async (item: Chat): Promise<Chat | undefined> => {
-    var newChatItem = {} as Chat;
+  const DownloadFile = async (item: Notification): Promise<Notification | undefined> => {
+    var newChatItem = {} as Notification;
 
     return new Promise(async (resolve, reject) => {
       if (item.AttahmentLocalPath) {
@@ -224,14 +232,14 @@ const NotificationPage = (
   };
   const HandleSendMessage = async () => {
     var tempMessage = newSendMessage;
-    var chat = SignalRHubConnection.GetProxyChatMessage(
+    var chat = SignalRHubConnection.GetProxyNotificationChatMessage(
       SenderChatId!,
       ReceiverChatId!,
       tempMessage,
       UIHelper.GetProxySrId(lastMessage?.lSrId),
     );
     setNewSendMessage('');
-    dispatch(ChatUserOptions.actions.AddNewOneToOneChat(chat));
+    dispatch(NotificationOptions.actions.AddNewOneToOneNotificationChat(chat));
 
     if (SelectedFile) {
       var FileUploadData = new FormData();
@@ -312,9 +320,9 @@ const NotificationPage = (
     Alert.alert(AcceptRejectResponse.data)
   };
 
-  var MessageList = chatUserOptions.AllUserList.find(
+  var MessageList = chatUserOptions.AllUserNotificationList.find(
     i => i.lId == SecondUser.lId,
-  )?.AllChatOneToOneList;
+  )?.AllNotificatonOneToOneList;
   var NotificationMessageList = MessageList?.filter((i: any) => i.cMsgFlg === 'F' || i.cMsgFlg === 'N');
 
 
@@ -370,7 +378,7 @@ const NotificationPage = (
               style={{ height: 30, width: 23.5, marginRight: 10, marginTop: 3 }}
             />
           </TouchableOpacity>
-          <UserProfileScreen userName={UserInfo?.userName ?? ''} />
+          <UserProfileScreen userName={UserInfo?.userName ?? ''} Admin={false} GroupId={0} />
         </View>
       </View>
       <View style={{ height: '89%', backgroundColor: '#FFFFFF' }}>
@@ -512,7 +520,7 @@ const NotificationPage = (
 
                             ShowToastMessage('Downloaded');
                             dispatch(
-                              ChatUserOptions.actions.UpdateOneToOneChat(
+                              NotificationOptions.actions.UpdateOneToOneNotificationChat(
                                 dataReceived,
                               ),
                             );

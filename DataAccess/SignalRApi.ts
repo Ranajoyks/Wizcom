@@ -1,24 +1,26 @@
 import SessionHelper from '../Core/SessionHelper';
-import { Chat } from '../Entity/Chat';
-import { ChatUser } from '../Entity/ChatUser';
-import { Group } from '../Entity/Group';
-import { GroupChat } from '../Entity/GroupChat';
-import { GroupDetails } from '../Entity/GroupDetails';
-import { KSResponse } from '../Entity/JInitializeResponse';
-import { NotificationUser } from '../Entity/NotificationUser';
+import {Chat} from '../Entity/Chat';
+import {ChatUser} from '../Entity/ChatUser';
+import {Member} from '../Entity/CreateGroup';
+import { CreateGroupMember } from '../Entity/CreateGroupMember';
+import {Group} from '../Entity/Group';
+import {GroupChat} from '../Entity/GroupChat';
+import {GroupDetails} from '../Entity/GroupDetails';
+import {KSResponse} from '../Entity/JInitializeResponse';
+import { Notification } from '../Entity/Notification';
+import {NotificationUser} from '../Entity/NotificationUser';
 import User from '../Entity/User';
 import BaseApi from './BaseApi';
 
 export default class SignalRApi extends BaseApi {
   public static async UserSetDetail(): Promise<KSResponse<boolean>> {
-
-    var tempUrl = (await BaseApi.getFinalUrl("ERES", "", false)).replace("/api", "")
-
+    var tempUrl = (await BaseApi.getFinalUrl('ERES', '', false)).replace(
+      '/api',
+      '',
+    );
 
     var companyID = await SessionHelper.GetCompanyID();
     var ChatId = await SessionHelper.GetChatId();
-
-
 
     const Data = JSON.stringify({
       userId: ChatId,
@@ -27,7 +29,7 @@ export default class SignalRApi extends BaseApi {
       code: companyID,
     });
 
-    console.log("user/set", Data)
+    console.log('user/set', Data);
 
     return this.Post('SignalR', 'user/set', Data);
   }
@@ -69,7 +71,7 @@ export default class SignalRApi extends BaseApi {
     SenderID: string,
     ReceiverID: string,
     PageNumber: number,
-  ): Promise<KSResponse<Chat[]>> {
+  ): Promise<KSResponse<Notification[]>> {
     //`User/readmessage?companyId=${BranchID}&senderId=${SenderID}&receiverId=${ReceiverID}&lastLSrid=${lSrid}`,
     return await this.Get(
       'SignalR',
@@ -112,7 +114,7 @@ export default class SignalRApi extends BaseApi {
   public static async GetGroupDetails(
     chatid: string,
     GroupId: number,
-  ): Promise<KSResponse<{ group: Group }>> {
+  ): Promise<KSResponse<{group: Group}>> {
     return await this.Get(
       'SignalR',
       `user/groupdetail?userId=${chatid}&groupId=${GroupId}`,
@@ -151,6 +153,19 @@ export default class SignalRApi extends BaseApi {
     return await this.Get(
       'SignalR',
       `user/getnotification?companyId=${CompanyId}&userId=${SenderID}`,
+    );
+  }
+  public static async CreateGroup(GroupCreateCredential: {
+    companyId: string;
+    creatorId: string;
+    groupName: string;
+    members: CreateGroupMember[];
+  }): Promise<KSResponse<boolean>> {
+    //`User/readmessage?companyId=${BranchID}&senderId=${SenderID}&receiverId=${ReceiverID}&lastLSrid=${lSrid}`,
+    return await this.Post(
+      'SignalR',
+      `user/creategroup`,
+      GroupCreateCredential,
     );
   }
 }

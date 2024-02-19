@@ -4,6 +4,7 @@ import UIHelper from '../../Core/UIHelper'
 import { NotificationUser } from '../../Entity/NotificationUser'
 import { Notification } from '../../Entity/Notification'
 import { ChatUser } from '../../Entity/ChatUser'
+import MHeaderOptions from './MHeaderOptions'
 
 
 
@@ -29,24 +30,42 @@ const NotificationOptions = createSlice({
 
         UpdateAllNotificationUserList: (state, action: PayloadAction<NotificationUser[]>) => {
 
+            var currentUserList = state.AllUserNotificationList
             action.payload.forEach(newUser => {
-                var oldUserIndex = state.AllUserNotificationList.findIndex(i => i.lId == newUser.lId)
+                var oldUserIndex = currentUserList.findIndex(i => i.lId == newUser.lId)
                 if (oldUserIndex == -1) {
-                    state.AllUserNotificationList.push(newUser)
+                    currentUserList.push(newUser)
                     return
                 }
 
-                var oldUser = state.AllUserNotificationList[oldUserIndex]
+                var oldUser = currentUserList[oldUserIndex]
 
-                var AllNotificatonOneToOneList = oldUser.AllNotificatonOneToOneList
-
+                var AllChatOneToOneList = oldUser.AllNotificatonOneToOneList
 
                 newUser = Object.assign(oldUser, newUser)
 
-                newUser.AllNotificatonOneToOneList = AllNotificatonOneToOneList
-
-                state.AllUserNotificationList[oldUserIndex] = newUser
+                newUser.AllNotificatonOneToOneList = AllChatOneToOneList
             });
+
+            state.AllUserNotificationList = currentUserList
+
+            //If no data 
+            if (!state.FilterUserNotificationList.length) {
+                state.FilterUserNotificationList = state.AllUserNotificationList
+            }
+
+            //When no search string 
+            if (state.FilterUserNotificationList.length == state.AllUserNotificationList.length) {
+                state.FilterUserNotificationList = state.AllUserNotificationList
+            }
+
+            if (state.FilterUserNotificationList.length && state.FilterUserNotificationList.length != state.AllUserNotificationList.length) {
+                var allFilteredUser = state.FilterUserNotificationList
+                allFilteredUser.forEach((item, itemIndex) => {
+                    allFilteredUser[itemIndex] = currentUserList.find(i => i.lId == item.lId)!
+                })
+                state.FilterUserNotificationList = allFilteredUser
+            }
 
         },
 
@@ -142,7 +161,27 @@ const NotificationOptions = createSlice({
             state.AllUserNotificationList[userIndex].AllNotificatonOneToOneList![chatIndex] = action.payload
         },
 
-    }
+    },
+    extraReducers: ((builder) => {
+        builder.addCase(MHeaderOptions.actions.UpdateSearchText, (state, action) => {
+            var searchText = action.payload
+            if (!searchText) {
+                state.FilterUserNotificationList = state.AllUserNotificationList
+                return
+            }
+
+            state.FilterUserNotificationList = state.AllUserNotificationList.filter(i => i.userName.toLowerCase().includes(searchText.toLowerCase()))
+        });
+        builder.addCase(MHeaderOptions.actions.UpdateUserShowMode, (state, action) => {
+
+            if (action.payload == "All User") {
+                state.FilterUserNotificationList = state.AllUserNotificationList
+                return
+            }
+
+            state.FilterUserNotificationList = state.AllUserNotificationList.filter(i => i.status)
+        });
+    })
 })
 
 export default NotificationOptions;

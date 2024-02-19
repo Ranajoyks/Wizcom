@@ -18,7 +18,7 @@ import {useAppDispatch, useAppSelector} from '../../../Redux/Hooks';
 
 import {EmptyListMessage} from '../../../Control/EmptyListMessage';
 import {MDivider} from '../../../Control/MDivider';
-import {Group} from '../../../Entity/Group';
+import {Group, GroupMember} from '../../../Entity/Group';
 import SignalRApi from '../../../DataAccess/SignalRApi';
 import ChatUserOptions from '../../../Redux/Reducer/NotificationOptions';
 import {ShowToastMessage} from '../../../Redux/Store';
@@ -30,8 +30,7 @@ import {CreateGroupMember} from '../../../Entity/CreateGroupMember';
 import OneToOneChatOptions from '../../../Redux/Reducer/OneToOneChatOptions';
 import UIHelper from '../../../Core/UIHelper';
 
-const CreateGroup = (props:any) => {
-  
+const AddGroupMember = (props: any) => {
   const dispatch = useAppDispatch();
   const filteredUserList = useAppSelector(
     i => i.OneToOneChatOptions.AllUserList,
@@ -44,27 +43,37 @@ const CreateGroup = (props:any) => {
   const [CompanyID, setCompanyID] = useState<string>();
   const [groupName, setGroupName] = useState<string>('');
   const [isPageRefreshing, setIsPageRefreshing] = useState(false);
+  const [GroupMember, setGroupMember] = useState<GroupMember[]>([]);
   const navigation = useNavigation<NavigationProps>();
 
   useEffect(() => {
     (async function () {
       Initilize();
-      console.log("GroupId: ",props.route.params?.GroupID);
-      
+      console.log('AdddGGroupId: ', props.route.params?.GroupID);
     })();
-
-    // IniTilizeOnce();
-    // CheckAppStatus();
-    // IsTalking();
-    // MarkRead();
   }, []);
   const Initilize = async () => {
     var CompanyId = await SessionHelper.GetCompanyID();
-
     await setCompanyID(CompanyId);
+    // console.log("FilterUserList: ",filteredUserList);
+    NewGroupDetails();
+  };
+  const NewGroupDetails = async () => {
+    var chatId = await SessionHelper.GetChatId();
+    var userInfo = await SessionHelper.GetUserDetails();
+    var GroupDetailsResponse = await SignalRApi.GetNewGroupDetails(
+      chatId!,
+      props.route.params?.GroupID,
+    );
+    // console.log(
+    //   'NewgroupDetails',
+    //   JSON.stringify(GroupDetailsResponse.data?.members),
+    // );
+    setGroupName(GroupDetailsResponse.data!.group.groupName);
+    setGroupMember(GroupDetailsResponse.data!.members);
   };
 
-  const HandleCreateGroup = async () => {
+  const AddGroupMembers = async () => {
     console.log('CompanyId: ', CompanyID);
     var ChatID = await SessionHelper.GetChatId();
     console.log('ChatID: ', ChatID);
@@ -79,29 +88,28 @@ const CreateGroup = (props:any) => {
       return;
     }
     console.log('SelectedUserIDs: ', CreateGroupMembers);
-    var GroupCreateCredential = {
-      companyId: CompanyID!,
-      creatorId: ChatID!,
-      groupName: groupName,
+    var GroupMemberAddCreateCredential = {
+      userId: ChatID,
+      groupId: props.route.params?.GroupID,
       members: CreateGroupMembers,
     };
-    console.log('GroupCreateCredential: ', GroupCreateCredential);
-    var CreateGroupResponse = await SignalRApi.CreateGroup(
-      GroupCreateCredential,
-    );
-    console.log('CreateGroupResponse: ', CreateGroupResponse);
+    console.log('GroupCreateCredential: ', GroupMemberAddCreateCredential);
+    // var CreateGroupResponse = await SignalRApi.CreateGroup(
+    //   GroupCreateCredential,
+    // );
+    // console.log('CreateGroupResponse: ', CreateGroupResponse);
 
-    if (!CreateGroupResponse.data) {
-      return;
-    }
-    ShowToastMessage(`${groupName}-created successfully`);
-    navigation.navigate('MainPage');
+    // if (!CreateGroupResponse.data) {
+    //   return;
+    // }
+    // ShowToastMessage(`${groupName}-created successfully`);
+    // navigation.navigate('MainPage');
 
     // ShowToastMessage('Susovan do this :)!!');
   };
 
   console.log(
-    'Re render, all CreateGroup page ' + filteredUserList.length + new Date(),
+    'Re render, all AddMember page ' + filteredUserList.length + new Date(),
   );
   return (
     <React.Fragment>
@@ -117,40 +125,52 @@ const CreateGroup = (props:any) => {
             />
           </TouchableOpacity>
           <View style={{flex: 1}}>
-            <Text style={styles.Grouptitle}>Create Group</Text>
+            <Text style={styles.Grouptitle}>Add Member</Text>
           </View>
         </View>
-        <View style={{padding: 10}}>
+        <View
+          style={{
+            flexDirection: 'row',
+            display: 'flex',
+            justifyContent: 'space-between',
+          }}>
+          <Text
+            style={{
+              fontSize: 16,
+              fontWeight: 'bold',
+              color: '#0383FA',
+              marginLeft: 5,
+            }}>
+            {groupName}
+          </Text>
+          {/* ) : (
+                  <Text
+                    style={{
+                      fontSize: 16,
+                      fontWeight: 'bold',
+                      color: '#0383FA',
+                      marginLeft: 20,
+                    }}>
+                    {model.GroupName?.slice(0, 15)}...
+                  </Text> */}
+          {/* )} */}
           <View
             style={{
-              backgroundColor: '#F1F1F1',
-              // paddingHorizontal: 10,
-              paddingVertical: 5,
-              borderRadius: 6,
               flexDirection: 'row',
+              alignItems: 'center',
+              //paddingRight: 5,
             }}>
-            <TextInput
-              onChangeText={text => {
-                setGroupName(text);
-              }}
-              style={
-                (styles.input,
-                {
-                  width: Dimensions.get('window').width - 100,
-                  fontFamily: 'OpenSans-Regular',
-                })
-              }
-              placeholder="Enter group name"></TextInput>
-            <View
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                //paddingRight: 5,
-              }}>
-              <TouchableOpacity onPress={HandleCreateGroup}>
-                <Text style={{fontSize: 16, fontWeight: 'bold'}}>Create</Text>
-              </TouchableOpacity>
-            </View>
+            <TouchableOpacity onPress={AddGroupMembers}>
+              <Text
+                style={{
+                  fontSize: 16,
+                  fontWeight: 'bold',
+                  alignSelf: 'flex-end',
+                  marginRight: 15,
+                }}>
+                Update
+              </Text>
+            </TouchableOpacity>
           </View>
         </View>
 
@@ -166,8 +186,9 @@ const CreateGroup = (props:any) => {
                   memberId: CompanyID + '_' + data.item.lId,
                 };
                 var isUserPresent =
-                  CreateGroupMembers.find(i => i.memberId == UserID.memberId) !=
-                  null;
+                GroupMember.find(
+                    i => i.memberId == User.lId.toString(),
+                  ) != null;
 
                 return (
                   <List.Item
@@ -237,4 +258,4 @@ const CreateGroup = (props:any) => {
   );
 };
 
-export default CreateGroup;
+export default AddGroupMember;

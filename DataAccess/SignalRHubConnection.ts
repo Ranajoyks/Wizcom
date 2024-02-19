@@ -9,6 +9,7 @@ import { Chat, cMsgFlagType } from '../Entity/Chat';
 import UIHelper from '../Core/UIHelper';
 import { GroupChat } from '../Entity/GroupChat';
 import { Group } from '../Entity/Group';
+import { Notification } from '../Entity/Notification';
 
 export class SignalRHubConnection {
 
@@ -131,6 +132,19 @@ export class SignalRHubConnection {
 
   public static GetProxyChatMessage(senderId: string, Receiverid: string, message: string, proxySrId?: number): Chat {
     var newChat: Chat = {} as Chat;
+    var utcDate = UIHelper.ISTToUTCDate(new Date()).toISOString()
+
+    newChat.dtMsg = utcDate
+    newChat.lSenderId = parseInt(senderId.split('_')[1])
+    newChat.lReceiverId = parseInt(Receiverid.split('_')[1])
+    newChat.sMsg = message
+    newChat.lSrId = proxySrId ?? UIHelper.GetProxySrId();
+
+    newChat.IsKsProxy = true
+    return newChat
+  }
+  public static GetProxyNotificationChatMessage(senderId: string, Receiverid: string, message: string, proxySrId?: number): Notification {
+    var newChat: Notification = {} as Notification;
     var utcDate = UIHelper.ISTToUTCDate(new Date()).toISOString()
 
     newChat.dtMsg = utcDate

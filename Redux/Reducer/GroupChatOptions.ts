@@ -2,6 +2,7 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit'
 import { Group } from '../../Entity/Group'
 import { GroupChat } from '../../Entity/GroupChat'
 import UIHelper from '../../Core/UIHelper'
+import MHeaderOptions from './MHeaderOptions'
 
 
 export interface GroupChatOptionsState {
@@ -175,7 +176,27 @@ const GroupChatOptions = createSlice({
 
             state.AllGroupList[GroupIndex].AllGroupMsgList![chatIndex] = action.payload
         },
-    }
+    },
+    extraReducers: ((builder) => {
+        builder.addCase(MHeaderOptions.actions.UpdateSearchText, (state, action) => {
+            var searchText = action.payload
+            if (!searchText) {
+                state.FilterGroupList = state.AllGroupList
+                return
+            }
+
+            state.FilterGroupList = state.AllGroupList.filter(i => i.groupName.toLowerCase().includes(searchText.toLowerCase()))
+        });
+        builder.addCase(MHeaderOptions.actions.UpdateUserShowMode, (state, action) => {
+
+            if (action.payload == "All User") {
+                state.FilterGroupList = state.AllGroupList
+                return
+            }
+
+            state.FilterGroupList = state.AllGroupList.filter(i => i.groupId)
+        });
+    })
 })
 
 export default GroupChatOptions;

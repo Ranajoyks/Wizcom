@@ -4,6 +4,8 @@ import User from "../Entity/User";
 import { Branch } from "../Entity/Branch";
 import { ChatUser } from "../Entity/ChatUser";
 import StorageHelper from "./StorageHelper";
+import { GroupMember } from "../Entity/Group";
+import { CreateGroupMember } from "../Entity/CreateGroupMember";
 
 
 
@@ -12,7 +14,7 @@ export type SessionKeys =
     | "URL" | "DeviceId"
     | "ReceiverID" | "FCMToken"
     | "lId" | "UserDetails" | "CompanyID"
-    | "Branch" | "SessionId" | "ChatDB"
+    | "Branch" | "SessionId" | "ChatDB" |"XYZCreateGroupMember"
 
 
 export default class SessionHelper extends StorageHelper {
@@ -84,6 +86,12 @@ export default class SessionHelper extends StorageHelper {
             return item as unknown as any;
         }
         return JSON.parse(item) as any;
+    }
+    public static async SetAddGroupMember(CreateGroupMember: CreateGroupMember[]) {
+        await this.setInternal("XYZCreateGroupMember", CreateGroupMember=[])
+    }
+    public static async GetAddGroupMember() {
+        return await this.getInternal<CreateGroupMember[]>("XYZCreateGroupMember")
     }
 
 

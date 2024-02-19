@@ -6,12 +6,14 @@ import {
   FlatList,
   TouchableOpacity,
   Image,
+  TextInput,
+  Dimensions,
 } from 'react-native';
 
 import {ColorCode, styles} from '../../MainStyle';
 import {useNavigation} from '@react-navigation/native';
 import {NavigationProps} from '../../../Core/BaseProps';
-import {Avatar, List} from 'react-native-paper';
+import {Avatar, Checkbox, List} from 'react-native-paper';
 import {useAppDispatch, useAppSelector} from '../../../Redux/Hooks';
 
 import {EmptyListMessage} from '../../../Control/EmptyListMessage';
@@ -24,6 +26,8 @@ import {ChatUser} from '../../../Entity/ChatUser';
 import GroupChatOptions from '../../../Redux/Reducer/GroupChatOptions';
 import AppDBHelper from '../../../Core/AppDBHelper';
 import SessionHelper from '../../../Core/SessionHelper';
+import {CreateGroupMember} from '../../../Entity/CreateGroupMember';
+import OneToOneChatOptions from '../../../Redux/Reducer/OneToOneChatOptions';
 
 const CreateGroup = () => {
   const dispatch = useAppDispatch();
@@ -96,6 +100,37 @@ const CreateGroup = () => {
             <Text style={styles.Grouptitle}>Create Group</Text>
           </View>
         </View>
+        <View style={{padding: 10}}>
+          <View
+            style={{
+              backgroundColor: '#F1F1F1',
+              // paddingHorizontal: 10,
+              paddingVertical: 5,
+              borderRadius: 6,
+              flexDirection: 'row',
+            }}>
+            <TextInput
+              onChangeText={text => {}}
+              style={
+                (styles.input,
+                {
+                  width: Dimensions.get('window').width - 100,
+                  fontFamily: 'OpenSans-Regular',
+                })
+              }
+              placeholder="Enter group name"></TextInput>
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                //paddingRight: 5,
+              }}>
+              <TouchableOpacity onPress={CreateGroup}>
+                <Text style={{fontSize: 16, fontWeight: 'bold'}}>Create</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
 
         <SafeAreaView>
           <View style={{marginTop: 10}}>
@@ -118,10 +153,43 @@ const CreateGroup = () => {
 const ChatUserScreen = (props: {data: ChatUser}) => {
   const users = useAppSelector(i => i.OneToOneChatOptions.AllUserList);
   const User = users.find(i => i.lId == props.data.lId);
+  const UserIndex = users.findIndex(i => i.lId == props.data.lId);
   const navigate = useNavigation<NavigationProps>();
+  const [checked, setChecked] = React.useState(false);
+  const [CreateGroupMember, setCreateGroupMember] = React.useState<
+    CreateGroupMember[]
+  >([]);
+  const dispatch = useAppDispatch();
+  const ChangeCheckboxValue = async (User: ChatUser, UserID: string) => {
+    var CompanyId = await SessionHelper.GetCompanyID();
+
+    console.log('UserID: ', UserID);
+    var Members = {
+      memberId: CompanyId + '_' + UserID,
+    };
+    var Checking = CreateGroupMember.find(
+      i => i.memberId == CompanyId + '_' + UserID,
+    );
+    console.log('Checking: ', Checking);
+
+    if (!Checking) {
+      users[UserIndex].isSelected = true;
+      dispatch(OneToOneChatOptions.actions.UpdateAllUserList(users));
+      console.log('NotcheckingHICreateGroupMember',  users[UserIndex]);
+
+      setCreateGroupMember([...CreateGroupMember, Members]);
+    }
+    if (Checking) {
+      setCreateGroupMember(
+        CreateGroupMember.filter(i => i.memberId != CompanyId + '_' + UserID),
+      );
+    }
+    console.log('CreateGroupMember:', CreateGroupMember);
+  };
+
   return (
     <List.Item
-      style={{marginLeft: 5, paddingTop: 0, paddingBottom: 0}}
+      style={{marginLeft: 5, paddingTop: 0, paddingBottom: 0, marginBottom: 10}}
       title={User?.userFullName}
       titleStyle={{fontFamily: 'OpenSans-Regular', fontSize: 15, marginTop: 0}}
       left={props => (
@@ -137,6 +205,16 @@ const ChatUserScreen = (props: {data: ChatUser}) => {
             label={User?.userFullName?.charAt(0).toUpperCase() ?? ''}
           />
         </View>
+      )}
+      right={props => (
+        <Checkbox
+          status={checked ? 'checked' : 'unchecked'}
+          color="green"
+          onPress={() => {
+            setChecked(!checked);
+            ChangeCheckboxValue(User!, User!.lId.toString());
+          }}
+        />
       )}
     />
   );

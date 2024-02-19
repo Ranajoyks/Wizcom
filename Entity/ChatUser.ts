@@ -12,5 +12,6 @@ export interface ChatUser {
     userFullName: string;
     userName: string;
     sMessgeList?: Chat[],
+    isSelected:boolean,
     AllChatOneToOneList?: Chat[],
 }

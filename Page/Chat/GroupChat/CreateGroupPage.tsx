@@ -35,14 +35,11 @@ const CreateGroupPage = (props: any) => {
 
   const dispatch = useAppDispatch();
   const filteredUserData = useAppSelector(i => i.OneToOneChatOptions.AllUserList);
+  const pageData = useAppSelector(i => i.PageOptions);
 
   const [selectedUserList, setSelectedUserList] = useState<ChatUser[]>([]);
-
-
   const [groupName, setGroupName] = useState<string>('');
-  const [isPageRefreshing, setIsPageRefreshing] = useState(false);
   const navigation = useNavigation<NavigationProps>();
-
 
   const HandleCreateGroup = async () => {
 
@@ -153,7 +150,7 @@ const CreateGroupPage = (props: any) => {
             <FlatList
               data={filteredUserData}
               keyExtractor={e => e.lId + ''}
-              refreshing={isPageRefreshing}
+              refreshing={pageData.IsPageLoading}
               renderItem={data => {
                 var User = data.item;
 

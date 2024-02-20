@@ -9,9 +9,9 @@ export const ColorCode = {
   Red: 'red',
   LightBlue: '#C9CC3F',
   Brown: '#5C4033',
-  LightGray:"#404040",
-  LightOrange:"#fef0e1",
-  DrakOrange:"#c66e12"
+  LightGray: '#404040',
+  LightOrange: '#fef0e1',
+  DrakOrange: '#c66e12',
 };
 
 const MainStyle = StyleSheet.create({
@@ -257,7 +257,7 @@ const MainStyle = StyleSheet.create({
 export const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor:'#ffffff',
+    backgroundColor: '#ffffff',
   },
   scrollView: {
     marginLeft: 5,
@@ -413,12 +413,19 @@ export const styles = StyleSheet.create({
     flexDirection: 'row',
     //   zIndex: 1,
   },
-  GroupMemberBadge:{
+  GroupMemberBadge: {
     backgroundColor: '#404040',
     borderRadius: 50,
     alignItems: 'center',
     display: 'flex',
-    fontSize:10,
+    fontSize: 10,
+    fontFamily: 'OpenSans_Condensed-Bold',
+  },
+  GroupNameStyle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#0383FA',
+    marginLeft: 20,
   },
   topAvatar: {
     width: 45,
@@ -520,7 +527,12 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
     flexDirection: 'row',
   },
-  messagefromtext: {paddingLeft: 10, paddingRight: 30, paddingVertical: 0,alignContent:'center'},
+  messagefromtext: {
+    paddingLeft: 10,
+    paddingRight: 30,
+    paddingVertical: 0,
+    alignContent: 'center',
+  },
   messagefromtextcontent: {
     paddingVertical: 5,
     paddingHorizontal: 10,
@@ -529,7 +541,7 @@ export const styles = StyleSheet.create({
     fontSize: 15,
     color: '#000',
     lineHeight: 25,
-    marginHorizontal:5,
+    marginHorizontal: 5,
     fontFamily: 'OpenSans-VariableFont_wdth,wght',
     // flexWrap: 'wrap'
   },
@@ -568,7 +580,7 @@ export const styles = StyleSheet.create({
     borderRadius: 5,
     fontSize: 15,
     color: '#C66E12',
-    marginHorizontal:5,
+    marginHorizontal: 5,
     // lineHeight: 30,
     fontFamily: 'OpenSans-VariableFont_wdth,wght',
     // zIndex: 1,

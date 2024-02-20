@@ -37,7 +37,7 @@ const GroupMainPage2 = () => {
 
   const GetAllGroups = async () => {
     SignalRApi.GetAllGroup().then(groupListRes => {
-      // console.log('GroupResponse: ', groupListRes);
+      console.log('GroupResponse: ', groupListRes);
       if (groupListRes.IsKSError) {
         ShowToastMessage(groupListRes.ErrorInfo || 'Some issue happening');
         return;

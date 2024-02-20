@@ -28,6 +28,9 @@ import IonIcon from 'react-native-vector-icons/Ionicons';
 import ChatAvatar from '../Page/Chat/ChatAvatar';
 import AuthenticationHelper from '../Core/AuthenticationHelper';
 import MHeaderOptions, {UserShowMode} from '../Redux/Reducer/MHeaderOptions';
+import SignalRApi from '../DataAccess/SignalRApi';
+import {ShowPageLoader, ShowToastMessage} from '../Redux/Store';
+import GroupChatOptions from '../Redux/Reducer/GroupChatOptions';
 
 export interface MHeaderProps {
   Title?: string;
@@ -210,6 +213,8 @@ export const UserProfileScreen = (props: {
   const onlineUsers = AllUserList?.filter(i => i.isUserLive);
   const offlineUsers = AllUserList.filter(i => !i.isUserLive);
   const [showMode, setshowMode] = useState<UserShowMode>('Online User');
+  const FilterGroupList = useAppSelector(i => i.GroupChatOptions.AllGroupList);
+  // console.log('FilterGroupList: ', FilterGroupList);
   const dispatch = useAppDispatch();
   useEffect(() => {
     (async function () {
@@ -252,6 +257,32 @@ export const UserProfileScreen = (props: {
     navigation.navigate('AddGroupMember', {
       GroupID: props.GroupId.toString(),
     });
+  };
+  const DeleteMember = async () => {
+    setVisible(false);
+    navigation.navigate('DeleteGroupMember', {
+      GroupID: props.GroupId.toString(),
+    });
+  };
+  const DeleteGroup = async () => {
+    setVisible(false);
+    ShowPageLoader(true);
+    console.log('Props.GroupID: ', props.GroupId);
+
+    var DeleteGroupResponse = await SignalRApi.DeleteGroup(props.GroupId);
+    ShowPageLoader(false);
+
+    if (!DeleteGroupResponse.data) {
+      ShowToastMessage(DeleteGroupResponse.ErrorInfo || 'Someting wrong');
+      return;
+    }
+    ShowToastMessage(`Group Deleted`);
+    console.log('FilterGroupLIst:----- ', FilterGroupList);
+
+    var DeleteGroup = FilterGroupList.filter(i => i.groupId != props.GroupId);
+    console.log('DeleteGroup:-----', DeleteGroup);
+    dispatch(GroupChatOptions.actions.DeleteGroupUpdateList(DeleteGroup))
+    navigation.pop();
   };
 
   const HandleUserlabelClicked = (event: GestureResponderEvent) => {
@@ -310,11 +341,11 @@ export const UserProfileScreen = (props: {
                 <MenuItem2 HearderText="Add Member" />
               </TouchableOpacity>
               <View style={localStyles.divider}></View>
-              <TouchableOpacity>
+              <TouchableOpacity onPress={DeleteMember}>
                 <MenuItem2 HearderText="Remove Member" />
               </TouchableOpacity>
               <View style={localStyles.divider}></View>
-              <TouchableOpacity>
+              <TouchableOpacity onPress={DeleteGroup}>
                 <MenuItem2 HearderText="Delete Group" />
               </TouchableOpacity>
               <View style={localStyles.divider}></View>

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, {useEffect, useState} from 'react';
 import {
   View,
   Text,
@@ -10,31 +10,32 @@ import {
   Dimensions,
 } from 'react-native';
 
-import { ColorCode, styles } from '../../MainStyle';
-import { useNavigation } from '@react-navigation/native';
-import { NavigationProps } from '../../../Core/BaseProps';
-import { Avatar, Checkbox, List } from 'react-native-paper';
-import { useAppDispatch, useAppSelector } from '../../../Redux/Hooks';
+import {ColorCode, styles} from '../../MainStyle';
+import {useNavigation} from '@react-navigation/native';
+import {NavigationProps} from '../../../Core/BaseProps';
+import {Avatar, Checkbox, List} from 'react-native-paper';
+import {useAppDispatch, useAppSelector} from '../../../Redux/Hooks';
 
-import { EmptyListMessage } from '../../../Control/EmptyListMessage';
-import { MDivider } from '../../../Control/MDivider';
-import { Group, GroupMember } from '../../../Entity/Group';
+import {EmptyListMessage} from '../../../Control/EmptyListMessage';
+import {MDivider} from '../../../Control/MDivider';
+import {Group, GroupMember} from '../../../Entity/Group';
 import SignalRApi from '../../../DataAccess/SignalRApi';
 import ChatUserOptions from '../../../Redux/Reducer/NotificationOptions';
-import { ShowPageLoader, ShowToastMessage } from '../../../Redux/Store';
-import { ChatUser } from '../../../Entity/ChatUser';
+import {ShowPageLoader, ShowToastMessage} from '../../../Redux/Store';
+import {ChatUser} from '../../../Entity/ChatUser';
 import GroupChatOptions from '../../../Redux/Reducer/GroupChatOptions';
 import AppDBHelper from '../../../Core/AppDBHelper';
 import SessionHelper from '../../../Core/SessionHelper';
-import { CreateGroupMember } from '../../../Entity/CreateGroupMember';
+import {CreateGroupMember} from '../../../Entity/CreateGroupMember';
 import OneToOneChatOptions from '../../../Redux/Reducer/OneToOneChatOptions';
 import UIHelper from '../../../Core/UIHelper';
-import { GroupChat } from '../../../Entity/GroupChat';
+import {GroupChat} from '../../../Entity/GroupChat';
 
 const CreateGroupPage = (props: any) => {
-
   const dispatch = useAppDispatch();
-  const filteredUserData = useAppSelector(i => i.OneToOneChatOptions.AllUserList);
+  const filteredUserData = useAppSelector(
+    i => i.OneToOneChatOptions.AllUserList,
+  );
   const pageData = useAppSelector(i => i.PageOptions);
 
   const [selectedUserList, setSelectedUserList] = useState<ChatUser[]>([]);
@@ -42,7 +43,6 @@ const CreateGroupPage = (props: any) => {
   const navigation = useNavigation<NavigationProps>();
 
   const HandleCreateGroup = async () => {
-
     if (!groupName) {
       ShowToastMessage('Please provide a valid group name!!');
       return;
@@ -53,43 +53,40 @@ const CreateGroupPage = (props: any) => {
       return;
     }
 
-    ShowPageLoader(true)
+    ShowPageLoader(true);
     var CreateGroupResponse = await SignalRApi.CreateGroup(
-      groupName, selectedUserList
+      groupName,
+      selectedUserList,
     );
-    ShowPageLoader(false)
+    ShowPageLoader(false);
 
     if (!CreateGroupResponse.data) {
-      ShowToastMessage(CreateGroupResponse.ErrorInfo || "Someting wrong");
+      ShowToastMessage(CreateGroupResponse.ErrorInfo || 'Someting wrong');
       return;
     }
     ShowToastMessage(`${groupName}-created successfully`);
 
-    var userDetails = await SessionHelper.GetUserDetails()
+    var userDetails = await SessionHelper.GetUserDetails();
 
     var groupProxy: Group = {
       groupId: UIHelper.GetProxySrId(),
       groupName: groupName,
-      members: selectedUserList.map<GroupMember>((i) => {
+      members: selectedUserList.map<GroupMember>(i => {
         var newMember: GroupMember = {
           fullName: i.userFullName,
           isOwner: i.lId == userDetails?.lId,
-          memberId: i.lId + ""
-        }
-        return newMember
-      }
-      ),
-      lastMessage: "",
+          memberId: i.lId + '',
+        };
+        return newMember;
+      }),
+      lastMessage: '',
       sMessgeList: [],
+    };
+    console.log('GRoupProxy: ', groupProxy);
 
-    }
-
-    dispatch(GroupChatOptions.actions.UpdateAllGroupList([groupProxy]))
-    navigation.pop()
-
-    // ShowToastMessage('Susovan do this :)!!');
+    dispatch(GroupChatOptions.actions.UpdateAllGroupList([groupProxy]));
+    navigation.pop();
   };
-
 
   console.log(
     'Re render, all CreateGroup page ' + filteredUserData.length + new Date(),
@@ -104,14 +101,14 @@ const CreateGroupPage = (props: any) => {
             }}>
             <Image
               source={require('../../../assets/backimg.png')}
-              style={{ height: 30, width: 30, marginLeft: 10 }}
+              style={{height: 30, width: 30, marginLeft: 10}}
             />
           </TouchableOpacity>
-          <View style={{ flex: 1 }}>
+          <View style={{flex: 1}}>
             <Text style={styles.Grouptitle}>Create Group</Text>
           </View>
         </View>
-        <View style={{ padding: 10 }}>
+        <View style={{padding: 10}}>
           <View
             style={{
               backgroundColor: '#F1F1F1',
@@ -139,14 +136,14 @@ const CreateGroupPage = (props: any) => {
                 //paddingRight: 5,
               }}>
               <TouchableOpacity onPress={HandleCreateGroup}>
-                <Text style={{ fontSize: 16, fontWeight: 'bold' }}>Create</Text>
+                <Text style={{fontSize: 16, fontWeight: 'bold'}}>Create</Text>
               </TouchableOpacity>
             </View>
           </View>
         </View>
 
         <SafeAreaView>
-          <View style={{ marginTop: 10 }}>
+          <View style={{marginTop: 10}}>
             <FlatList
               data={filteredUserData}
               keyExtractor={e => e.lId + ''}
@@ -154,7 +151,8 @@ const CreateGroupPage = (props: any) => {
               renderItem={data => {
                 var User = data.item;
 
-                var isUserPresent = selectedUserList.find(i => i.lId == User.lId) != null;
+                var isUserPresent =
+                  selectedUserList.find(i => i.lId == User.lId) != null;
 
                 return (
                   <List.Item
@@ -197,7 +195,9 @@ const CreateGroupPage = (props: any) => {
                         onPress={e => {
                           console.log(e);
                           if (isUserPresent) {
-                            setSelectedUserList(selectedUserList.filter(i => i.lId != User.lId));
+                            setSelectedUserList(
+                              selectedUserList.filter(i => i.lId != User.lId),
+                            );
                           }
                           if (!isUserPresent) {
                             setSelectedUserList([...selectedUserList, User]);

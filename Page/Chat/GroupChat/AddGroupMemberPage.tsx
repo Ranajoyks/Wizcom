@@ -21,7 +21,7 @@ import {MDivider} from '../../../Control/MDivider';
 import {Group, GroupMember} from '../../../Entity/Group';
 import SignalRApi from '../../../DataAccess/SignalRApi';
 import ChatUserOptions from '../../../Redux/Reducer/NotificationOptions';
-import {ShowToastMessage} from '../../../Redux/Store';
+import {ShowPageLoader, ShowToastMessage} from '../../../Redux/Store';
 import {ChatUser} from '../../../Entity/ChatUser';
 import GroupChatOptions from '../../../Redux/Reducer/GroupChatOptions';
 import AppDBHelper from '../../../Core/AppDBHelper';
@@ -29,83 +29,53 @@ import SessionHelper from '../../../Core/SessionHelper';
 import {CreateGroupMember} from '../../../Entity/CreateGroupMember';
 import OneToOneChatOptions from '../../../Redux/Reducer/OneToOneChatOptions';
 import UIHelper from '../../../Core/UIHelper';
+import { Member } from '../../../Entity/GroupDetails';
 
 const AddGroupMember = (props: any) => {
   const dispatch = useAppDispatch();
   const filteredUserList = useAppSelector(
     i => i.OneToOneChatOptions.AllUserList,
   );
+  const FilterGroupDetails = useAppSelector(
+    i => i.GroupChatOptions.groupdetails,
+  );
 
   const [selectedUserList, setSelectedUserList] = useState<ChatUser[]>([]);
-  const [CreateGroupMembers, setCreateGroupMembers] = useState<
-    CreateGroupMember[]
-  >([]);
   const [CompanyID, setCompanyID] = useState<string>();
   const [groupName, setGroupName] = useState<string>('');
   const [isPageRefreshing, setIsPageRefreshing] = useState(false);
-  const [GroupMember, setGroupMember] = useState<GroupMember[]>([]);
   const navigation = useNavigation<NavigationProps>();
 
-  useEffect(() => {
-    (async function () {
-      Initilize();
-      console.log('AdddGGroupId: ', props.route.params?.GroupID);
-    })();
-  }, []);
-  const Initilize = async () => {
-    var CompanyId = await SessionHelper.GetCompanyID();
-    await setCompanyID(CompanyId);
-    // console.log("FilterUserList: ",filteredUserList);
-    NewGroupDetails();
-  };
-  const NewGroupDetails = async () => {
-    var chatId = await SessionHelper.GetChatId();
-    var userInfo = await SessionHelper.GetUserDetails();
-    var GroupDetailsResponse = await SignalRApi.GetNewGroupDetails(
-      chatId!,
-      props.route.params?.GroupID,
-    );
-    // console.log(
-    //   'NewgroupDetails',
-    //   JSON.stringify(GroupDetailsResponse.data?.members),
-    // );
-    setGroupName(GroupDetailsResponse.data!.group.groupName);
-    setGroupMember(GroupDetailsResponse.data!.members);
-  };
-
   const AddGroupMembers = async () => {
-    console.log('CompanyId: ', CompanyID);
-    var ChatID = await SessionHelper.GetChatId();
-    console.log('ChatID: ', ChatID);
-
-    if (!groupName) {
-      ShowToastMessage('Please provide a valid group name!!');
-      return;
-    }
-
-    if (!CreateGroupMembers.length) {
+    if (!selectedUserList.length) {
       ShowToastMessage('Please choose atleast 1 user!!');
       return;
     }
-    console.log('SelectedUserIDs: ', CreateGroupMembers);
-    var GroupMemberAddCreateCredential = {
-      userId: ChatID,
-      groupId: props.route.params?.GroupID,
-      members: CreateGroupMembers,
-    };
-    console.log('GroupCreateCredential: ', GroupMemberAddCreateCredential);
-    // var CreateGroupResponse = await SignalRApi.CreateGroup(
-    //   GroupCreateCredential,
-    // );
-    // console.log('CreateGroupResponse: ', CreateGroupResponse);
 
-    // if (!CreateGroupResponse.data) {
-    //   return;
-    // }
-    // ShowToastMessage(`${groupName}-created successfully`);
-    // navigation.navigate('MainPage');
-
-    // ShowToastMessage('Susovan do this :)!!');
+    ShowPageLoader(true);
+    var AddGroupMemberResponse = await SignalRApi.AddGroupMember(
+      FilterGroupDetails.group.groupId,
+      selectedUserList,
+    );
+    ShowPageLoader(false);
+    if (!AddGroupMemberResponse.data) {
+      ShowToastMessage(AddGroupMemberResponse.ErrorInfo || 'Someting wrong');
+      return;
+    }
+    ShowToastMessage(
+      `${FilterGroupDetails.group.groupName}'s-new member add successfully`,
+    );
+    var AddMember:Member[] = [];
+    selectedUserList.forEach(i => {
+      var AddMemberDetails = {
+        memberId: i.lId.toString(),
+        fullName: i.userFullName,
+        isOwner: false,
+      };
+      AddMember.push(AddMemberDetails)
+    });
+    dispatch(GroupChatOptions.actions.AddGroupMember(AddMember))
+    navigation.pop();
   };
 
   console.log(
@@ -121,7 +91,7 @@ const AddGroupMember = (props: any) => {
             }}>
             <Image
               source={require('../../../assets/backimg.png')}
-              style={{height: 30, width: 30, marginLeft: 10}}
+              style={{height: 30, width: 30, marginLeft: 5}}
             />
           </TouchableOpacity>
           <View style={{flex: 1}}>
@@ -134,26 +104,15 @@ const AddGroupMember = (props: any) => {
             display: 'flex',
             justifyContent: 'space-between',
           }}>
-          <Text
-            style={{
-              fontSize: 16,
-              fontWeight: 'bold',
-              color: '#0383FA',
-              marginLeft: 5,
-            }}>
-            {groupName}
-          </Text>
-          {/* ) : (
-                  <Text
-                    style={{
-                      fontSize: 16,
-                      fontWeight: 'bold',
-                      color: '#0383FA',
-                      marginLeft: 20,
-                    }}>
-                    {model.GroupName?.slice(0, 15)}...
-                  </Text> */}
-          {/* )} */}
+          {FilterGroupDetails.group.groupName.length <= 15 ? (
+            <Text style={styles.GroupNameStyle}>
+              {FilterGroupDetails.group.groupName}
+            </Text>
+          ) : (
+            <Text style={styles.GroupNameStyle}>
+              {FilterGroupDetails.group.groupName?.slice(0, 15)}...
+            </Text>
+          )}
           <View
             style={{
               flexDirection: 'row',
@@ -182,18 +141,16 @@ const AddGroupMember = (props: any) => {
               refreshing={isPageRefreshing}
               renderItem={data => {
                 var User = data.item;
-                var UserID = {
-                  memberId: CompanyID + '_' + data.item.lId,
-                };
                 var isUserPresent =
-                GroupMember.find(
-                    i => i.memberId == User.lId.toString(),
+                  selectedUserList.find(i => i.lId == User.lId) != null ||
+                  FilterGroupDetails.members.find(
+                    i => i.memberId == User.lId + '',
                   ) != null;
 
                 return (
                   <List.Item
                     style={{
-                      marginLeft: 5,
+                      marginLeft: 15,
                       paddingTop: 0,
                       paddingBottom: 0,
                       marginBottom: 10,
@@ -229,19 +186,13 @@ const AddGroupMember = (props: any) => {
                         status={isUserPresent ? 'checked' : 'unchecked'}
                         color="green"
                         onPress={e => {
-                          console.log(e);
-
                           if (isUserPresent) {
-                            setCreateGroupMembers(
-                              CreateGroupMembers.filter(
-                                i => i.memberId != UserID.memberId,
-                              ),
+                            setSelectedUserList(
+                              selectedUserList.filter(i => i.lId != User.lId),
                             );
-                          } else {
-                            setCreateGroupMembers([
-                              ...CreateGroupMembers,
-                              UserID,
-                            ]);
+                          }
+                          if (!isUserPresent) {
+                            setSelectedUserList([...selectedUserList, User]);
                           }
                         }}
                       />

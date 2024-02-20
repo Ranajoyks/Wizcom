@@ -10,7 +10,7 @@ import {
   Dimensions,
 } from 'react-native';
 
-import {ColorCode, styles} from '../../MainStyle';
+import MainStyle, {ColorCode, styles} from '../../MainStyle';
 import {useNavigation} from '@react-navigation/native';
 import {NavigationProps} from '../../../Core/BaseProps';
 import {Avatar, Checkbox, List} from 'react-native-paper';
@@ -29,61 +29,19 @@ import SessionHelper from '../../../Core/SessionHelper';
 import {CreateGroupMember} from '../../../Entity/CreateGroupMember';
 import OneToOneChatOptions from '../../../Redux/Reducer/OneToOneChatOptions';
 import UIHelper from '../../../Core/UIHelper';
-import { Member } from '../../../Entity/GroupDetails';
 
-const DeleteGroupMemberPage = (props: any) => {
+const AllGroupMemberPage = (props: any) => {
   const dispatch = useAppDispatch();
-  const filteredUserList = useAppSelector(
-    i => i.OneToOneChatOptions.AllUserList,
-  );
   const FilterGroupDetails = useAppSelector(
     i => i.GroupChatOptions.groupdetails,
   );
-  
- 
-  
-
-  const [selectedUserList, setSelectedUserList] = useState<GroupMember[]>([]);
-  const [CompanyID, setCompanyID] = useState<string>();
-  const [groupName, setGroupName] = useState<string>('');
-  const [isPageRefreshing, setIsPageRefreshing] = useState(false);
   const navigation = useNavigation<NavigationProps>();
-  
-  const DeleteGroupMember = async () => {
-    if (!selectedUserList.length) {
-      ShowToastMessage('Please choose atleast 1 user!!');
-      return;
-    }
-    console.log('selectedUserList: ', selectedUserList);
-
-    ShowPageLoader(true);
-    var DeleteGroupResponse = await SignalRApi.DeleteGroupMember(
-      FilterGroupDetails.group.groupId,
-      selectedUserList,
-    );
-    ShowPageLoader(false);
-    if (!DeleteGroupResponse.data) {
-      ShowToastMessage(DeleteGroupResponse.ErrorInfo || 'Someting wrong');
-      return;
-    }
-    ShowToastMessage(
-      `${FilterGroupDetails.group.groupName}'s-new member removed`,      
-    );
-    var AddMember:Member[] = [];
-    selectedUserList.forEach(i => {
-      var AddMemberDetails = {
-        memberId: i.memberId.toString(),
-        fullName: i.fullName,
-        isOwner: false,
-      };
-      AddMember.push(AddMemberDetails)
-    });
-    dispatch(GroupChatOptions.actions.DeleteGroupMember(AddMember))
-    navigation.pop();
-  };
+  const [isPageRefreshing, setIsPageRefreshing] = useState(false);
 
   console.log(
-    'Re render, all AddMember page ' + filteredUserList.length + new Date(),
+    'Re render, all Member page ' +
+      FilterGroupDetails.members.length +
+      new Date(),
   );
   return (
     <React.Fragment>
@@ -99,42 +57,19 @@ const DeleteGroupMemberPage = (props: any) => {
             />
           </TouchableOpacity>
           <View style={{flex: 1}}>
-            <Text style={styles.Grouptitle}>Remove Member</Text>
+            <Text style={styles.Grouptitle}>All Members</Text>
           </View>
         </View>
-        <View
-          style={{
-            flexDirection: 'row',
-            display: 'flex',
-            justifyContent: 'space-between',
-          }}>
-          {FilterGroupDetails.group.groupName.length <= 15 ? (
+        <View>
+          {FilterGroupDetails.group.groupName.length <= 30 ? (
             <Text style={styles.GroupNameStyle}>
               {FilterGroupDetails.group.groupName}
             </Text>
           ) : (
             <Text style={styles.GroupNameStyle}>
-              {FilterGroupDetails.group.groupName?.slice(0, 15)}...
+              {FilterGroupDetails.group.groupName?.slice(0, 30)}...
             </Text>
           )}
-          <View
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              //paddingRight: 5,
-            }}>
-            <TouchableOpacity onPress={DeleteGroupMember}>
-              <Text
-                style={{
-                  fontSize: 16,
-                  fontWeight: 'bold',
-                  alignSelf: 'flex-end',
-                  marginRight: 15,
-                }}>
-                Update
-              </Text>
-            </TouchableOpacity>
-          </View>
         </View>
 
         <SafeAreaView>
@@ -145,10 +80,6 @@ const DeleteGroupMemberPage = (props: any) => {
               refreshing={isPageRefreshing}
               renderItem={data => {
                 var User = data.item;
-                var isUserPresent =
-                  selectedUserList.find(i => i.memberId == User.memberId) !=
-                  null;
-
                 return (
                   <List.Item
                     style={{
@@ -181,28 +112,9 @@ const DeleteGroupMemberPage = (props: any) => {
                         />
                       </View>
                     )}
-                    right={props => (
-                      <Checkbox
-                        status={isUserPresent ? 'checked' : 'unchecked'}
-                        color="green"
-                        onPress={e => {
-                          if (isUserPresent) {
-                            setSelectedUserList(
-                              selectedUserList.filter(
-                                i => i.memberId != User.memberId,
-                              ),
-                            );
-                          }
-                          if (!isUserPresent) {
-                            setSelectedUserList([...selectedUserList, User]);
-                          }
-                        }}
-                      />
-                    )}
                   />
                 );
               }}
-              ListEmptyComponent={EmptyListMessage}
             />
           </View>
         </SafeAreaView>
@@ -211,4 +123,4 @@ const DeleteGroupMemberPage = (props: any) => {
   );
 };
 
-export default DeleteGroupMemberPage;
+export default AllGroupMemberPage;

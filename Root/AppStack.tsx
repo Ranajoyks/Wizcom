@@ -25,7 +25,7 @@ import { ChatUser } from '../Entity/ChatUser';
 import { Group } from '../Entity/Group';
 import CreateGroup from '../Page/Chat/GroupChat/CreateGroupPage';
 import DeleteGroupMember from '../Page/Chat/GroupChat/DeleteGroupMember';
-import AllGroupMember from '../Page/Chat/OneToOneChat/AllGroupMember';
+import AllGroupMember from '../Page/Chat/GroupChat/AllGroupMember';
 import GroupChatDetailsPage2 from '../Page/Chat/GroupChat/GroupChatDetailsPage2';
 import NotificationPage from '../Page/Chat/Notification/NotificationDetailsPage';
 import { NotificationUser } from '../Entity/NotificationUser';
@@ -55,7 +55,7 @@ export type RootStackParamList = {
   CreateGroup: { GroupID: string }
   AddGroupMember: { GroupID: string }
   DeleteGroupMember: { GroupID: string }
-  AllGroupMember: { GroupID: string }
+  AllGroupMember: undefined
   NotificationPage: { SecondUser: NotificationUser, OnUserListRefresRequest?: () => void }
   // OneToOneChatDetailsPage: { OnReturn: (isSuccess: boolean) => void };
   // AnalysisPage: { licenseNo: string },

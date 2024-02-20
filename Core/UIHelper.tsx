@@ -66,9 +66,13 @@ export default class UIHelper {
     console.log(`TimeTest: ${Module} ${Mode} at-> ${new Date()}`)
   }
 
+  public static GetChatIdSync(UserId: number, companyID: string) {
+    return `U000${companyID}_${UserId}`;
+  }
+
   public static async GetChatId(UserId: number) {
     var CompanyId = await SessionHelper.GetCompanyID()
-    return `U000${CompanyId}_${UserId}`;
+    return UIHelper.GetChatIdSync(UserId, CompanyId!)
   }
   public static GetProxySrId(lastNumber?: number) {
     return Math.floor(Math.random() * 10000000) + 100000 + (lastNumber ?? 0)

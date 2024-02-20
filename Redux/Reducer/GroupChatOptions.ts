@@ -28,16 +28,15 @@ const GroupChatOptions = createSlice({
 
 
         UpdateAllGroupList: (state, action: PayloadAction<Group[]>) => {
-            var currentGroupList = state.AllGroupList
 
             action.payload.forEach(newGroup => {
-                var oldGroupIndex = currentGroupList.findIndex(i => i.groupId == newGroup.groupId)
+                var oldGroupIndex = state.AllGroupList.findIndex(i => i.groupId == newGroup.groupId)
                 if (oldGroupIndex == -1) {
-                    currentGroupList.push(newGroup)
+                    state.AllGroupList.push(newGroup)
                     return
                 }
 
-                var oldGroup = currentGroupList[oldGroupIndex]
+                var oldGroup = state.AllGroupList[oldGroupIndex]
 
                 var AllChatOneToOneList = oldGroup.AllGroupMsgList
 
@@ -46,10 +45,10 @@ const GroupChatOptions = createSlice({
 
                 newGroup.AllGroupMsgList = AllChatOneToOneList
 
-                currentGroupList[oldGroupIndex] = newGroup
+                state.AllGroupList[oldGroupIndex] = newGroup
             });
 
-            state.AllGroupList = currentGroupList
+
             if (!state.FilterGroupList.length) {
                 state.FilterGroupList = state.AllGroupList
             }
@@ -62,7 +61,7 @@ const GroupChatOptions = createSlice({
             if (state.FilterGroupList.length && state.FilterGroupList.length != state.AllGroupList.length) {
                 var allFilteredUser = state.FilterGroupList
                 allFilteredUser.forEach((item, itemIndex) => {
-                    allFilteredUser[itemIndex] = currentGroupList.find(i => i.groupId == item.groupId)!
+                    allFilteredUser[itemIndex] = state.AllGroupList.find(i => i.groupId == item.groupId)!
                 })
                 state.FilterGroupList = allFilteredUser
             }

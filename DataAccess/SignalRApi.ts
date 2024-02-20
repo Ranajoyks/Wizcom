@@ -1,14 +1,15 @@
 import SessionHelper from '../Core/SessionHelper';
-import {Chat} from '../Entity/Chat';
-import {ChatUser} from '../Entity/ChatUser';
-import {Member} from '../Entity/CreateGroup';
+import UIHelper from '../Core/UIHelper';
+import { Chat } from '../Entity/Chat';
+import { ChatUser } from '../Entity/ChatUser';
+import { Member } from '../Entity/CreateGroup';
 import { CreateGroupMember } from '../Entity/CreateGroupMember';
-import {Group} from '../Entity/Group';
-import {GroupChat} from '../Entity/GroupChat';
-import {GroupDetails} from '../Entity/GroupDetails';
-import {KSResponse} from '../Entity/JInitializeResponse';
+import { Group } from '../Entity/Group';
+import { GroupChat } from '../Entity/GroupChat';
+import { GroupDetails } from '../Entity/GroupDetails';
+import { KSResponse } from '../Entity/JInitializeResponse';
 import { Notification } from '../Entity/Notification';
-import {NotificationUser} from '../Entity/NotificationUser';
+import { NotificationUser } from '../Entity/NotificationUser';
 import User from '../Entity/User';
 import BaseApi from './BaseApi';
 
@@ -114,7 +115,7 @@ export default class SignalRApi extends BaseApi {
   public static async GetGroupDetails(
     chatid: string,
     GroupId: number,
-  ): Promise<KSResponse<{group: Group}>> {
+  ): Promise<KSResponse<{ group: Group }>> {
     return await this.Get(
       'SignalR',
       `user/groupdetail?userId=${chatid}&groupId=${GroupId}`,
@@ -155,17 +156,40 @@ export default class SignalRApi extends BaseApi {
       `user/getnotification?companyId=${CompanyId}&userId=${SenderID}`,
     );
   }
-  public static async CreateGroup(GroupCreateCredential: {
-    companyId: string;
-    creatorId: string;
-    groupName: string;
-    members: CreateGroupMember[];
-  }): Promise<KSResponse<boolean>> {
-    //`User/readmessage?companyId=${BranchID}&senderId=${SenderID}&receiverId=${ReceiverID}&lastLSrid=${lSrid}`,
+  public static async CreateGroup(GroupName: string, selectedUserList: ChatUser[]): Promise<KSResponse<boolean>> {
+
+    var companyID = await SessionHelper.GetCompanyID();
+    var ChatId = await SessionHelper.GetChatId();
+
+    var data: CreateGroupMember[] = selectedUserList.map((i) => {
+      var cgm: CreateGroupMember = {
+        memberId: UIHelper.GetChatIdSync(i.lId, companyID!)
+      };
+      return cgm;
+    })
+
+    // var data: CreateGroupMember[] = []
+    // selectedUserList.forEach(async i => {
+    //   var cgm: CreateGroupMember = {
+    //     memberId: await UIHelper.GetChatId(i.lId)
+    //   };
+    //   data.push(cgm)
+    // })
+
+    var reqModel = {
+      companyId: companyID,
+      creatorId: ChatId,
+      groupName: GroupName,
+      members: data,
+    };
+
+    console.log("CreateGroup", reqModel);
+
+
     return await this.Post(
       'SignalR',
       `user/creategroup`,
-      GroupCreateCredential,
+      reqModel,
     );
   }
 }

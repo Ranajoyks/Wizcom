@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -10,98 +10,92 @@ import {
   Dimensions,
 } from 'react-native';
 
-import {ColorCode, styles} from '../../MainStyle';
-import {useNavigation} from '@react-navigation/native';
-import {NavigationProps} from '../../../Core/BaseProps';
-import {Avatar, Checkbox, List} from 'react-native-paper';
-import {useAppDispatch, useAppSelector} from '../../../Redux/Hooks';
+import { ColorCode, styles } from '../../MainStyle';
+import { useNavigation } from '@react-navigation/native';
+import { NavigationProps } from '../../../Core/BaseProps';
+import { Avatar, Checkbox, List } from 'react-native-paper';
+import { useAppDispatch, useAppSelector } from '../../../Redux/Hooks';
 
-import {EmptyListMessage} from '../../../Control/EmptyListMessage';
-import {MDivider} from '../../../Control/MDivider';
-import {Group} from '../../../Entity/Group';
+import { EmptyListMessage } from '../../../Control/EmptyListMessage';
+import { MDivider } from '../../../Control/MDivider';
+import { Group, GroupMember } from '../../../Entity/Group';
 import SignalRApi from '../../../DataAccess/SignalRApi';
 import ChatUserOptions from '../../../Redux/Reducer/NotificationOptions';
-import {ShowToastMessage} from '../../../Redux/Store';
-import {ChatUser} from '../../../Entity/ChatUser';
+import { ShowPageLoader, ShowToastMessage } from '../../../Redux/Store';
+import { ChatUser } from '../../../Entity/ChatUser';
 import GroupChatOptions from '../../../Redux/Reducer/GroupChatOptions';
 import AppDBHelper from '../../../Core/AppDBHelper';
 import SessionHelper from '../../../Core/SessionHelper';
-import {CreateGroupMember} from '../../../Entity/CreateGroupMember';
+import { CreateGroupMember } from '../../../Entity/CreateGroupMember';
 import OneToOneChatOptions from '../../../Redux/Reducer/OneToOneChatOptions';
 import UIHelper from '../../../Core/UIHelper';
+import { GroupChat } from '../../../Entity/GroupChat';
 
-const CreateGroup = (props:any) => {
-  
+const CreateGroupPage = (props: any) => {
+
   const dispatch = useAppDispatch();
-  const filteredUserList = useAppSelector(
-    i => i.OneToOneChatOptions.AllUserList,
-  );
+  const filteredUserData = useAppSelector(i => i.OneToOneChatOptions.AllUserList);
 
   const [selectedUserList, setSelectedUserList] = useState<ChatUser[]>([]);
-  const [CreateGroupMembers, setCreateGroupMembers] = useState<
-    CreateGroupMember[]
-  >([]);
-  const [CompanyID, setCompanyID] = useState<string>();
+
+
   const [groupName, setGroupName] = useState<string>('');
   const [isPageRefreshing, setIsPageRefreshing] = useState(false);
   const navigation = useNavigation<NavigationProps>();
 
-  useEffect(() => {
-    (async function () {
-      Initilize();
-      console.log("GroupId: ",props.route.params?.GroupID);
-      
-    })();
-
-    // IniTilizeOnce();
-    // CheckAppStatus();
-    // IsTalking();
-    // MarkRead();
-  }, []);
-  const Initilize = async () => {
-    var CompanyId = await SessionHelper.GetCompanyID();
-
-    await setCompanyID(CompanyId);
-  };
 
   const HandleCreateGroup = async () => {
-    console.log('CompanyId: ', CompanyID);
-    var ChatID = await SessionHelper.GetChatId();
-    console.log('ChatID: ', ChatID);
 
     if (!groupName) {
       ShowToastMessage('Please provide a valid group name!!');
       return;
     }
 
-    if (!CreateGroupMembers.length) {
+    if (!selectedUserList.length) {
       ShowToastMessage('Please choose atleast 1 user!!');
       return;
     }
-    console.log('SelectedUserIDs: ', CreateGroupMembers);
-    var GroupCreateCredential = {
-      companyId: CompanyID!,
-      creatorId: ChatID!,
-      groupName: groupName,
-      members: CreateGroupMembers,
-    };
-    console.log('GroupCreateCredential: ', GroupCreateCredential);
+
+    ShowPageLoader(true)
     var CreateGroupResponse = await SignalRApi.CreateGroup(
-      GroupCreateCredential,
+      groupName, selectedUserList
     );
-    console.log('CreateGroupResponse: ', CreateGroupResponse);
+    ShowPageLoader(false)
 
     if (!CreateGroupResponse.data) {
+      ShowToastMessage(CreateGroupResponse.ErrorInfo || "Someting wrong");
       return;
     }
     ShowToastMessage(`${groupName}-created successfully`);
-    navigation.navigate('MainPage');
+
+    var userDetails = await SessionHelper.GetUserDetails()
+
+    var groupProxy: Group = {
+      groupId: UIHelper.GetProxySrId(),
+      groupName: groupName,
+      members: selectedUserList.map<GroupMember>((i) => {
+        var newMember: GroupMember = {
+          fullName: i.userFullName,
+          isOwner: i.lId == userDetails?.lId,
+          memberId: i.lId + ""
+        }
+        return newMember
+      }
+      ),
+      lastMessage: "",
+      sMessgeList: [],
+
+    }
+
+    dispatch(GroupChatOptions.actions.UpdateAllGroupList([groupProxy]))
+    navigation.pop()
 
     // ShowToastMessage('Susovan do this :)!!');
   };
 
+
   console.log(
-    'Re render, all CreateGroup page ' + filteredUserList.length + new Date(),
+    'Re render, all CreateGroup page ' + filteredUserData.length + new Date(),
   );
   return (
     <React.Fragment>
@@ -113,14 +107,14 @@ const CreateGroup = (props:any) => {
             }}>
             <Image
               source={require('../../../assets/backimg.png')}
-              style={{height: 30, width: 30, marginLeft: 10}}
+              style={{ height: 30, width: 30, marginLeft: 10 }}
             />
           </TouchableOpacity>
-          <View style={{flex: 1}}>
+          <View style={{ flex: 1 }}>
             <Text style={styles.Grouptitle}>Create Group</Text>
           </View>
         </View>
-        <View style={{padding: 10}}>
+        <View style={{ padding: 10 }}>
           <View
             style={{
               backgroundColor: '#F1F1F1',
@@ -148,26 +142,22 @@ const CreateGroup = (props:any) => {
                 //paddingRight: 5,
               }}>
               <TouchableOpacity onPress={HandleCreateGroup}>
-                <Text style={{fontSize: 16, fontWeight: 'bold'}}>Create</Text>
+                <Text style={{ fontSize: 16, fontWeight: 'bold' }}>Create</Text>
               </TouchableOpacity>
             </View>
           </View>
         </View>
 
         <SafeAreaView>
-          <View style={{marginTop: 10}}>
+          <View style={{ marginTop: 10 }}>
             <FlatList
-              data={filteredUserList}
+              data={filteredUserData}
               keyExtractor={e => e.lId + ''}
               refreshing={isPageRefreshing}
               renderItem={data => {
                 var User = data.item;
-                var UserID = {
-                  memberId: CompanyID + '_' + data.item.lId,
-                };
-                var isUserPresent =
-                  CreateGroupMembers.find(i => i.memberId == UserID.memberId) !=
-                  null;
+
+                var isUserPresent = selectedUserList.find(i => i.lId == User.lId) != null;
 
                 return (
                   <List.Item
@@ -209,18 +199,11 @@ const CreateGroup = (props:any) => {
                         color="green"
                         onPress={e => {
                           console.log(e);
-
                           if (isUserPresent) {
-                            setCreateGroupMembers(
-                              CreateGroupMembers.filter(
-                                i => i.memberId != UserID.memberId,
-                              ),
-                            );
-                          } else {
-                            setCreateGroupMembers([
-                              ...CreateGroupMembers,
-                              UserID,
-                            ]);
+                            setSelectedUserList(selectedUserList.filter(i => i.lId != User.lId));
+                          }
+                          if (!isUserPresent) {
+                            setSelectedUserList([...selectedUserList, User]);
                           }
                         }}
                       />
@@ -237,4 +220,4 @@ const CreateGroup = (props:any) => {
   );
 };
 
-export default CreateGroup;
+export default CreateGroupPage;

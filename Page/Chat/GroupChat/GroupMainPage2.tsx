@@ -34,7 +34,19 @@ const GroupMainPage2 = () => {
       clearInterval(FetchMessageInterval);
     };
   }, []);
+  const InitilizeOnce = async () => {
+    var chatId = await SessionHelper.GetChatId();
 
+    AppDBHelper.GetGroups(chatId!).then(res => {
+      dispatch(GroupChatOptions.actions.UpdateAllGroupList(res ?? []));
+      console.log('GetGroupResponse: ', res);
+    });
+    GetAllGroups();
+
+    FetchMessageInterval = setInterval(() => {
+      GetAllGroups();
+    }, 1000 * 60);
+  };
   const GetAllGroups = async () => {
     SignalRApi.GetAllGroup().then(groupListRes => {
       console.log('GroupResponse: ', groupListRes);
@@ -47,23 +59,13 @@ const GroupMainPage2 = () => {
         GroupChatOptions.actions.UpdateAllGroupList(groupListRes.data || []),
       );
       dispatch(
-        GroupChatOptions.actions.LoadGroupOneToOneChatList(groupListRes.data||[]),
+        GroupChatOptions.actions.LoadGroupOneToOneChatList(
+          groupListRes.data || [],
+        ),
       );
     });
   };
 
-  const InitilizeOnce = async () => {
-    var chatId = await SessionHelper.GetChatId();
-
-    AppDBHelper.GetGroups(chatId!).then(res => {
-      dispatch(GroupChatOptions.actions.UpdateAllGroupList(res ?? []));
-    });
-    GetAllGroups();
-
-    FetchMessageInterval = setInterval(() => {
-      GetAllGroups();
-    }, 1000 * 60);
-  };
   console.log(
     'Re render, all GroupChat page ' + filteredGroupList.length + new Date(),
   );

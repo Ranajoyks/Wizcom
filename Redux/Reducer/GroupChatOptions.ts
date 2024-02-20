@@ -22,17 +22,17 @@ const GroupChatOptions = createSlice({
   initialState,
   reducers: {
     UpdateAllGroupList: (state, action: PayloadAction<Group[]>) => {
-      var currentUserList = state.AllGroupList;
+      var currentGroupList = state.AllGroupList;
       action.payload.forEach(newUser => {
-        var oldUserIndex = currentUserList.findIndex(
+        var oldUserIndex = currentGroupList.findIndex(
           i => i.groupId == newUser.groupId,
         );
         if (oldUserIndex == -1) {
-          currentUserList.push(newUser);
+          currentGroupList.push(newUser);
           return;
         }
 
-        var oldUser = currentUserList[oldUserIndex];
+        var oldUser = currentGroupList[oldUserIndex];
 
         var AllChatOneToOneList = oldUser.AllGroupMsgList;
 
@@ -41,33 +41,35 @@ const GroupChatOptions = createSlice({
         newUser.AllGroupMsgList = AllChatOneToOneList;
       });
 
-      state.AllGroupList = currentUserList;
+      state.AllGroupList = currentGroupList;
+      console.log('currentGroupList: ', currentGroupList);
 
       //If no data
       if (!state.FilterGroupList.length) {
         state.FilterGroupList = state.AllGroupList;
+        console.log('If no data: ');
       }
 
       //When no search string
       if (state.FilterGroupList.length == state.AllGroupList.length) {
         state.FilterGroupList = state.AllGroupList;
+        console.log('/When no search string');
       }
 
       if (
         state.FilterGroupList.length &&
         state.FilterGroupList.length != state.AllGroupList.length
       ) {
-        var allFilteredUser = state.FilterGroupList;
+        var allFilteredUser = state.AllGroupList;
         allFilteredUser.forEach((item, itemIndex) => {
-          allFilteredUser[itemIndex] = currentUserList.find(
+          allFilteredUser[itemIndex] = currentGroupList.find(
             i => i.groupId == item.groupId,
           )!;
         });
         state.FilterGroupList = allFilteredUser;
+
+        console.log('allFilteredUser: ', allFilteredUser);
       }
-    },
-    UpdateFilterGroupList: (state, action: PayloadAction<Group[]>) => {
-      state.FilterGroupList = action.payload;
     },
     LoadGroupOneToOneChatList: (state, action: PayloadAction<Group[]>) => {
       //   console.log('ActionPLayLOad: ', action.payload);
@@ -201,7 +203,9 @@ const GroupChatOptions = createSlice({
     },
     DeleteGroupMember: (state, action: PayloadAction<Member[]>) => {
       action.payload.forEach(i => {
-        state.groupdetails.members= state.groupdetails.members.filter(j => j.memberId != i.memberId);
+        state.groupdetails.members = state.groupdetails.members.filter(
+          j => j.memberId != i.memberId,
+        );
       });
     },
     DeleteGroupUpdateList: (state, action: PayloadAction<Group[]>) => {
@@ -209,8 +213,8 @@ const GroupChatOptions = createSlice({
       state.FilterGroupList = action.payload;
     },
     CrateGroupUpdateLIst: (state, action: PayloadAction<Group>) => {
-      state.AllGroupList.push(action.payload)
-      state.FilterGroupList.push(action.payload)
+      state.AllGroupList.push(action.payload);
+      state.FilterGroupList.push(action.payload);
     },
   },
   extraReducers: builder => {

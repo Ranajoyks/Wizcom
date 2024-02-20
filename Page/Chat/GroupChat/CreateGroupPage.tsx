@@ -82,9 +82,9 @@ const CreateGroupPage = (props: any) => {
       lastMessage: '',
       sMessgeList: [],
     };
-    console.log('GRoupProxy: ', groupProxy);
+    // console.log('GRoupProxy: ', groupProxy);
 
-    dispatch(GroupChatOptions.actions.UpdateAllGroupList([groupProxy]));
+    // dispatch(GroupChatOptions.actions.UpdateAllGroupList([groupProxy]));
     navigation.pop();
   };
 

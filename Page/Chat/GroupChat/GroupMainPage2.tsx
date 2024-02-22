@@ -39,7 +39,7 @@ const GroupMainPage2 = () => {
 
     AppDBHelper.GetGroups(chatId!).then(res => {
       dispatch(GroupChatOptions.actions.UpdateAllGroupList(res ?? []));
-      console.log('GetGroupResponse: ', res);
+      // console.log('GetGroupResponse: ', res);
     });
     GetAllGroups();
 
@@ -49,7 +49,7 @@ const GroupMainPage2 = () => {
   };
   const GetAllGroups = async () => {
     SignalRApi.GetAllGroup().then(groupListRes => {
-      console.log('GroupResponse: ', groupListRes);
+      console.log('GroupResponse: ',JSON.stringify(groupListRes.data));
       if (groupListRes.IsKSError) {
         ShowToastMessage(groupListRes.ErrorInfo || 'Some issue happening');
         return;
@@ -58,11 +58,11 @@ const GroupMainPage2 = () => {
       dispatch(
         GroupChatOptions.actions.UpdateAllGroupList(groupListRes.data || []),
       );
-      dispatch(
-        GroupChatOptions.actions.LoadGroupOneToOneChatList(
-          groupListRes.data || [],
-        ),
-      );
+      // dispatch(
+      //   GroupChatOptions.actions.LoadGroupOneToOneChatList(
+      //     groupListRes.data || [],
+      //   ),
+      // );
     });
   };
 

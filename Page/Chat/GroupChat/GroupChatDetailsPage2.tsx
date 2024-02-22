@@ -85,6 +85,8 @@ const GroupChatDetailsPage2 = (
   const FilterGroupDetails = useAppSelector(
     i => i.GroupChatOptions.groupdetails,
   );
+  console.log("FilterGroupDetails: ",FilterGroupDetails);
+  
 
   useEffect(() => {
     Initilize();
@@ -554,6 +556,8 @@ const GroupChatDetailsPage2 = (
                           style={{marginLeft: 5}}
                           name="download-circle-outline"
                           onPress={async () => {
+                            console.log("groupItem: ",item);
+                            
                             var dataReceived = await DownloadFile(item);
                             console.log('dataReceived', dataReceived);
                             if (!dataReceived) {

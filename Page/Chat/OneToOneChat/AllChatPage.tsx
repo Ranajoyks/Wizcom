@@ -29,7 +29,7 @@ import ChatUserOptions from '../../../Redux/Reducer/NotificationOptions';
 import KSUtility from '../../../Core/KSUtility';
 import { MHeader } from '../../../Control/MHeader';
 import MHeaderOptions from '../../../Redux/Reducer/MHeaderOptions';
-import OneToOneChatOptions from '../../../Redux/Reducer/OneToOneChatOptions';
+import OneToOneChatOptions, { GetFilteredUserList } from '../../../Redux/Reducer/OneToOneChatOptions';
 import UIHelper from '../../../Core/UIHelper';
 import { ShowPageLoader } from '../../../Redux/Store';
 
@@ -37,7 +37,7 @@ import { ShowPageLoader } from '../../../Redux/Store';
 const AllChatPage = () => {
 
   const dispatch = useAppDispatch()
-  const filteredUserList = useAppSelector(i => i.OneToOneChatOptions.FilterUserList)
+  const filteredUserList = useAppSelector(GetFilteredUserList)
   const pageData = useAppSelector(i => i.PageOptions)
 
   const [isPageRefreshing, setIsPageRefreshing] = useState(false)
@@ -191,7 +191,7 @@ const ChatUserScreen = (props: { data: ChatUser, OnUserListRefresRequest: () => 
               backgroundColor: user?.isUserLive ? 'green' : 'orange',
               position: 'absolute',
               bottom: 20,
-              right:0,
+              right: 0,
             }}></Badge>
         </View>
       )}

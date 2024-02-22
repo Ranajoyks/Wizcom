@@ -1,9 +1,9 @@
-import {createSlice, PayloadAction} from '@reduxjs/toolkit';
-import {Group} from '../../Entity/Group';
-import {GroupChat} from '../../Entity/GroupChat';
+import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { Group } from '../../Entity/Group';
+import { GroupChat } from '../../Entity/GroupChat';
 import UIHelper from '../../Core/UIHelper';
 import MHeaderOptions from './MHeaderOptions';
-import {GroupDetails, Member} from '../../Entity/GroupDetails';
+import { GroupDetails, Member } from '../../Entity/GroupDetails';
 
 export interface GroupChatOptionsState {
   AllGroupList: Group[];
@@ -42,7 +42,7 @@ const GroupChatOptions = createSlice({
       });
 
       state.AllGroupList = currentGroupList;
-      console.log('currentGroupList: ', currentGroupList);
+      console.log('currentGroupList: ', currentGroupList.length);
 
       //If no data
       if (!state.FilterGroupList.length) {
@@ -68,7 +68,7 @@ const GroupChatOptions = createSlice({
         });
         state.FilterGroupList = allFilteredUser;
 
-        console.log('allFilteredUser: ', allFilteredUser);
+        console.log('allFilteredUser: ', allFilteredUser.length);
       }
     },
     LoadGroupOneToOneChatList: (state, action: PayloadAction<Group[]>) => {

@@ -1,38 +1,31 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit'
+import { createSelector, createSlice, PayloadAction } from '@reduxjs/toolkit'
 
 import { ChatUser } from '../../Entity/ChatUser'
 import UIHelper from '../../Core/UIHelper'
 import { Chat } from '../../Entity/Chat'
-import MHeaderOptions from './MHeaderOptions'
-
-
+import { RootState } from '../Store'
 
 export interface OneToOneChatOptionsState {
-    AllUserList: ChatUser[],
-    FilterUserList: ChatUser[],
+    AllUserList: ChatUser[]
 }
 
 const initialState: OneToOneChatOptionsState = {
-    AllUserList: [],
-    FilterUserList: [],
+    AllUserList: []
 }
-
 
 const OneToOneChatOptions = createSlice({
     name: 'OneToOneChatOptions',
     initialState,
     reducers: {
         UpdateAllUserList: (state, action: PayloadAction<ChatUser[]>) => {
-
-            var currentUserList = state.AllUserList
             action.payload.forEach(newUser => {
-                var oldUserIndex = currentUserList.findIndex(i => i.lId == newUser.lId)
+                var oldUserIndex = state.AllUserList.findIndex(i => i.lId == newUser.lId)
                 if (oldUserIndex == -1) {
-                    currentUserList.push(newUser)
+                    state.AllUserList.push(newUser)
                     return
                 }
 
-                var oldUser = currentUserList[oldUserIndex]
+                var oldUser = state.AllUserList[oldUserIndex]
 
                 var AllChatOneToOneList = oldUser.AllChatOneToOneList
 
@@ -41,31 +34,11 @@ const OneToOneChatOptions = createSlice({
                 newUser.AllChatOneToOneList = AllChatOneToOneList
             });
 
-            state.AllUserList = currentUserList
-
-            //If no data 
-            if (!state.FilterUserList.length) {
-                state.FilterUserList = state.AllUserList
-            }
-
-            //When no search string 
-            if (state.FilterUserList.length == state.AllUserList.length) {
-                state.FilterUserList = state.AllUserList
-            }
-
-            if (state.FilterUserList.length && state.FilterUserList.length != state.AllUserList.length) {
-                var allFilteredUser = state.FilterUserList
-                allFilteredUser.forEach((item, itemIndex) => {
-                    allFilteredUser[itemIndex] = currentUserList.find(i => i.lId == item.lId)!
-                })
-                state.FilterUserList = allFilteredUser
-            }
+            state.AllUserList = state.AllUserList
         },
         LoadUserOneToOneChatList: (state, action: PayloadAction<ChatUser[]>) => {
 
             action.payload.forEach(payloadUser => {
-
-
                 var secondUserId = payloadUser.lId
 
                 var userIndex = state.AllUserList.findIndex(i => i.lId == secondUserId)!
@@ -134,16 +107,6 @@ const OneToOneChatOptions = createSlice({
                 state.AllUserList[userIndex] = user
             })
 
-
-            if (!state.FilterUserList.length) {
-                state.FilterUserList = state.AllUserList
-            }
-            else {
-                state.FilterUserList.forEach((element, index) => {
-                    state.FilterUserList[index] = state.AllUserList.find(i => i.lId == element.lId)!
-                });
-            }
-
         },
         AddNewOneToOneChat: (state, action: PayloadAction<Chat>) => {
             var currentUserList = state.AllUserList
@@ -168,26 +131,29 @@ const OneToOneChatOptions = createSlice({
             state.AllUserList[userIndex].AllChatOneToOneList![chatIndex] = action.payload
         },
     },
-    extraReducers: ((builder) => {
-        builder.addCase(MHeaderOptions.actions.UpdateSearchText, (state, action) => {
-            var searchText = action.payload
-            if (!searchText) {
-                state.FilterUserList = state.AllUserList
-                return
-            }
-
-            state.FilterUserList = state.AllUserList.filter(i => i.userName.toLowerCase().includes(searchText.toLowerCase()))
-        });
-        builder.addCase(MHeaderOptions.actions.UpdateUserShowMode, (state, action) => {
-
-            if (action.payload == "All User") {
-                state.FilterUserList = state.AllUserList
-                return
-            }
-
-            state.FilterUserList = state.AllUserList.filter(i => i.status)
-        });
-    })
 })
+
+
+export const GetFilteredUserList = createSelector([
+    (state: RootState) => state.OneToOneChatOptions.AllUserList,
+    (state: RootState) => state.MHeaderOptions],
+    (AllUserList, mheader) => {
+
+        var tempFilteredUserList = AllUserList;
+
+        //If curretly Showing
+        if (mheader.UserShowMode == "Online User") {
+            tempFilteredUserList = tempFilteredUserList.filter(i => i.isUserLive)
+        }
+        if (!mheader.CurrentSearchText) {
+            return tempFilteredUserList
+        }
+
+        var tempFilteredUserList = tempFilteredUserList.filter(i => i.userName.toLowerCase().includes(mheader.CurrentSearchText.toLowerCase()))
+
+        return tempFilteredUserList
+
+    }
+)
 
 export default OneToOneChatOptions;

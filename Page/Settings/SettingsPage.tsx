@@ -13,6 +13,7 @@ import BaseComponent from '../../Core/BaseComponent';
 import BaseState from '../../Core/BaseState';
 import SessionHelper from '../../Core/SessionHelper';
 import { Button } from 'react-native-paper';
+import SignalRApi from '../../DataAccess/SignalRApi';
 
 export class SettingsViewModel {
   URL: string = 'eipl.eresourceerp.com';
@@ -27,11 +28,16 @@ export default class SettingsPage extends BaseComponent<
   }
   async componentDidMount() {
     var Model = this.state.Model;
-    var URL = await SessionHelper.GetURL();
-    if (URL) {
-      Model.URL = URL;
-      this.UpdateViewModel();
+    var url = await SignalRApi.GetERESServiceUrl()
+    url = url.replace("http://", '').replace("https://", '');
+    if (url.endsWith("/")) {
+      url = url.substring(0, url.length - 1)
     }
+    Model.URL = url
+
+
+    this.UpdateViewModel();
+
   }
   handleSetUrl = () => {
     var Model = this.state.Model;

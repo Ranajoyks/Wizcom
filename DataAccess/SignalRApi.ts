@@ -1,24 +1,29 @@
 import SessionHelper from '../Core/SessionHelper';
 import UIHelper from '../Core/UIHelper';
-import {Chat} from '../Entity/Chat';
-import {ChatUser} from '../Entity/ChatUser';
-import {Member} from '../Entity/CreateGroup';
-import {CreateGroupMember} from '../Entity/CreateGroupMember';
-import {Group, GroupMember} from '../Entity/Group';
-import {GroupChat} from '../Entity/GroupChat';
-import {GroupDetails} from '../Entity/GroupDetails';
-import {KSResponse} from '../Entity/JInitializeResponse';
-import {Notification} from '../Entity/Notification';
-import {NotificationUser} from '../Entity/NotificationUser';
+import { Chat } from '../Entity/Chat';
+import { ChatUser } from '../Entity/ChatUser';
+import { Member } from '../Entity/CreateGroup';
+import { CreateGroupMember } from '../Entity/CreateGroupMember';
+import { Group, GroupMember } from '../Entity/Group';
+import { GroupChat } from '../Entity/GroupChat';
+import { GroupDetails } from '../Entity/GroupDetails';
+import { KSResponse } from '../Entity/JInitializeResponse';
+import { Notification } from '../Entity/Notification';
+import { NotificationUser } from '../Entity/NotificationUser';
 import User from '../Entity/User';
 import BaseApi from './BaseApi';
 
 export default class SignalRApi extends BaseApi {
-  public static async UserSetDetail(): Promise<KSResponse<boolean>> {
-    var tempUrl = (await BaseApi.getFinalUrl('ERES', '', false)).replace(
+
+  public static async GetERESServiceUrl(): Promise<string> {
+    return (await BaseApi.getFinalUrl('ERES', '', false)).replace(
       '/api',
       '',
     );
+  }
+
+  public static async UserSetDetail(): Promise<KSResponse<boolean>> {
+    var tempUrl = await this.GetERESServiceUrl()
 
     var companyID = await SessionHelper.GetCompanyID();
     var ChatId = await SessionHelper.GetChatId();
@@ -115,7 +120,7 @@ export default class SignalRApi extends BaseApi {
   public static async GetGroupDetails(
     chatid: string,
     GroupId: number,
-  ): Promise<KSResponse<{group: Group}>> {
+  ): Promise<KSResponse<{ group: Group }>> {
     return await this.Get(
       'SignalR',
       `user/groupdetail?userId=${chatid}&groupId=${GroupId}`,

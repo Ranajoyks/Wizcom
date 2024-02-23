@@ -31,7 +31,8 @@ import MHeaderOptions, { UserShowMode } from '../Redux/Reducer/MHeaderOptions';
 import SignalRApi from '../DataAccess/SignalRApi';
 import { ShowPageLoader, ShowToastMessage } from '../Redux/Store';
 import GroupChatOptions from '../Redux/Reducer/GroupChatOptions';
-import { GetFilteredUserList } from '../Redux/Reducer/OneToOneChatOptions';
+import OneToOneChatOptions, { GetFilteredUserList } from '../Redux/Reducer/OneToOneChatOptions';
+import AuthenticationOptions from '../Redux/Reducer/AuthenticationOptions';
 
 export interface MHeaderProps {
   Title?: string;
@@ -228,7 +229,7 @@ export const UserProfileScreen = (props: {
       var companyID = await SessionHelper.GetCompanyID();
       var UserDetails = await SessionHelper.GetUserDetails();
       var FCMToken = await SessionHelper.GetFCMToken();
-      console.log('GroupIDgrgrgrg: ', props.GroupId);
+      // console.log('GroupIDgrgrgrg: ', props.GroupId);
 
       await setInfo({
         companyId: companyID,
@@ -246,7 +247,12 @@ export const UserProfileScreen = (props: {
       'Do you want to logout?',
       [
         { text: 'No' },
-        { text: 'Yes', onPress: () => AuthenticationHelper.OnLogOut(navigation) },
+        {
+          text: 'Yes', onPress: () => {
+            dispatch(AuthenticationOptions.actions.LogOut())
+            AuthenticationHelper.OnLogOut(navigation)
+          }
+        },
       ],
       { cancelable: false },
     );

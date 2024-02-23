@@ -1,29 +1,33 @@
-import React, {useEffect} from 'react';
+import React, { useEffect } from 'react';
 import SessionHelper from '../../Core/SessionHelper';
-import {SafeAreaView} from 'react-native';
+import { SafeAreaView } from 'react-native';
 
-import {styles} from '../MainStyle';
-import {SignalRHubConnection} from '../../DataAccess/SignalRHubConnection';
-import {MHeader} from '../../Control/MHeader';
+import { styles } from '../MainStyle';
+import { SignalRHubConnection } from '../../DataAccess/SignalRHubConnection';
+import { MHeader } from '../../Control/MHeader';
 
-import {createMaterialTopTabNavigator} from '@react-navigation/material-top-tabs';
-import {ShowToastMessage} from '../../Redux/Store';
+import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
+import { ShowToastMessage } from '../../Redux/Store';
 import AllChatPage from './OneToOneChat/AllChatPage';
-import {useAppDispatch} from '../../Redux/Hooks';
+import { useAppDispatch, useAppSelector } from '../../Redux/Hooks';
 import Geolocation from '@react-native-community/geolocation';
 import SignalRApi from '../../DataAccess/SignalRApi';
-import {Chat} from '../../Entity/Chat';
+import { Chat } from '../../Entity/Chat';
 
-import {GroupChat} from '../../Entity/GroupChat';
-import OneToOneChatOptions from '../../Redux/Reducer/OneToOneChatOptions';
+import { GroupChat } from '../../Entity/GroupChat';
+import OneToOneChatOptions, { GetSavableUserList } from '../../Redux/Reducer/OneToOneChatOptions';
 import GroupChatOptions from '../../Redux/Reducer/GroupChatOptions';
 import NotificationMainPage from './Notification/NotificationMainPage';
 import GroupMainPage2 from './GroupChat/GroupMainPage2';
+import { useSelector } from 'react-redux';
+import AppDBHelper from '../../Core/AppDBHelper';
 
 const MainPage = () => {
   const Tab = createMaterialTopTabNavigator();
 
   const dispatch = useAppDispatch();
+  const SavableOneToOneUserList = useAppSelector(GetSavableUserList)
+  const AuthenticationData = useAppSelector(i => i.AuthenticationOptions)
 
   useEffect(() => {
     IniTilizeOnce(true);
@@ -64,6 +68,11 @@ const MainPage = () => {
     });
   };
 
+  //When user loggin off store restting, causing this data to be empty
+  if (AuthenticationData.User) {
+    AppDBHelper.SetChatUsers(SavableOneToOneUserList)
+  }
+
   console.log('re render Mainpage', new Date());
 
   return (
@@ -72,9 +81,9 @@ const MainPage = () => {
 
       <Tab.Navigator
         initialRouteName="AllChat"
-        sceneContainerStyle={{backgroundColor: '#ffffff'}}
+        sceneContainerStyle={{ backgroundColor: '#ffffff' }}
         screenOptions={{
-          tabBarStyle: {position: 'relative'},
+          tabBarStyle: { position: 'relative' },
           tabBarActiveTintColor: '#000000',
           tabBarInactiveTintColor: '#A6A6A6',
           tabBarLabelStyle: {
@@ -86,7 +95,7 @@ const MainPage = () => {
         }}>
         <Tab.Screen
           name="AllChatPage"
-          options={{tabBarLabel: 'All Messages'}}
+          options={{ tabBarLabel: 'All Messages' }}
           children={() => {
             return <AllChatPage />;
           }}
@@ -94,14 +103,14 @@ const MainPage = () => {
 
         <Tab.Screen
           name="Group"
-          options={{tabBarLabel: 'Group'}}
+          options={{ tabBarLabel: 'Group' }}
           children={() => {
             return <GroupMainPage2 />;
           }}
         />
         <Tab.Screen
           name="Notifications"
-          options={{tabBarLabel: 'Notifications'}}
+          options={{ tabBarLabel: 'Notifications' }}
           children={() => {
             return <NotificationMainPage />;
           }}

@@ -23,8 +23,8 @@ export default class BaseApi {
 
     public static async getFinalUrl(DomainUrl: BaseUrlType, relativeUrl: string, IsMultiPart: boolean): Promise<string> {
 
-        console.log('DomainUrl Type-->', DomainUrl)
-        console.log('Relative URl-->', relativeUrl)
+        //console.log('DomainUrl Type-->', DomainUrl)
+        //console.log('Relative URl-->', relativeUrl)
         var value;
         switch (DomainUrl) {
             case "ERES":
@@ -75,8 +75,8 @@ export default class BaseApi {
 
         var headers = await this.GetHeaders()
         var url = await BaseApi.getFinalUrl(DomainUrl, url, false)
-        console.log("Get url-->", url)
-        console.log("Get headers-->", headers)
+        //console.log("Get url-->", url)
+        //console.log("Get headers-->", headers)
         var response: KSResponse<T> = { data: undefined, IsKSError: false, ErrorInfo: "" }
 
         return new Promise((resolve) => {
@@ -100,9 +100,9 @@ export default class BaseApi {
     private static async _PostInternal<T>(DomainUrl: BaseUrlType, url: string, Model: unknown, IsMultiPart: boolean): Promise<KSResponse<T>> {
         var headers = await this.GetHeaders(IsMultiPart ? "Multipart" : "GetOrPost")
         var url = await BaseApi.getFinalUrl(DomainUrl, url, IsMultiPart)
-        console.log("Post url-->", url)
-        console.log("Post headers-->", headers)
-        console.log("Post body-->", JSON.stringify(Model ?? "", undefined, 1))
+        // console.log("Post url-->", url)
+        //console.log("Post headers-->", headers)
+        //console.log("Post body-->", JSON.stringify(Model ?? "", undefined, 1))
         var response: KSResponse<T> = { data: undefined, IsKSError: false, ErrorInfo: "" }
         return new Promise((resolve) => {
             axios.post<T>(url, Model, {

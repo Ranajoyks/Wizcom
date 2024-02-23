@@ -47,16 +47,16 @@ export type RootStackParamList = {
   MainPage: undefined,
   MapPage: undefined,
 
-  OneToOneChatPage2: { SecondUser: ChatUser, OnUserListRefresRequest?: () => void }
+  OneToOneChatPage2: { SecondUser: ChatUser }
   AllChatPage: undefined,
 
   GroupMainPage: undefined,
-  GroupChatDetailsPage2: { Group: Group, OnBackRefresRequest?: () => void },
+  GroupChatDetailsPage2: { Group: Group },
   CreateGroup: { GroupID: string }
   AddGroupMember: { GroupID: string }
   DeleteGroupMember: { GroupID: string }
   AllGroupMember: undefined
-  NotificationPage: { SecondUser: NotificationUser, OnUserListRefresRequest?: () => void }
+  NotificationPage: { SecondUser: NotificationUser }
   // OneToOneChatDetailsPage: { OnReturn: (isSuccess: boolean) => void };
   // AnalysisPage: { licenseNo: string },
 

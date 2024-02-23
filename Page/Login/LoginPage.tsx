@@ -1,26 +1,28 @@
 import React from 'react';
 
-import {View, Text, StyleSheet, TextInput} from 'react-native';
+import { View, Text, StyleSheet, TextInput } from 'react-native';
 import BaseComponent from '../../Core/BaseComponent';
 import BaseState from '../../Core/BaseState';
 
 import SessionHelper from '../../Core/SessionHelper';
 import messaging from '@react-native-firebase/messaging';
 
-import {request, check, PERMISSIONS, RESULTS} from 'react-native-permissions';
+import { request, check, PERMISSIONS, RESULTS } from 'react-native-permissions';
 import PermissionHelper from '../../Core/PermissionHelper';
 import BaseViewModel from '../../Core/BaseViewModel';
 import ERESApi from '../../DataAccess/ERESApi';
-import {connect} from 'react-redux';
+import { connect } from 'react-redux';
 
-import {mapDispatchToProps} from '../../Core/BaseProps';
+import { mapDispatchToProps } from '../../Core/BaseProps';
 
-import {styles} from '../MainStyle';
+import { styles } from '../MainStyle';
 import CustomButton from '../../Control/CustomButton';
-import {SafeAreaView} from 'react-native-safe-area-context';
-import {MHeader} from '../../Control/MHeader';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { MHeader } from '../../Control/MHeader';
 import MTextInput from '../../Control/MTextInput';
 import User from '../../Entity/User';
+import AuthenticationOptions from '../../Redux/Reducer/AuthenticationOptions';
+
 
 export class LoginViewModel extends BaseViewModel {
   UserName?: string;
@@ -90,14 +92,16 @@ export class LoginPage extends BaseComponent<'LoginPage', LoginViewModel> {
     if (loginResponse.IsKSError || !loginResponse.data?.d?.bStatus) {
       this.ShowToast(
         loginResponse.ErrorInfo ||
-          loginResponse.data?.d?.cError ||
-          'Some issue happend',
+        loginResponse.data?.d?.cError ||
+        'Some issue happend',
       );
       return;
     }
 
     var user = {} as User;
     user.userName = Model.UserName!;
+
+    this.props.dispatch(AuthenticationOptions.actions.LogIn(user))
     SessionHelper.SetUserDetails(user);
 
     this.props.navigation.reset({
@@ -105,7 +109,7 @@ export class LoginPage extends BaseComponent<'LoginPage', LoginViewModel> {
       routes: [
         {
           name: 'BranchPage',
-          params: {BranchList: loginResponse.data.d.data.ado},
+          params: { BranchList: loginResponse.data.d.data.ado },
         },
       ],
     });
@@ -117,7 +121,7 @@ export class LoginPage extends BaseComponent<'LoginPage', LoginViewModel> {
       <SafeAreaView style={styles.container}>
         <MHeader Title="Login"></MHeader>
 
-        <View style={{padding: 30}}>
+        <View style={{ padding: 30 }}>
           <Text style={localStyle.text}>Please Login</Text>
           <Text style={localStyle.text2}>USER NAME</Text>
 

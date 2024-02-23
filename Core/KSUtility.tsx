@@ -15,4 +15,8 @@ export default class KSUtility {
     public static IsEmpty<T>(data?: T[]): boolean {
         return (data === undefined || data === null || data.length == 0);
     }
+
+    public static LogUnexpcted(message?: string) {
+        console.error(message ?? "data is empty, this should not happen");
+    }
 }

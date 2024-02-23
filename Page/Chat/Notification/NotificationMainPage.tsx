@@ -75,7 +75,7 @@ const NotificationMainPage = () => {
     var tempSenderChatId = await SessionHelper.GetChatId()
 
     var cuResponse = await SignalRApi.GetAllUserNotification(tempSenderChatId!, branch?.lId!)
-    console.log("NotificatinDetails: ", cuResponse.data);
+    //console.log("NotificatinDetails: ", cuResponse.data);
     if (cuResponse.data) {
       UpdateAllOnlineUser(cuResponse.data)
       dispatch(NotificationOptions.actions.UpdateAllNotificationUserList(cuResponse.data))
@@ -176,7 +176,7 @@ const ChatUserScreen = (props: { data: NotificationUser, OnUserListRefresRequest
               backgroundColor: user?.isUserLive ? 'green' : 'orange',
               position: 'absolute',
               bottom: 20,
-              right:0,
+              right: 0,
             }}></Badge>
         </View>
       )}

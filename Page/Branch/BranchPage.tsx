@@ -22,6 +22,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import UIHelper from '../../Core/UIHelper';
 import { SignalRHubConnection } from '../../DataAccess/SignalRHubConnection';
 import MPicker from '../../Control/MPicker';
+import AppDBHelper from '../../Core/AppDBHelper';
+import AuthenticationOptions from '../../Redux/Reducer/AuthenticationOptions';
 
 
 export class BranchPageViewModel {
@@ -65,6 +67,8 @@ export class BranchPage extends BaseComponent<"BranchPage", BranchPageViewModel>
       return
     }
 
+
+
     var CompanyID = await SessionHelper.GetCompanyID()
     var chatId = await UIHelper.GetChatId(companyRes.data.d.obj.lUsrId)
     //var chatId = `${CompanyID}_${companyRes.data.d.obj.lUsrId}`
@@ -96,8 +100,9 @@ export class BranchPage extends BaseComponent<"BranchPage", BranchPageViewModel>
       this.ShowPageLoader(false)
       return
     }
-
-    SessionHelper.SetUserDetails(connectResponse.data[0]);
+    var user = connectResponse.data[0]
+    this.props.dispatch(AuthenticationOptions.actions.LogIn(user))
+    SessionHelper.SetUserDetails(user);
     UIHelper.LogTime("JoinChat", "Start")
     await SignalRHubConnection.JoinChat(chatId)
     UIHelper.LogTime("JoinChat", "End")

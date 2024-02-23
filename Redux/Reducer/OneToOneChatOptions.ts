@@ -4,6 +4,8 @@ import { ChatUser } from '../../Entity/ChatUser'
 import UIHelper from '../../Core/UIHelper'
 import { Chat } from '../../Entity/Chat'
 import { RootState } from '../Store'
+import AppDBHelper from '../../Core/AppDBHelper'
+import AuthenticationOptions from './AuthenticationOptions'
 
 export interface OneToOneChatOptionsState {
     AllUserList: ChatUser[]
@@ -17,42 +19,23 @@ const OneToOneChatOptions = createSlice({
     name: 'OneToOneChatOptions',
     initialState,
     reducers: {
-        UpdateAllUserList: (state, action: PayloadAction<ChatUser[]>) => {
-            action.payload.forEach(newUser => {
-                var oldUserIndex = state.AllUserList.findIndex(i => i.lId == newUser.lId)
+        UpdateAllUserListAndMessage: (state, action: PayloadAction<ChatUser[]>) => {
+
+            action.payload.forEach(payloadUser => {
+
+                var oldUserIndex = state.AllUserList.findIndex(i => i.lId == payloadUser.lId)
                 if (oldUserIndex == -1) {
-                    state.AllUserList.push(newUser)
+                    payloadUser.AllChatOneToOneList = []
+                    state.AllUserList.push(payloadUser)
                     return
                 }
 
                 var oldUser = state.AllUserList[oldUserIndex]
-
                 var AllChatOneToOneList = oldUser.AllChatOneToOneList
 
-                newUser = Object.assign(oldUser, newUser)
+                var newUser = Object.assign(oldUser, payloadUser)
 
                 newUser.AllChatOneToOneList = AllChatOneToOneList
-            });
-
-            state.AllUserList = state.AllUserList
-        },
-        LoadUserOneToOneChatList: (state, action: PayloadAction<ChatUser[]>) => {
-
-            action.payload.forEach(payloadUser => {
-                var secondUserId = payloadUser.lId
-
-                var userIndex = state.AllUserList.findIndex(i => i.lId == secondUserId)!
-                var user = state.AllUserList[userIndex]
-
-                if (!user) {
-                    console.error("User not found, this should nor happen", secondUserId)
-                    return
-                }
-
-
-                if (!user.AllChatOneToOneList) {
-                    user.AllChatOneToOneList = []
-                }
 
                 //below one is required as sMessgeList is readonly here
                 var nonReadonlyList = [...payloadUser.sMessgeList ?? []]
@@ -62,7 +45,7 @@ const OneToOneChatOptions = createSlice({
 
 
 
-                var newNoProxySortedMessageList: Chat[] = user?.AllChatOneToOneList.filter(i => !i.IsKsProxy)
+                var newNoProxySortedMessageList: Chat[] = newUser.AllChatOneToOneList.filter(i => !i.IsKsProxy)
                 var todayGroupName = UIHelper.CreateGroupNameFromdate(new Date())
 
                 sortedIncomingMessageList.forEach(newMwssage => {
@@ -101,12 +84,11 @@ const OneToOneChatOptions = createSlice({
                 })
 
 
-                user.sMessgeList = []
-                user.AllChatOneToOneList = uniqueMessagaeList
+                newUser.sMessgeList = []
+                newUser.AllChatOneToOneList = uniqueMessagaeList
 
-                state.AllUserList[userIndex] = user
+                state.AllUserList[oldUserIndex] = newUser
             })
-
         },
         AddNewOneToOneChat: (state, action: PayloadAction<Chat>) => {
             var currentUserList = state.AllUserList
@@ -129,10 +111,21 @@ const OneToOneChatOptions = createSlice({
             var chatIndex = user.AllChatOneToOneList?.findIndex(i => i.lSrId == action.payload.lSrId)!
 
             state.AllUserList[userIndex].AllChatOneToOneList![chatIndex] = action.payload
-        },
+        }
     },
+    extraReducers: (builder) => {
+        builder.addCase(AuthenticationOptions.actions.LogOut, state => {
+            state.AllUserList = [];
+        });
+    }
 })
 
+export const GetSavableUserList = createSelector([
+    (state: RootState) => state.OneToOneChatOptions.AllUserList],
+    (AllUserList) => {
+        return [...AllUserList]
+    }
+)
 
 export const GetFilteredUserList = createSelector([
     (state: RootState) => state.OneToOneChatOptions.AllUserList,

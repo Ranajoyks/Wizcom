@@ -1,8 +1,10 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import KSUtility from "./KSUtility";
 
 export default abstract class StorageHelper {
     protected static async setInternal<T>(module: string, value: T): Promise<void> {
-        await AsyncStorage.setItem(module, JSON.stringify(value || ''))
+        // console.log("module value", module + "--" + value)
+        return await AsyncStorage.setItem(module, JSON.stringify(value ?? '')).catch(err => KSUtility.LogUnexpcted(err + ''))
     }
 
     protected static async getInternal<T>(module: string) {

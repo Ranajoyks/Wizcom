@@ -10,9 +10,6 @@ import { View } from 'react-native-animatable';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   ActivityIndicator,
-  Card,
-  FAB,
-  IconButton,
   List,
   ProgressBar,
   Text,
@@ -21,27 +18,18 @@ import {
   Dimensions,
   FlatList,
   Image,
-  ImageBackground,
-  RefreshControl,
   StyleSheet,
   TouchableOpacity,
   TextInput,
-  Button,
 } from 'react-native';
 import { ColorCode } from '../../MainStyle';
-import IonIcon from 'react-native-vector-icons/Ionicons';
 import MCIcon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useNavigation } from '@react-navigation/native';
 import { NavigationProps } from '../../../Core/BaseProps';
-import ChatAvatar from '../ChatAvatar';
 import User from '../../../Entity/User';
 import { useAppDispatch, useAppSelector } from '../../../Redux/Hooks';
-import ChatUserOptions from '../../../Redux/Reducer/NotificationOptions';
 import React from 'react';
-import DocumentPicker, {
-  DocumentPickerResponse,
-} from 'react-native-document-picker';
-import axios from 'axios';
+import DocumentPicker from 'react-native-document-picker';
 import { UserProfileScreen } from '../../../Control/MHeader';
 import RNFile from '../../../Core/RNFile';
 import ERESApi from '../../../DataAccess/ERESApi';
@@ -60,9 +48,10 @@ const OneToOneChatPage2 = (
   props: StackScreenProps<RootStackParamList, 'OneToOneChatPage2'>,
 ) => {
   const SecondUser = props.route.params.SecondUser;
-  const OnUserListRefresRequest = props.route.params.OnUserListRefresRequest;
+
   const navigation = useNavigation<NavigationProps>();
   const dispatch = useAppDispatch();
+
 
   const [SenderChatId, setSenderChatId] = useState<string>();
   const [ReceiverChatId, setReceiverChatId] = useState<string>();
@@ -70,7 +59,7 @@ const OneToOneChatPage2 = (
 
   const [newSendMessage, setNewSendMessage] = useState('');
   const [UserInfo, setUserInfo] = useState<User>();
-  const [CompnanyId, setCompnanyId] = useState<string>();
+
   const [BrnachId, setBranchId] = useState<number>();
 
 
@@ -106,8 +95,14 @@ const OneToOneChatPage2 = (
     setBranchId(Branch?.lId);
     setSenderChatId(chatId);
     setReceiverChatId(receiverChatId);
-    setCompnanyId(CompanyId);
+
     setUserInfo(userInfo);
+
+    // var usersd = await AppDBHelper.GetChatUsers(65 + "")
+    // var usersSS = await AppDBHelper.GetChatUsers(60 + "")
+
+    // console.log("UserD", JSON.stringify(usersd, undefined, 1))
+    // console.log("usersSS", JSON.stringify(usersSS, undefined, 1))
 
     //UIHelper.LogTime("MarkTalkingTrue", "Start")
 
@@ -126,14 +121,7 @@ const OneToOneChatPage2 = (
     //UIHelper.LogTime("LoadOldMessages", "End")
     ShowPageLoader(false);
 
-    var JoinedChat = await SignalRHubConnection.JoinChat();
-
-    if (!JoinedChat) {
-      //console.log(JoinedChat);
-      ShowPageLoader(false);
-      ShowToastMessage(SignalRHubConnection.connectionErrorMessage);
-      return;
-    }
+    await SignalRHubConnection.JoinChat();
     await LoadOldMessages(chatId, receiverChatId, Branch?.lId);
   };
   const LoadOldMessages = async (
@@ -173,12 +161,8 @@ const OneToOneChatPage2 = (
           sMessgeList: res.data
         } as unknown as ChatUser
 
-        dispatch(OneToOneChatOptions.actions.LoadUserOneToOneChatList([proxyChatUser]));
+        dispatch(OneToOneChatOptions.actions.UpdateAllUserListAndMessage([proxyChatUser]));
 
-        AppDBHelper.SetChatUsers(
-          chatUserOptions.AllUserList,
-          tempSenderChatId!,
-        );
       }
       setIsPageRefreshing(false);
     });
@@ -186,7 +170,7 @@ const OneToOneChatPage2 = (
   const DownloadFile = async (item: Chat): Promise<Chat | undefined> => {
     var newChatItem = {} as Chat;
 
-    return new Promise(async (resolve, reject) => {
+    return new Promise(async (resolve) => {
       if (item.AttahmentLocalPath) {
         console.log('item.AttahmentLocalPath', item.AttahmentLocalPath);
 
@@ -197,7 +181,7 @@ const OneToOneChatPage2 = (
       HandleMultiDownloadingLoader(item.lAttchId, true);
       var res = await ERESApi.DownloadAttachment(item.lAttchId);
 
-      const { config, fs } = RNFetchBlob;
+      const { fs } = RNFetchBlob;
       var cacheDir = fs.dirs.DownloadDir;
       var binaryData = res.data.d.data.mAttch;
       var fullLocalFileName = `${cacheDir}/${item.sMsg}`;
@@ -214,7 +198,7 @@ const OneToOneChatPage2 = (
           console.log('File written successfully!', newChatItem);
           resolve(newChatItem);
         })
-        .catch((err: any) => {
+        .catch(() => {
           resolve(undefined);
         });
     });
@@ -337,7 +321,6 @@ const OneToOneChatPage2 = (
       <View style={localStyle.header}>
         <TouchableOpacity
           onPress={() => {
-            OnUserListRefresRequest && OnUserListRefresRequest();
             navigation.pop();
           }}>
           <Image

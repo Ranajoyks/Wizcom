@@ -65,7 +65,7 @@ const App = (props: any) => {
   };
 
   const theme = lightTheme;
-  console.log("snackbarOptions.State ", snackbarOptions.State, "-->", snackbarOptions.Text)
+  //console.log("snackbarOptions.State ", snackbarOptions.State, "-->", snackbarOptions.Text)
   return (
     <PaperProvider theme={theme}>
       <MPopUpLoader mode='Square' visible={pageOptions.IsPageLoading}></MPopUpLoader>

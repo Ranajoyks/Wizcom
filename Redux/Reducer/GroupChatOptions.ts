@@ -47,13 +47,13 @@ const GroupChatOptions = createSlice({
       //If no data
       if (!state.FilterGroupList.length) {
         state.FilterGroupList = state.AllGroupList;
-        console.log('If no data: ');
+        //console.log('If no data: ');
       }
 
       //When no search string
       if (state.FilterGroupList.length == state.AllGroupList.length) {
         state.FilterGroupList = state.AllGroupList;
-        console.log('/When no search string');
+        //console.log('/When no search string');
       }
 
       if (

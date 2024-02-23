@@ -83,27 +83,16 @@ const OneToOneChatPage2 = (
 
   const Initilize = async () => {
     var chatId = await SessionHelper.GetChatId();
-    var CompanyId = await SessionHelper.GetCompanyID();
     var Branch = await SessionHelper.GetBranch();
     var receiverChatId = await UIHelper.GetChatId(SecondUser.lId);
     var userInfo = await SessionHelper.GetUserDetails();
 
-    console.log('ReceiverChatId', receiverChatId);
-    console.log('ChatId', chatId);
-    console.log('Branch?.lId', Branch?.lId);
 
     setBranchId(Branch?.lId);
     setSenderChatId(chatId);
     setReceiverChatId(receiverChatId);
 
     setUserInfo(userInfo);
-
-    // var usersd = await AppDBHelper.GetChatUsers(65 + "")
-    // var usersSS = await AppDBHelper.GetChatUsers(60 + "")
-
-    // console.log("UserD", JSON.stringify(usersd, undefined, 1))
-    // console.log("usersSS", JSON.stringify(usersSS, undefined, 1))
-
     //UIHelper.LogTime("MarkTalkingTrue", "Start")
 
     await SignalRApi.MarkTalkingTrue({
@@ -111,18 +100,13 @@ const OneToOneChatPage2 = (
       ToUserId: receiverChatId,
       IsTaking: true,
     });
-    //UIHelper.LogTime("MarkTalkingTrue", "End")
-    //UIHelper.LogTime("JoinChat", "Start")
-    await SignalRHubConnection.JoinChat();
-    //UIHelper.LogTime("JoinChat", "End")
-    //UIHelper.LogTime("LoadOldMessages", "Start")
-    LoadOldMessages(chatId, receiverChatId, Branch?.lId, 0, false);
-    await ReadMsg(chatId, receiverChatId, Branch?.lId.toString());
-    //UIHelper.LogTime("LoadOldMessages", "End")
-    ShowPageLoader(false);
 
     await SignalRHubConnection.JoinChat();
-    await LoadOldMessages(chatId, receiverChatId, Branch?.lId);
+
+    LoadOldMessages(chatId, receiverChatId, Branch?.lId, 0, true);
+    ReadMsg(chatId, receiverChatId, Branch?.lId.toString());
+
+    ShowPageLoader(false);
   };
   const LoadOldMessages = async (
     FromSenderId?: string,
@@ -282,7 +266,7 @@ const OneToOneChatPage2 = (
       receiverId: FromReceiverId,
     };
     var ReadMsgResponse = await SignalRApi.ReadMsg(ReadMsgOption);
-    console.log('ReadMsgResponse: ', ReadMsgResponse);
+    //console.log('ReadMsgResponse: ', ReadMsgResponse);
   };
   const HandleMultiDownloadingLoader = (
     AttachmentId: number,
@@ -552,9 +536,7 @@ const OneToOneChatPage2 = (
                   { width: Dimensions.get('window').width - 100 })
               }
               value={newSendMessage}
-              onChangeText={e => {
-                setNewSendMessage(e);
-              }}
+              onChangeText={setNewSendMessage}
               placeholder="Write your message here"></TextInput>
             <View
               style={{

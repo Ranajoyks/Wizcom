@@ -31,7 +31,7 @@ import MHeaderOptions, { UserShowMode } from '../Redux/Reducer/MHeaderOptions';
 import SignalRApi from '../DataAccess/SignalRApi';
 import { ShowPageLoader, ShowToastMessage } from '../Redux/Store';
 import GroupChatOptions from '../Redux/Reducer/GroupChatOptions';
-import OneToOneChatOptions, { GetFilteredUserList } from '../Redux/Reducer/OneToOneChatOptions';
+import { GetFilteredUserList } from '../Redux/Reducer/OneToOneChatOptions';
 import AuthenticationOptions from '../Redux/Reducer/AuthenticationOptions';
 
 export interface MHeaderProps {
@@ -183,11 +183,9 @@ const MSerachBar = (props: MSearchBarProps) => {
   );
 };
 
-export const MStatusBar = (props: StatusBarProps) => {
+export const MStatusBar = () => {
   return (
-    <>
-      <StatusBar backgroundColor="blue" />
-    </>
+    <StatusBar backgroundColor="blue" />
   );
 };
 
@@ -204,7 +202,6 @@ export const UserProfileScreen = (props: {
   const [visible, setVisible] = React.useState(false);
 
   const allChatUserListData = useAppSelector(i => i.OneToOneChatOptions.AllUserList)
-  const filterChatUserListData = useAppSelector(GetFilteredUserList)
   const mHeaderData = useAppSelector(i => i.MHeaderOptions)
 
   const [info, setInfo] = useState<{
@@ -296,7 +293,7 @@ export const UserProfileScreen = (props: {
     navigation.pop();
   };
 
-  const HandleUserlabelClicked = (event: GestureResponderEvent) => {
+  const HandleUserlabelClicked = () => {
     var isOnLineUser = mHeaderData.UserShowMode == 'Online User';
     var newMode: UserShowMode = isOnLineUser ? 'All User' : 'Online User';
     dispatch(MHeaderOptions.actions.UpdateUserShowMode(newMode));
@@ -327,19 +324,17 @@ export const UserProfileScreen = (props: {
           <View style={localStyles.divider}></View>
           <MenuItem2 HearderText="Version:" ItemText={'1.0.0'} />
           <View style={localStyles.divider}></View>
-          {allChatUserListData.length && (
-            <>
-              <View style={localStyles.dividerView}>
-                <TouchableOpacity onPress={HandleUserlabelClicked}>
-                  <Text style={localStyles.InfoItemHeader}>{mHeaderData.UserShowMode == "All User" ? "Online User" : "All User"}</Text>
-                </TouchableOpacity>
-                <Text style={localStyles.InfoItemData}>
-                  {'' + onlineUsers?.length + '/' + offlineUsers?.length}
-                </Text>
-              </View>
-              <View style={localStyles.divider}></View>
-            </>
-          )}
+
+          <View style={localStyles.dividerView}>
+            <TouchableOpacity onPress={HandleUserlabelClicked}>
+              <Text style={localStyles.InfoItemHeader}>{mHeaderData.UserShowMode == "All User" ? "Online User" : "All User"}</Text>
+            </TouchableOpacity>
+            <Text style={localStyles.InfoItemData}>
+              {'' + onlineUsers.length + '/' + offlineUsers.length}
+            </Text>
+          </View>
+          <View style={localStyles.divider}></View>
+
           <TouchableOpacity onPress={CreateGroup}>
             <MenuItem2 HearderText="New Group" />
           </TouchableOpacity>

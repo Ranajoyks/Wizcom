@@ -32,7 +32,6 @@ import OneToOneChatOptions, { GetFilteredUserList } from '../../../Redux/Reducer
 const AllChatPage = () => {
 
   const dispatch = useAppDispatch()
-  const allOneTOneUserListData = useAppSelector(i => i.OneToOneChatOptions.AllUserList)
   const filteredOneToOneUserListData = useAppSelector(GetFilteredUserList)
   const [isPageRefreshing, setIsPageRefreshing] = useState(false)
   var FetchMessageInterval: NodeJS.Timeout;
@@ -160,7 +159,7 @@ const ChatUserScreen = (props: { data: ChatUser }) => {
           </View>
         );
       }}
-      left={props => (
+      left={() => (
         <View>
           <Avatar.Text
             style={{ backgroundColor: ColorCode.DimGray, width: 45, height: 45 }}

@@ -2,13 +2,10 @@ import * as signalR from '@microsoft/signalr';
 import BaseApi from './BaseApi';
 import SessionHelper from '../Core/SessionHelper';
 
-import { JoinChatResponse } from '../Entity/JInitializeResponse';
-import { Dispatch, SetStateAction } from 'react';
 import { ChatUser } from '../Entity/ChatUser';
 import { Chat, cMsgFlagType } from '../Entity/Chat';
 import UIHelper from '../Core/UIHelper';
 import { GroupChat } from '../Entity/GroupChat';
-import { Group } from '../Entity/Group';
 import { Notification } from '../Entity/Notification';
 
 export class SignalRHubConnection {
@@ -72,7 +69,7 @@ export class SignalRHubConnection {
         .withAutomaticReconnect()
         .build();
 
-      _tempConnection.keepAliveIntervalInMilliseconds = 5000
+      //_tempConnection.keepAliveIntervalInMilliseconds = 5000
       _tempConnection.onclose((err) => {
         console.log("OnConnectionClose", err)
       })
@@ -118,7 +115,7 @@ export class SignalRHubConnection {
       chatId = await SignalRHubConnection.GetChatId();
     }
     var connection = await SignalRHubConnection.GetConnection(chatId);
-    console.log("JoinChat chatId" + chatId);
+    //console.log("JoinChat chatId" + chatId);
 
     return await connection.invoke('JoinChat', chatId);
   }

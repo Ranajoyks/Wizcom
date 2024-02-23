@@ -69,7 +69,7 @@ const MainPage = () => {
   };
 
   //When user loggin off store restting, causing this data to be empty
-  if (AuthenticationData.User) {
+  if (AuthenticationData.User && SavableOneToOneUserList.length) {
     AppDBHelper.SetChatUsers(SavableOneToOneUserList)
   }
 

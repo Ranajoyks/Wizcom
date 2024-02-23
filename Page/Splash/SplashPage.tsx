@@ -35,10 +35,9 @@ export class SplashPage extends BaseComponent<'SplashPage', BaseViewModel> {
         index: 0,
         routes: [{ name: 'CompanySelectionPage' }],
       });
-    }, 500);
+    }, 100);
   }
   RedirectToMainScreen = async (ChatId: string) => {
-    var SessionId = await SessionHelper.GetSessionId();
     var companyID = await SessionHelper.GetCompanyID();
 
     var FMCToken = await SessionHelper.GetFCMToken();

@@ -161,7 +161,7 @@ const NotificationPage = (
     ).then(res => {
       if (res.data) {
         setCurrentIndex(tempIndexNo);
-       
+
         console.log("sMessgeList", res.data.length);
 
         SecondUser.sMessgeList = res.data
@@ -295,7 +295,7 @@ const NotificationPage = (
       receiverId: FromReceiverId,
     };
     var ReadMsgResponse = await SignalRApi.ReadMsg(ReadMsgOption);
-    console.log('ReadMsgResponse: ', ReadMsgResponse);
+    //console.log('ReadMsgResponse: ', ReadMsgResponse);
   };
   const HandleMultiDownloadingLoader = (
     AttachmentId: number,

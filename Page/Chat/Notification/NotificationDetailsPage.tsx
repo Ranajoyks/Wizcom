@@ -43,7 +43,7 @@ import ERESApi from '../../../DataAccess/ERESApi';
 import { Chat } from '../../../Entity/Chat';
 import User from '../../../Entity/User';
 import { useAppDispatch, useAppSelector } from '../../../Redux/Hooks';
-import ChatUserOptions from '../../../Redux/Reducer/NotificationOptions';
+import NotificationUserOptions from '../../../Redux/Reducer/NotificationOptions';
 import { ColorCode } from '../../MainStyle';
 import { RootStackParamList } from '../../../Root/AppStack';
 import { StackScreenProps } from '@react-navigation/stack';
@@ -59,7 +59,6 @@ const NotificationPage = (
   props: StackScreenProps<RootStackParamList, 'NotificationPage'>,
 ) => {
   const SecondUser = props.route.params.SecondUser;
-  const OnUserListRefresRequest = props.route.params.OnUserListRefresRequest;
   const navigation = useNavigation<NavigationProps>();
   const dispatch = useAppDispatch();
 
@@ -75,7 +74,7 @@ const NotificationPage = (
 
   const [ShowDownloading, setShowDownloading] = useState<number[]>([]);
   const [singleFileDownloadId, setSingleFileDownloadId] = useState<number>(0);
-  const chatUserOptions = useAppSelector(i => i.NotificationOptions);
+  const NotificationUserOptions = useAppSelector(i => i.NotificationOptions);
 
   const [SelectedFile, setSelectedFile] = useState<RNFile>();
 
@@ -164,17 +163,17 @@ const NotificationPage = (
        
         console.log("sMessgeList", res.data.length);
 
-        SecondUser.sMessgeList = res.data
+        SecondUser.sMessgeList = res.data.filter((i: Notification) => i.cMsgFlg === 'F' || i.cMsgFlg === 'N');
 
         var proxyChatUser: NotificationUser = {
           lId: SecondUser.lId,
-          sMessgeList: res.data
+          sMessgeList: res.data.filter((i: Notification) => i.cMsgFlg === 'F' || i.cMsgFlg === 'N')
         } as unknown as NotificationUser
 
-        dispatch(NotificationOptions.actions.LoadUserOneToOneNotificationChatList([proxyChatUser]));
+        dispatch(NotificationOptions.actions.UpdateAllUserNotificationListAndMessage([proxyChatUser]));
 
         AppDBHelper.SetNotificationUsers(
-          chatUserOptions.AllUserNotificationList,
+          NotificationUserOptions.AllUserNotificationList,
           tempSenderChatId!,
         );
       }
@@ -320,7 +319,7 @@ const NotificationPage = (
     Alert.alert(AcceptRejectResponse.data)
   };
 
-  var MessageList = chatUserOptions.AllUserNotificationList.find(
+  var MessageList = NotificationUserOptions.AllUserNotificationList.find(
     i => i.lId == SecondUser.lId,
   )?.AllNotificatonOneToOneList;
   var NotificationMessageList = MessageList?.filter((i: any) => i.cMsgFlg === 'F' || i.cMsgFlg === 'N');
@@ -332,7 +331,7 @@ const NotificationPage = (
 
   var lastMessage = MessageList?.length ? MessageList[0] : undefined;
 
-  //console.log("MessageList", MessageList)
+  // console.log("NotificationMessageList", MessageList)
 
   return (
     <SafeAreaView
@@ -340,7 +339,6 @@ const NotificationPage = (
       <View style={localStyle.header}>
         <TouchableOpacity
           onPress={() => {
-            OnUserListRefresRequest && OnUserListRefresRequest();
             navigation.pop();
           }}>
           <Image

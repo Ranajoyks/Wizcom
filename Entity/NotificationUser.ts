@@ -11,5 +11,5 @@ export interface NotificationUser {
     userFullName: string;
     userName: string;
     sMessgeList?: Notification[],
-    AllNotificatonOneToOneList?: Notification[],
+    AllNotificatonOneToOneList: Notification[],
 }

@@ -1,23 +1,22 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit'
+import { createSelector, createSlice, PayloadAction } from '@reduxjs/toolkit'
 
 import UIHelper from '../../Core/UIHelper'
 import { NotificationUser } from '../../Entity/NotificationUser'
 import { Notification } from '../../Entity/Notification'
 import { ChatUser } from '../../Entity/ChatUser'
 import MHeaderOptions from './MHeaderOptions'
+import { RootState } from '../Store'
 
 
 
 export interface NotificationOptionsState {
 
     AllUserNotificationList: NotificationUser[],
-    FilterUserNotificationList: NotificationUser[],
 }
 
 const initialState: NotificationOptionsState = {
 
     AllUserNotificationList: [],
-    FilterUserNotificationList: [],
 }
 
 
@@ -28,45 +27,78 @@ const NotificationOptions = createSlice({
     initialState,
     reducers: {
 
-        UpdateAllNotificationUserList: (state, action: PayloadAction<NotificationUser[]>) => {
+        UpdateAllUserNotificationListAndMessage: (state, action: PayloadAction<NotificationUser[]>) => {
+            // console.log("UpdateAllUserNotificationListAndMessage: ",JSON.stringify(action.payload));
+            
 
-            var currentUserList = state.AllUserNotificationList
-            action.payload.forEach(newUser => {
-                var oldUserIndex = currentUserList.findIndex(i => i.lId == newUser.lId)
+            action.payload.forEach(payloadUser => {
+
+                var oldUserIndex = state.AllUserNotificationList.findIndex(i => i.lId == payloadUser.lId)
                 if (oldUserIndex == -1) {
-                    currentUserList.push(newUser)
+                    payloadUser.AllNotificatonOneToOneList = []
+                    state.AllUserNotificationList.push(payloadUser)
                     return
                 }
 
-                var oldUser = currentUserList[oldUserIndex]
+                var oldUser = state.AllUserNotificationList[oldUserIndex]
+                var AllNotificatonOneToOneList = oldUser.AllNotificatonOneToOneList
 
-                var AllChatOneToOneList = oldUser.AllNotificatonOneToOneList
+                var newUser = Object.assign(oldUser, payloadUser)
 
-                newUser = Object.assign(oldUser, newUser)
+                newUser.AllNotificatonOneToOneList = AllNotificatonOneToOneList
 
-                newUser.AllNotificatonOneToOneList = AllChatOneToOneList
-            });
-
-            state.AllUserNotificationList = currentUserList
-
-            //If no data 
-            if (!state.FilterUserNotificationList.length) {
-                state.FilterUserNotificationList = state.AllUserNotificationList
-            }
-
-            //When no search string 
-            if (state.FilterUserNotificationList.length == state.AllUserNotificationList.length) {
-                state.FilterUserNotificationList = state.AllUserNotificationList
-            }
-
-            if (state.FilterUserNotificationList.length && state.FilterUserNotificationList.length != state.AllUserNotificationList.length) {
-                var allFilteredUser = state.FilterUserNotificationList
-                allFilteredUser.forEach((item, itemIndex) => {
-                    allFilteredUser[itemIndex] = currentUserList.find(i => i.lId == item.lId)!
+                //below one is required as sMessgeList is readonly here
+                var nonReadonlyList = [...payloadUser.sMessgeList ?? []]
+                var sortedIncomingMessageList = nonReadonlyList.sort((a, b) => {
+                    return b.lSrId - a.lSrId
                 })
-                state.FilterUserNotificationList = allFilteredUser
-            }
 
+
+
+                var newNoProxySortedMessageList: Notification[] = newUser.AllNotificatonOneToOneList.filter(i => !i.IsKsProxy)
+                var todayGroupName = UIHelper.CreateGroupNameFromdate(new Date())
+
+                sortedIncomingMessageList.forEach(newMwssage => {
+                    var newMessageIndex = newNoProxySortedMessageList.findIndex(i => i.lSrId == newMwssage.lSrId)
+
+                    if (newMessageIndex == -1) {
+                        var dt = new Date(newMwssage.dtMsg)
+                        var newGroup = UIHelper.CreateGroupNameFromdate(dt)
+
+                        newMwssage.GroupName = newGroup == todayGroupName ? "Today" : newGroup
+                        newNoProxySortedMessageList.unshift(newMwssage)
+                    }
+                });
+
+                newNoProxySortedMessageList = newNoProxySortedMessageList.sort((a, b) => {
+                    return b.lSrId - a.lSrId
+                })
+
+
+                var uniqueMessagaeList: Notification[] = []
+                newNoProxySortedMessageList.forEach((item) => {
+                    var existItemIndex = uniqueMessagaeList.findIndex(i => i.lSrId == item.lSrId);
+                    if (existItemIndex != -1) {
+                        return
+                    }
+
+                    //Fixing group name
+                    var previosMessageWithSameGroupIndex = uniqueMessagaeList.findIndex(i => i.GroupName == item.GroupName);
+                    if (previosMessageWithSameGroupIndex != -1) {
+                        var OldGroupNameMessage = uniqueMessagaeList[previosMessageWithSameGroupIndex]
+                        OldGroupNameMessage.GroupName = ""
+                        uniqueMessagaeList[previosMessageWithSameGroupIndex] = OldGroupNameMessage
+                    }
+
+                    uniqueMessagaeList.push(item)
+                })
+
+
+                newUser.sMessgeList = []
+                newUser.AllNotificatonOneToOneList = uniqueMessagaeList
+
+                state.AllUserNotificationList[oldUserIndex] = newUser
+            })
         },
 
         LoadUserOneToOneNotificationChatList: (state, action: PayloadAction<NotificationUser[]>) => {
@@ -162,26 +194,54 @@ const NotificationOptions = createSlice({
         },
 
     },
-    extraReducers: ((builder) => {
-        builder.addCase(MHeaderOptions.actions.UpdateSearchText, (state, action) => {
-            var searchText = action.payload
-            if (!searchText) {
-                state.FilterUserNotificationList = state.AllUserNotificationList
-                return
-            }
+    // extraReducers: ((builder) => {
+    //     builder.addCase(MHeaderOptions.actions.UpdateSearchText, (state, action) => {
+    //         var searchText = action.payload
+    //         if (!searchText) {
+    //             state.FilterUserNotificationList = state.AllUserNotificationList
+    //             return
+    //         }
 
-            state.FilterUserNotificationList = state.AllUserNotificationList.filter(i => i.userName.toLowerCase().includes(searchText.toLowerCase()))
-        });
-        builder.addCase(MHeaderOptions.actions.UpdateUserShowMode, (state, action) => {
+    //         state.FilterUserNotificationList = state.AllUserNotificationList.filter(i => i.userName.toLowerCase().includes(searchText.toLowerCase()))
+    //     });
+    //     builder.addCase(MHeaderOptions.actions.UpdateUserShowMode, (state, action) => {
 
-            if (action.payload == "All User") {
-                state.FilterUserNotificationList = state.AllUserNotificationList
-                return
-            }
+    //         if (action.payload == "All User") {
+    //             state.FilterUserNotificationList = state.AllUserNotificationList
+    //             return
+    //         }
 
-            state.FilterUserNotificationList = state.AllUserNotificationList.filter(i => i.status)
-        });
-    })
+    //         state.FilterUserNotificationList = state.AllUserNotificationList.filter(i => i.status)
+    //     });
+    // })
+    
 })
+export const GetSavableUserNotificationList = createSelector([
+    (state: RootState) => state.NotificationOptions.AllUserNotificationList],
+    (AllUserNotificationList) => {
+        return [...AllUserNotificationList]
+    }
+)
+export const GetFilteredNotificationList = createSelector([
+    (state: RootState) => state.NotificationOptions.AllUserNotificationList,
+    (state: RootState) => state.MHeaderOptions],
+    (AllUserNotificationList, mheader) => {
+
+        var tempFilteredNotificationList = AllUserNotificationList;
+
+        //If curretly Showing
+        if (mheader.UserShowMode == "Online User") {
+            tempFilteredNotificationList = tempFilteredNotificationList.filter(i => i.isUserLive)
+        }
+        if (!mheader.CurrentSearchText) {
+            return tempFilteredNotificationList
+        }
+
+        var tempFilteredNotificationList = tempFilteredNotificationList.filter(i => i.userName.toLowerCase().includes(mheader.CurrentSearchText.toLowerCase()))
+
+        return tempFilteredNotificationList
+
+    }
+)
 
 export default NotificationOptions;

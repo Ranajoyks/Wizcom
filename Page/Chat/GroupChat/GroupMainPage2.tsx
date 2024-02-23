@@ -39,7 +39,7 @@ const GroupMainPage2 = () => {
 
     AppDBHelper.GetGroups(chatId!).then(res => {
       dispatch(GroupChatOptions.actions.UpdateAllGroupList(res ?? []));
-      console.log('GetGroupResponse: ', res?.length);
+      // console.log('GetGroupResponse: ', res);
     });
     GetAllGroups();
 
@@ -58,11 +58,11 @@ const GroupMainPage2 = () => {
       dispatch(
         GroupChatOptions.actions.UpdateAllGroupList(groupListRes.data || []),
       );
-      dispatch(
-        GroupChatOptions.actions.LoadGroupOneToOneChatList(
-          groupListRes.data || [],
-        ),
-      );
+      // dispatch(
+      //   GroupChatOptions.actions.LoadGroupOneToOneChatList(
+      //     groupListRes.data || [],
+      //   ),
+      // );
     });
   };
 

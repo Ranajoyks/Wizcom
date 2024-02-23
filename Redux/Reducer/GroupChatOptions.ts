@@ -42,7 +42,7 @@ const GroupChatOptions = createSlice({
       });
 
       state.AllGroupList = currentGroupList;
-      console.log('currentGroupList: ', currentGroupList.length);
+      // console.log('currentGroupList: ', currentGroupList);
 
       //If no data
       if (!state.FilterGroupList.length) {
@@ -68,11 +68,11 @@ const GroupChatOptions = createSlice({
         });
         state.FilterGroupList = allFilteredUser;
 
-        console.log('allFilteredUser: ', allFilteredUser.length);
+        // console.log('allFilteredUser: ', allFilteredUser);
       }
     },
     LoadGroupOneToOneChatList: (state, action: PayloadAction<Group[]>) => {
-      //   console.log('ActionPLayLOad: ', action.payload);
+      // console.log('ActionPLayLOad: ', action.payload);
 
       action.payload.forEach(payloadUser => {
         var GroupID = payloadUser.groupId;
@@ -164,18 +164,14 @@ const GroupChatOptions = createSlice({
     },
     AddNewGroupChat: (state, action: PayloadAction<GroupChat>) => {
       var currentGroupList = state.AllGroupList;
-
       var GroupIndex = currentGroupList.findIndex(
         i =>
-          i.groupId == action.payload.lReceiverId ||
-          i.groupId == action.payload.lSenderId,
+          i.groupId == action.payload.groupId
       );
       var Group = currentGroupList[GroupIndex];
-
       if (!Group.AllGroupMsgList?.length) {
         Group.AllGroupMsgList = [];
       }
-
       Group.AllGroupMsgList.unshift(action.payload);
       state.AllGroupList[GroupIndex] = Group;
     },

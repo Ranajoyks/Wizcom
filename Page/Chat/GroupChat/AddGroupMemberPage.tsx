@@ -27,15 +27,15 @@ import GroupChatOptions from '../../../Redux/Reducer/GroupChatOptions';
 import AppDBHelper from '../../../Core/AppDBHelper';
 import SessionHelper from '../../../Core/SessionHelper';
 import {CreateGroupMember} from '../../../Entity/CreateGroupMember';
-import OneToOneChatOptions from '../../../Redux/Reducer/OneToOneChatOptions';
+import OneToOneChatOptions, { GetFilteredUserList } from '../../../Redux/Reducer/OneToOneChatOptions';
 import UIHelper from '../../../Core/UIHelper';
 import { Member } from '../../../Entity/GroupDetails';
+import { MSerachBar } from '../../../Control/MHeader';
+import MHeaderOptions from '../../../Redux/Reducer/MHeaderOptions';
 
 const AddGroupMember = (props: any) => {
   const dispatch = useAppDispatch();
-  const filteredUserList = useAppSelector(
-    i => i.OneToOneChatOptions.AllUserList,
-  );
+  const filteredOneToOneUserListData = useAppSelector(GetFilteredUserList);
   const FilterGroupDetails = useAppSelector(
     i => i.GroupChatOptions.groupdetails,
   );
@@ -44,6 +44,7 @@ const AddGroupMember = (props: any) => {
   const [CompanyID, setCompanyID] = useState<string>();
   const [groupName, setGroupName] = useState<string>('');
   const [isPageRefreshing, setIsPageRefreshing] = useState(false);
+  const [ShowSearch, setShowSearch] = React.useState(false);
   const navigation = useNavigation<NavigationProps>();
 
   const AddGroupMembers = async () => {
@@ -79,7 +80,7 @@ const AddGroupMember = (props: any) => {
   };
 
   console.log(
-    'Re render, all AddMember page ' + filteredUserList.length + new Date(),
+    'Re render, all AddMember page ' + filteredOneToOneUserListData.length + new Date(),
   );
   return (
     <React.Fragment>
@@ -132,11 +133,19 @@ const AddGroupMember = (props: any) => {
             </TouchableOpacity>
           </View>
         </View>
-
+        <MSerachBar
+          onIconPress={() => {
+            dispatch(MHeaderOptions.actions.UpdateSearchText(''));
+            setShowSearch(!ShowSearch);
+          }}
+          OnSearchDataChange={e => {
+            dispatch(MHeaderOptions.actions.UpdateSearchText(e));
+          }}
+        />
         <SafeAreaView>
           <View style={{marginTop: 10}}>
             <FlatList
-              data={filteredUserList}
+              data={filteredOneToOneUserListData}
               keyExtractor={e => e.lId + ''}
               refreshing={isPageRefreshing}
               renderItem={data => {

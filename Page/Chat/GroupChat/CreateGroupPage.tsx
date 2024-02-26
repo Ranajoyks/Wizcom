@@ -13,7 +13,7 @@ import {
 import {ColorCode, styles} from '../../MainStyle';
 import {useNavigation} from '@react-navigation/native';
 import {NavigationProps} from '../../../Core/BaseProps';
-import {Avatar, Checkbox, List} from 'react-native-paper';
+import {Avatar, Checkbox, List, Searchbar} from 'react-native-paper';
 import {useAppDispatch, useAppSelector} from '../../../Redux/Hooks';
 
 import {EmptyListMessage} from '../../../Control/EmptyListMessage';
@@ -27,18 +27,25 @@ import GroupChatOptions from '../../../Redux/Reducer/GroupChatOptions';
 import AppDBHelper from '../../../Core/AppDBHelper';
 import SessionHelper from '../../../Core/SessionHelper';
 import {CreateGroupMember} from '../../../Entity/CreateGroupMember';
-import OneToOneChatOptions from '../../../Redux/Reducer/OneToOneChatOptions';
+import OneToOneChatOptions, {
+  GetFilteredUserList,
+} from '../../../Redux/Reducer/OneToOneChatOptions';
 import UIHelper from '../../../Core/UIHelper';
 import {GroupChat} from '../../../Entity/GroupChat';
+import MHeaderOptions from '../../../Redux/Reducer/MHeaderOptions';
+import { MSerachBar } from '../../../Control/MHeader';
 
 const CreateGroupPage = (props: any) => {
+  interface MSearchBarProps {
+    OnSearchDataChange?: (value: string) => void;
+    onIconPress?: () => void;
+  }
   const dispatch = useAppDispatch();
-  const filteredUserData = useAppSelector(
-    i => i.OneToOneChatOptions.AllUserList,
-  );
+  const filteredOneToOneUserListData = useAppSelector(GetFilteredUserList);
   const pageData = useAppSelector(i => i.PageOptions);
 
   const [selectedUserList, setSelectedUserList] = useState<ChatUser[]>([]);
+  const [ShowSearch, setShowSearch] = React.useState(false);
   const [groupName, setGroupName] = useState<string>('');
   const navigation = useNavigation<NavigationProps>();
 
@@ -65,11 +72,12 @@ const CreateGroupPage = (props: any) => {
       return;
     }
     ShowToastMessage(`${groupName}-created successfully`);
+    console.log('CreateGroupResponse.data: ', CreateGroupResponse.data);
 
     var userDetails = await SessionHelper.GetUserDetails();
 
     var groupProxy: Group = {
-      groupId: UIHelper.GetProxySrId(),
+      groupId: CreateGroupResponse.data.groupId,
       groupName: groupName,
       members: selectedUserList.map<GroupMember>(i => {
         var newMember: GroupMember = {
@@ -82,14 +90,15 @@ const CreateGroupPage = (props: any) => {
       lastMessage: '',
       sMessgeList: [],
     };
-    // console.log('GRoupProxy: ', groupProxy);
+    console.log('GRoupProxy: ', groupProxy);
 
-    // dispatch(GroupChatOptions.actions.UpdateAllGroupList([groupProxy]));
+    dispatch(GroupChatOptions.actions.UpdateAllGroupList([groupProxy]));
     navigation.pop();
   };
-
   console.log(
-    'Re render, all CreateGroup page ' + filteredUserData.length + new Date(),
+    'Re render, all CreateGroup page ' +
+      filteredOneToOneUserListData.length +
+      new Date(),
   );
   return (
     <React.Fragment>
@@ -141,11 +150,19 @@ const CreateGroupPage = (props: any) => {
             </View>
           </View>
         </View>
-
+        <MSerachBar
+          onIconPress={() => {
+            dispatch(MHeaderOptions.actions.UpdateSearchText(''));
+            setShowSearch(!ShowSearch);
+          }}
+          OnSearchDataChange={e => {
+            dispatch(MHeaderOptions.actions.UpdateSearchText(e));
+          }}
+        />
         <SafeAreaView>
           <View style={{marginTop: 10}}>
             <FlatList
-              data={filteredUserData}
+              data={filteredOneToOneUserListData}
               keyExtractor={e => e.lId + ''}
               refreshing={pageData.IsPageLoading}
               renderItem={data => {

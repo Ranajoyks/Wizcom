@@ -164,7 +164,7 @@ export default class SignalRApi extends BaseApi {
   public static async CreateGroup(
     GroupName: string,
     selectedUserList: ChatUser[],
-  ): Promise<KSResponse<boolean>> {
+  ): Promise<KSResponse<Group>> {
     var companyID = await SessionHelper.GetCompanyID();
     var ChatId = await SessionHelper.GetChatId();
 

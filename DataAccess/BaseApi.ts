@@ -7,8 +7,8 @@ export type BaseUrlType = "ERES" | "SignalR"
 export default class BaseApi {
 
 
-    // public static readonly BaseUrlEresourceerp = "http://eipl.eresourceerp.com"
-    public static readonly BaseUrlEresourceerp = "http://eiplutm.eresourceerp.com/AzaaleaR"
+    public static readonly BaseUrlEresourceerp = "http://eipl.eresourceerp.com"
+    // public static readonly BaseUrlEresourceerp = "http://eiplutm.eresourceerp.com/AzaaleaR"
     public static readonly BaseUrlSignalR = "https://wemessanger.azurewebsites.net/"
 
 

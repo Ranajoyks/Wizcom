@@ -1,247 +1,286 @@
-import { createSelector, createSlice, PayloadAction } from '@reduxjs/toolkit'
+import {createSelector, createSlice, PayloadAction} from '@reduxjs/toolkit';
 
-import UIHelper from '../../Core/UIHelper'
-import { NotificationUser } from '../../Entity/NotificationUser'
-import { Notification } from '../../Entity/Notification'
-import { ChatUser } from '../../Entity/ChatUser'
-import MHeaderOptions from './MHeaderOptions'
-import { RootState } from '../Store'
-
-
+import UIHelper from '../../Core/UIHelper';
+import {NotificationUser} from '../../Entity/NotificationUser';
+import {Notification} from '../../Entity/Notification';
+import MHeaderOptions from './MHeaderOptions';
+import {RootState} from '../Store';
 
 export interface NotificationOptionsState {
-
-    AllUserNotificationList: NotificationUser[],
+  AllUserNotificationList: NotificationUser[];
 }
 
 const initialState: NotificationOptionsState = {
-
-    AllUserNotificationList: [],
-}
-
-
-
+  AllUserNotificationList: [],
+};
 
 const NotificationOptions = createSlice({
-    name: 'NotificationOptions',
-    initialState,
-    reducers: {
+  name: 'NotificationOptions',
+  initialState,
+  reducers: {
+    UpdateAllUserNotificationListAndMessage: (
+      state,
+      action: PayloadAction<NotificationUser[]>,
+    ) => {
+      // console.log("UpdateAllUserNotificationListAndMessage: ",JSON.stringify(action.payload));
 
-        UpdateAllUserNotificationListAndMessage: (state, action: PayloadAction<NotificationUser[]>) => {
-            // console.log("UpdateAllUserNotificationListAndMessage: ",JSON.stringify(action.payload));
-            
+      var sortedUserList: NotificationUser[] = [];
+      var remainingUserList: NotificationUser[] = state.AllUserNotificationList;
 
-            action.payload.forEach(payloadUser => {
+      action.payload.forEach(payloadUser => {
+        var oldUserIndex = remainingUserList.findIndex(
+          i => i.lId == payloadUser.lId,
+        );
+        if (oldUserIndex == -1) {
+          payloadUser.AllNotificatonOneToOneList = [];
+          sortedUserList.push(payloadUser);
+          return;
+        }
 
-                var oldUserIndex = state.AllUserNotificationList.findIndex(i => i.lId == payloadUser.lId)
-                if (oldUserIndex == -1) {
-                    payloadUser.AllNotificatonOneToOneList = []
-                    state.AllUserNotificationList.push(payloadUser)
-                    return
-                }
+        var oldUser = remainingUserList[oldUserIndex];
+        var AllChatOneToOneList = oldUser.AllNotificatonOneToOneList;
+        var newUser = Object.assign(oldUser, payloadUser);
+        newUser.AllNotificatonOneToOneList = AllChatOneToOneList;
 
-                var oldUser = state.AllUserNotificationList[oldUserIndex]
-                var AllNotificatonOneToOneList = oldUser.AllNotificatonOneToOneList
+        //below one is required as sMessgeList is readonly here
+        var nonReadonlyList = [...(payloadUser.sMessgeList ?? [])];
+        var sortedIncomingMessageList = nonReadonlyList.sort((a, b) => {
+          return b.lSrId - a.lSrId;
+        });
 
-                var newUser = Object.assign(oldUser, payloadUser)
+        var newNoProxySortedMessageList: Notification[] =
+          newUser.AllNotificatonOneToOneList.filter(i => !i.IsKsProxy);
+        var todayGroupName = UIHelper.CreateGroupNameFromdate(new Date());
 
-                newUser.AllNotificatonOneToOneList = AllNotificatonOneToOneList
+        sortedIncomingMessageList.forEach(newMwssage => {
+          var newMessageIndex = newNoProxySortedMessageList.findIndex(
+            i => i.lSrId == newMwssage.lSrId,
+          );
 
-                //below one is required as sMessgeList is readonly here
-                var nonReadonlyList = [...payloadUser.sMessgeList ?? []]
-                var sortedIncomingMessageList = nonReadonlyList.sort((a, b) => {
-                    return b.lSrId - a.lSrId
-                })
+          if (newMessageIndex == -1) {
+            var dt = new Date(newMwssage.dtMsg);
+            var newGroup = UIHelper.CreateGroupNameFromdate(dt);
 
+            newMwssage.GroupName =
+              newGroup == todayGroupName ? 'Today' : newGroup;
+            newNoProxySortedMessageList.unshift(newMwssage);
+          }
+        });
 
+        newNoProxySortedMessageList = newNoProxySortedMessageList.sort(
+          (a, b) => {
+            return b.lSrId - a.lSrId;
+          },
+        );
 
-                var newNoProxySortedMessageList: Notification[] = newUser.AllNotificatonOneToOneList.filter(i => !i.IsKsProxy)
-                var todayGroupName = UIHelper.CreateGroupNameFromdate(new Date())
+        var uniqueMessagaeList: Notification[] = [];
+        newNoProxySortedMessageList.forEach(item => {
+          var existItemIndex = uniqueMessagaeList.findIndex(
+            i => i.lSrId == item.lSrId,
+          );
+          if (existItemIndex != -1) {
+            return;
+          }
 
-                sortedIncomingMessageList.forEach(newMwssage => {
-                    var newMessageIndex = newNoProxySortedMessageList.findIndex(i => i.lSrId == newMwssage.lSrId)
+          //Fixing group name
+          var previosMessageWithSameGroupIndex = uniqueMessagaeList.findIndex(
+            i => i.GroupName == item.GroupName,
+          );
+          if (previosMessageWithSameGroupIndex != -1) {
+            var OldGroupNameMessage =
+              uniqueMessagaeList[previosMessageWithSameGroupIndex];
+            OldGroupNameMessage.GroupName = '';
+            uniqueMessagaeList[previosMessageWithSameGroupIndex] =
+              OldGroupNameMessage;
+          }
 
-                    if (newMessageIndex == -1) {
-                        var dt = new Date(newMwssage.dtMsg)
-                        var newGroup = UIHelper.CreateGroupNameFromdate(dt)
+          uniqueMessagaeList.push(item);
+        });
 
-                        newMwssage.GroupName = newGroup == todayGroupName ? "Today" : newGroup
-                        newNoProxySortedMessageList.unshift(newMwssage)
-                    }
-                });
+        newUser.sMessgeList = [];
+        newUser.AllNotificatonOneToOneList = uniqueMessagaeList;
+        sortedUserList.push(newUser);
 
-                newNoProxySortedMessageList = newNoProxySortedMessageList.sort((a, b) => {
-                    return b.lSrId - a.lSrId
-                })
+        remainingUserList.splice(oldUserIndex, 1);
+      });
 
+      sortedUserList = sortedUserList.concat(remainingUserList);
 
-                var uniqueMessagaeList: Notification[] = []
-                newNoProxySortedMessageList.forEach((item) => {
-                    var existItemIndex = uniqueMessagaeList.findIndex(i => i.lSrId == item.lSrId);
-                    if (existItemIndex != -1) {
-                        return
-                    }
-
-                    //Fixing group name
-                    var previosMessageWithSameGroupIndex = uniqueMessagaeList.findIndex(i => i.GroupName == item.GroupName);
-                    if (previosMessageWithSameGroupIndex != -1) {
-                        var OldGroupNameMessage = uniqueMessagaeList[previosMessageWithSameGroupIndex]
-                        OldGroupNameMessage.GroupName = ""
-                        uniqueMessagaeList[previosMessageWithSameGroupIndex] = OldGroupNameMessage
-                    }
-
-                    uniqueMessagaeList.push(item)
-                })
-
-
-                newUser.sMessgeList = []
-                newUser.AllNotificatonOneToOneList = uniqueMessagaeList
-
-                state.AllUserNotificationList[oldUserIndex] = newUser
-            })
-        },
-
-        LoadUserOneToOneNotificationChatList: (state, action: PayloadAction<NotificationUser[]>) => {
-
-            action.payload.forEach(payloadUser => {
-
-                var secondUserId = payloadUser.lId
-
-                var userIndex = state.AllUserNotificationList.findIndex(i => i.lId == secondUserId)!
-                var user = state.AllUserNotificationList[userIndex]
-
-
-                if (!user) {
-                    console.error("User not found, this should nor happen", payloadUser)
-                    return
-                }
-
-                if (!user.AllNotificatonOneToOneList) {
-                    user.AllNotificatonOneToOneList = []
-                }
-
-                var payLoadMessageList = [...payloadUser.sMessgeList ?? []]
-
-                var sortedIncomingMessageList = payLoadMessageList.sort((a, b) => {
-                    return b.lSrId - a.lSrId
-                })
-
-                var newNoProxySortedMessageList: Notification[] = user?.AllNotificatonOneToOneList.filter(i => !i.IsKsProxy)
-                var todayGroupName = UIHelper.CreateGroupNameFromdate(new Date())
-
-                sortedIncomingMessageList.forEach(newMwssage => {
-                    var newMessageIndex = newNoProxySortedMessageList.findIndex(i => i.lSrId == newMwssage.lSrId)
-
-                    if (newMessageIndex == -1) {
-                        var dt = new Date(newMwssage.dtMsg)
-                        var newGroup = UIHelper.CreateGroupNameFromdate(dt)
-
-                        newMwssage.GroupName = newGroup == todayGroupName ? "Today" : newGroup
-                        newNoProxySortedMessageList.unshift(newMwssage)
-                    }
-                });
-
-                newNoProxySortedMessageList = newNoProxySortedMessageList.sort((a, b) => {
-                    return b.lSrId - a.lSrId
-                })
-
-
-                var uniqueMessagaeList: Notification[] = []
-                newNoProxySortedMessageList.forEach((item) => {
-                    var existItemIndex = uniqueMessagaeList.findIndex(i => i.lSrId == item.lSrId);
-                    if (existItemIndex != -1) {
-                        return
-                    }
-
-                    //Fixing group name
-                    var previosMessageWithSameGroupIndex = uniqueMessagaeList.findIndex(i => i.GroupName == item.GroupName);
-                    if (previosMessageWithSameGroupIndex != -1) {
-                        var OldGroupNameMessage = uniqueMessagaeList[previosMessageWithSameGroupIndex]
-                        OldGroupNameMessage.GroupName = ""
-                        uniqueMessagaeList[previosMessageWithSameGroupIndex] = OldGroupNameMessage
-                    }
-
-                    uniqueMessagaeList.push(item)
-                })
-
-
-                user.sMessgeList = []
-                user.AllNotificatonOneToOneList = uniqueMessagaeList
-
-                state.AllUserNotificationList[userIndex] = user
-            })
-
-        },
-        AddNewOneToOneNotificationChat: (state, action: PayloadAction<Notification>) => {
-            var userIndex = state.AllUserNotificationList.findIndex(i => i.lId == action.payload.lReceiverId
-                || i.lId == action.payload.lSenderId)
-            var user = state.AllUserNotificationList[userIndex]
-
-            if (!user.AllNotificatonOneToOneList?.length) {
-                user.AllNotificatonOneToOneList = []
-            }
-
-            user.AllNotificatonOneToOneList.unshift(action.payload)
-            state.AllUserNotificationList[userIndex] = user
-        },
-        UpdateOneToOneNotificationChat: (state, action: PayloadAction<Notification>) => {
-            var userIndex = state.AllUserNotificationList.findIndex(i => i.lId == action.payload.lReceiverId
-                || i.lId == action.payload.lSenderId)
-            var user = state.AllUserNotificationList[userIndex]
-            var chatIndex = user.AllNotificatonOneToOneList?.findIndex(i => i.lSrId == action.payload.lSrId)!
-
-            state.AllUserNotificationList[userIndex].AllNotificatonOneToOneList![chatIndex] = action.payload
-        },
-
+      state.AllUserNotificationList = sortedUserList;
     },
-    // extraReducers: ((builder) => {
-    //     builder.addCase(MHeaderOptions.actions.UpdateSearchText, (state, action) => {
-    //         var searchText = action.payload
-    //         if (!searchText) {
-    //             state.FilterUserNotificationList = state.AllUserNotificationList
-    //             return
-    //         }
 
-    //         state.FilterUserNotificationList = state.AllUserNotificationList.filter(i => i.userName.toLowerCase().includes(searchText.toLowerCase()))
-    //     });
-    //     builder.addCase(MHeaderOptions.actions.UpdateUserShowMode, (state, action) => {
+    LoadUserOneToOneNotificationChatList: (
+      state,
+      action: PayloadAction<NotificationUser[]>,
+    ) => {
+      action.payload.forEach(payloadUser => {
+        var secondUserId = payloadUser.lId;
 
-    //         if (action.payload == "All User") {
-    //             state.FilterUserNotificationList = state.AllUserNotificationList
-    //             return
-    //         }
+        var userIndex = state.AllUserNotificationList.findIndex(
+          i => i.lId == secondUserId,
+        )!;
+        var user = state.AllUserNotificationList[userIndex];
 
-    //         state.FilterUserNotificationList = state.AllUserNotificationList.filter(i => i.status)
-    //     });
-    // })
-    
-})
-export const GetSavableUserNotificationList = createSelector([
-    (state: RootState) => state.NotificationOptions.AllUserNotificationList],
-    (AllUserNotificationList) => {
-        return [...AllUserNotificationList]
-    }
-)
-export const GetFilteredNotificationList = createSelector([
+        if (!user) {
+          console.error('User not found, this should nor happen', payloadUser);
+          return;
+        }
+
+        if (!user.AllNotificatonOneToOneList) {
+          user.AllNotificatonOneToOneList = [];
+        }
+
+        var payLoadMessageList = [...(payloadUser.sMessgeList ?? [])];
+
+        var sortedIncomingMessageList = payLoadMessageList.sort((a, b) => {
+          return b.lSrId - a.lSrId;
+        });
+
+        var newNoProxySortedMessageList: Notification[] =
+          user?.AllNotificatonOneToOneList.filter(i => !i.IsKsProxy);
+        var todayGroupName = UIHelper.CreateGroupNameFromdate(new Date());
+
+        sortedIncomingMessageList.forEach(newMwssage => {
+          var newMessageIndex = newNoProxySortedMessageList.findIndex(
+            i => i.lSrId == newMwssage.lSrId,
+          );
+
+          if (newMessageIndex == -1) {
+            var dt = new Date(newMwssage.dtMsg);
+            var newGroup = UIHelper.CreateGroupNameFromdate(dt);
+
+            newMwssage.GroupName =
+              newGroup == todayGroupName ? 'Today' : newGroup;
+            newNoProxySortedMessageList.unshift(newMwssage);
+          }
+        });
+
+        newNoProxySortedMessageList = newNoProxySortedMessageList.sort(
+          (a, b) => {
+            return b.lSrId - a.lSrId;
+          },
+        );
+
+        var uniqueMessagaeList: Notification[] = [];
+        newNoProxySortedMessageList.forEach(item => {
+          var existItemIndex = uniqueMessagaeList.findIndex(
+            i => i.lSrId == item.lSrId,
+          );
+          if (existItemIndex != -1) {
+            return;
+          }
+
+          //Fixing group name
+          var previosMessageWithSameGroupIndex = uniqueMessagaeList.findIndex(
+            i => i.GroupName == item.GroupName,
+          );
+          if (previosMessageWithSameGroupIndex != -1) {
+            var OldGroupNameMessage =
+              uniqueMessagaeList[previosMessageWithSameGroupIndex];
+            OldGroupNameMessage.GroupName = '';
+            uniqueMessagaeList[previosMessageWithSameGroupIndex] =
+              OldGroupNameMessage;
+          }
+
+          uniqueMessagaeList.push(item);
+        });
+
+        user.sMessgeList = [];
+        user.AllNotificatonOneToOneList = uniqueMessagaeList;
+
+        state.AllUserNotificationList[userIndex] = user;
+      });
+    },
+    AddNewOneToOneNotificationChat: (
+      state,
+      action: PayloadAction<Notification>,
+    ) => {
+      var userIndex = state.AllUserNotificationList.findIndex(
+        i =>
+          i.lId == action.payload.lReceiverId ||
+          i.lId == action.payload.lSenderId,
+      );
+      var user = state.AllUserNotificationList[userIndex];
+
+      if (!user.AllNotificatonOneToOneList?.length) {
+        user.AllNotificatonOneToOneList = [];
+      }
+
+      user.AllNotificatonOneToOneList.unshift(action.payload);
+      state.AllUserNotificationList[userIndex] = user;
+    },
+    UpdateOneToOneNotificationChat: (
+      state,
+      action: PayloadAction<Notification>,
+    ) => {
+      var userIndex = state.AllUserNotificationList.findIndex(
+        i =>
+          i.lId == action.payload.lReceiverId ||
+          i.lId == action.payload.lSenderId,
+      );
+      var user = state.AllUserNotificationList[userIndex];
+      var chatIndex = user.AllNotificatonOneToOneList?.findIndex(
+        i => i.lSrId == action.payload.lSrId,
+      )!;
+
+      state.AllUserNotificationList[userIndex].AllNotificatonOneToOneList![
+        chatIndex
+      ] = action.payload;
+    },
+  },
+  // extraReducers: ((builder) => {
+  //     builder.addCase(MHeaderOptions.actions.UpdateSearchText, (state, action) => {
+  //         var searchText = action.payload
+  //         if (!searchText) {
+  //             state.FilterUserNotificationList = state.AllUserNotificationList
+  //             return
+  //         }
+
+  //         state.FilterUserNotificationList = state.AllUserNotificationList.filter(i => i.userName.toLowerCase().includes(searchText.toLowerCase()))
+  //     });
+  //     builder.addCase(MHeaderOptions.actions.UpdateUserShowMode, (state, action) => {
+
+  //         if (action.payload == "All User") {
+  //             state.FilterUserNotificationList = state.AllUserNotificationList
+  //             return
+  //         }
+
+  //         state.FilterUserNotificationList = state.AllUserNotificationList.filter(i => i.status)
+  //     });
+  // })
+});
+export const GetSavableUserNotificationList = createSelector(
+  [(state: RootState) => state.NotificationOptions.AllUserNotificationList],
+  AllUserNotificationList => {
+    return [...AllUserNotificationList];
+  },
+);
+export const GetFilteredNotificationList = createSelector(
+  [
     (state: RootState) => state.NotificationOptions.AllUserNotificationList,
-    (state: RootState) => state.MHeaderOptions],
-    (AllUserNotificationList, mheader) => {
+    (state: RootState) => state.MHeaderOptions,
+  ],
+  (AllUserNotificationList, mheader) => {
+    var tempFilteredNotificationList = AllUserNotificationList;
 
-        var tempFilteredNotificationList = AllUserNotificationList;
-
-        //If curretly Showing
-        if (mheader.UserShowMode == "Online User") {
-            tempFilteredNotificationList = tempFilteredNotificationList.filter(i => i.isUserLive)
-        }
-        if (!mheader.CurrentSearchText) {
-            return tempFilteredNotificationList
-        }
-
-        var tempFilteredNotificationList = tempFilteredNotificationList.filter(i => i.userName.toLowerCase().includes(mheader.CurrentSearchText.toLowerCase()))
-
-        return tempFilteredNotificationList
-
+    //If curretly Showing
+    if (mheader.UserShowMode == 'Online User') {
+      tempFilteredNotificationList = tempFilteredNotificationList.filter(
+        i => i.isUserLive,
+      );
     }
-)
+    if (!mheader.CurrentSearchText) {
+      return tempFilteredNotificationList;
+    }
+
+    var tempFilteredNotificationList = tempFilteredNotificationList.filter(i =>
+      i.userName
+        .toLowerCase()
+        .includes(mheader.CurrentSearchText.toLowerCase()),
+    );
+
+    return tempFilteredNotificationList;
+  },
+);
 
 export default NotificationOptions;

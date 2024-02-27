@@ -274,6 +274,7 @@ const NotificationPage = (
         ReceiverChatId!,
         newSendMessage,
         'N',
+        1
       ).then((chat?: Chat) => {
         if (!chat) {
           ShowToastMessage('Message is not sent');
@@ -315,7 +316,6 @@ const NotificationPage = (
     console.log('SplitMsg', msg);
     var AcceptRejectResponse = await ERESApi.JAcceptReject(msg)
     console.log("AcceptRejectResponse: ", AcceptRejectResponse);
-
     Alert.alert(AcceptRejectResponse.data)
   };
 

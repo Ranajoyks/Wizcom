@@ -182,10 +182,11 @@ export class SignalRHubConnection {
     SenderId: string,
     receiverId: string,
     Message: string,
-    cMsgFlag: cMsgFlagType
+    cMsgFlag: cMsgFlagType,
+    itype: number
   ): Promise<Chat | undefined> {
 
-    console.log(BrnachId, SenderId, receiverId, Message)
+    console.log(BrnachId, SenderId, receiverId, Message,cMsgFlag,itype)
 
     var connection = await SignalRHubConnection.GetConnection();
 
@@ -197,8 +198,8 @@ export class SignalRHubConnection {
           SenderId,
           receiverId,
           Message,
-          "U",
-          0
+          cMsgFlag,
+          1
         ).
         then(res => {
           console.log("SendMessageResponse", res)

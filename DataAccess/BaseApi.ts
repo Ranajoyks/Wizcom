@@ -124,8 +124,8 @@ export default class BaseApi {
     private static async _PutInternal<T>(DomainUrl: BaseUrlType, url: string, Model: unknown, IsMultiPart: boolean): Promise<KSResponse<T>> {
         var headers = await this.GetHeaders(IsMultiPart ? "Multipart" : "GetOrPost")
         var url = await BaseApi.getFinalUrl(DomainUrl, url, IsMultiPart)
-        console.log("Put url-->", url)
-        console.log("Put headers-->", headers)
+        // console.log("Put url-->", url)
+        // console.log("Put headers-->", headers)
 
         var response: KSResponse<T> = { data: undefined, IsKSError: false, ErrorInfo: "" }
         return new Promise((resolve) => {

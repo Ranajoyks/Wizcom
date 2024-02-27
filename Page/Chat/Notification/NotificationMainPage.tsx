@@ -70,7 +70,7 @@ const NotificationMainPage = () => {
     FetchMessageInterval = setInterval(() => {
       FetchAllUserNotificationMessages(false)
       // SignalRHubConnection.GetUserList().then(res => { UpdateAllOnlineUser(res) })
-    }, 1000 * 60)
+    }, 1000 * 1)
 
   }
 

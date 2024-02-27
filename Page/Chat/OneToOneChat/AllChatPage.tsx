@@ -62,7 +62,7 @@ const AllChatPage = () => {
 
     FetchMessageInterval = setInterval(() => {
       FetchAllUserAndUnReadMessages(false)
-    }, 1000 * 60 * 5)
+    }, 1000 * 1 * 5)
 
   }
 

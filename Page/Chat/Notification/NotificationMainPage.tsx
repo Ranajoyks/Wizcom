@@ -130,7 +130,7 @@ const ChatUserScreen = (props: { data: NotificationUser }) => {
       navigate.navigate("NotificationPage", { SecondUser: user })
     }}
       style={{ marginLeft: 5, paddingTop: 0, paddingBottom: 0, }}
-      title={user.userName}
+      title={user.userFullName}
       titleStyle={{ fontFamily: 'OpenSans-SemiBold', fontSize: 15, marginTop: 0 }}
       description={() => {
         return (

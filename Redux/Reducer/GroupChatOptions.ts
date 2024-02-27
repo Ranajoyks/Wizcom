@@ -1,9 +1,9 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { Group } from '../../Entity/Group';
-import { GroupChat } from '../../Entity/GroupChat';
+import {createSlice, PayloadAction} from '@reduxjs/toolkit';
+import {Group} from '../../Entity/Group';
+import {GroupChat} from '../../Entity/GroupChat';
 import UIHelper from '../../Core/UIHelper';
 import MHeaderOptions from './MHeaderOptions';
-import { GroupDetails, Member } from '../../Entity/GroupDetails';
+import {GroupDetails, Member} from '../../Entity/GroupDetails';
 
 export interface GroupChatOptionsState {
   AllGroupList: Group[];
@@ -42,7 +42,7 @@ const GroupChatOptions = createSlice({
       });
 
       state.AllGroupList = currentGroupList;
-      // console.log('currentGroupList: ', currentGroupList);
+      // console.log('currentGroupList: ', JSON.stringify(currentGroupList));
 
       //If no data
       if (!state.FilterGroupList.length) {
@@ -72,7 +72,10 @@ const GroupChatOptions = createSlice({
       }
     },
     LoadGroupOneToOneChatList: (state, action: PayloadAction<Group[]>) => {
-      // console.log('ActionPLayLOad: ', action.payload);
+      // console.log(
+      //   'LoadGroupOneToOneChatListAction: ',
+      //   JSON.stringify(action.payload[0].sMessgeList),
+      // );
 
       action.payload.forEach(payloadUser => {
         var GroupID = payloadUser.groupId;
@@ -112,7 +115,7 @@ const GroupChatOptions = createSlice({
 
             newMwssage.DayDisplayGroupName =
               newGroup == todayGroupName ? 'Today' : newGroup;
-            newNoProxySortedMessageList.unshift(newMwssage);
+            newNoProxySortedMessageList.push(newMwssage);
           }
         });
 
@@ -150,6 +153,10 @@ const GroupChatOptions = createSlice({
         Group.AllGroupMsgList = uniqueMessagaeList;
 
         state.AllGroupList[GroupIndex] = Group;
+        // console.log(
+        //   ' Group.AllGroupMsgList: ',
+        //   JSON.stringify(Group.AllGroupMsgList),
+        // );
       });
 
       if (!state.FilterGroupList.length) {
@@ -165,8 +172,7 @@ const GroupChatOptions = createSlice({
     AddNewGroupChat: (state, action: PayloadAction<GroupChat>) => {
       var currentGroupList = state.AllGroupList;
       var GroupIndex = currentGroupList.findIndex(
-        i =>
-          i.groupId == action.payload.groupId
+        i => i.groupId == action.payload.groupId,
       );
       var Group = currentGroupList[GroupIndex];
       if (!Group.AllGroupMsgList?.length) {
@@ -177,9 +183,7 @@ const GroupChatOptions = createSlice({
     },
     UpdateGroupChat: (state, action: PayloadAction<GroupChat>) => {
       var userIndex = state.AllGroupList.findIndex(
-        i =>
-          i.groupId == action.payload.lReceiverId ||
-          i.groupId == action.payload.lSenderId,
+        i => i.groupId == action.payload.groupId,
       );
       var user = state.AllGroupList[userIndex];
       var chatIndex = user.AllGroupMsgList?.findIndex(

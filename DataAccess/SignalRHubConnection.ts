@@ -136,7 +136,7 @@ export class SignalRHubConnection {
     newChat.lReceiverId = parseInt(Receiverid.split('_')[1])
     newChat.sMsg = message
     newChat.lSrId = proxySrId ?? UIHelper.GetProxySrId();
-
+    newChat.bStatus = true
     newChat.IsKsProxy = true
     return newChat
   }
@@ -149,7 +149,7 @@ export class SignalRHubConnection {
     newChat.lReceiverId = parseInt(Receiverid.split('_')[1])
     newChat.sMsg = message
     newChat.lSrId = proxySrId ?? UIHelper.GetProxySrId();
-
+    newChat.bStatus = true
     newChat.IsKsProxy = true
     return newChat
   }
@@ -172,7 +172,7 @@ export class SignalRHubConnection {
     newChat.lAttchId = AttachmentID
     newChat.sMsg = message
     newChat.lSrId = proxySrId ?? UIHelper.GetProxySrId();
-
+    newChat.bStatus = true
     newChat.IsKsProxy = true
     return newChat
   }

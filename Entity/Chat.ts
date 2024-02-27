@@ -1,4 +1,4 @@
-import {LoaclFileType} from '../Core/LocalFileHelper';
+import { LoaclFileType } from '../Core/LocalFileHelper';
 
 export type cMsgFlagType = 'U' | 'G' | 'F' | 'N';
 

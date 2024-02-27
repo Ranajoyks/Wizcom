@@ -260,10 +260,27 @@ const OneToOneChatPage2 = (
     FromReceiverId?: string,
     FromBranchId?: string,
   ) => {
+
+
+    var tempSenderChatId = FromSenderId ?? SenderChatId;
+    var tempReceiverId = FromReceiverId ?? ReceiverChatId;
+    var tempBranchId = FromBranchId ?? BrnachId + "";
+
+    if (!tempSenderChatId) {
+      tempSenderChatId = await SessionHelper.GetChatId()
+    }
+    if (!tempReceiverId) {
+      tempReceiverId = await UIHelper.GetChatId(SecondUser.lId);
+    }
+    if (!tempBranchId) {
+      var branch = await SessionHelper.GetBranch()
+      tempBranchId = branch?.lId + ""
+    }
+
     var ReadMsgOption = {
-      companyid: FromBranchId,
-      senderId: FromSenderId,
-      receiverId: FromReceiverId,
+      companyid: tempBranchId,
+      senderId: tempSenderChatId,
+      receiverId: tempReceiverId,
     };
     var ReadMsgResponse = await SignalRApi.ReadMsg(ReadMsgOption);
     //console.log('ReadMsgResponse: ', ReadMsgResponse);

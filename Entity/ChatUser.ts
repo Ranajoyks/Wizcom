@@ -15,3 +15,10 @@ export interface ChatUser {
 
     AllChatOneToOneList: Chat[],
 }
+
+export interface ChatUserAllPage {
+    lId: number;
+    displayName: string,
+    lastMessage?: string,
+    UnreadMessageCount: number
+}

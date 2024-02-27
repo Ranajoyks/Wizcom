@@ -27,6 +27,7 @@ import SignalRApi from '../../../DataAccess/SignalRApi';
 import { SignalRHubConnection } from '../../../DataAccess/SignalRHubConnection';
 import KSUtility from '../../../Core/KSUtility';
 import OneToOneChatOptions, { GetFilteredUserList } from '../../../Redux/Reducer/OneToOneChatOptions';
+import ReduxDataHelper from '../../../Redux/ReduxDataHelper';
 
 
 const AllChatPage = () => {
@@ -34,13 +35,10 @@ const AllChatPage = () => {
   const dispatch = useAppDispatch()
   const filteredOneToOneUserListData = useAppSelector(GetFilteredUserList)
   const [isPageRefreshing, setIsPageRefreshing] = useState(false)
-  var FetchMessageInterval: NodeJS.Timeout;
+
 
   useEffect(() => {
     InitilizeOnce()
-    return () => {
-      clearInterval(FetchMessageInterval);
-    }
   }, [])
 
 
@@ -58,39 +56,15 @@ const AllChatPage = () => {
     if (res?.length) {
       dispatch(OneToOneChatOptions.actions.UpdateAllUserListAndMessage(res))
     }
-    FetchAllUserAndUnReadMessages(KSUtility.IsEmpty(res))
-
-    FetchMessageInterval = setInterval(() => {
-      FetchAllUserAndUnReadMessages(false)
-    }, 1000 * 1 * 5)
-
+    ReduxDataHelper.UpdateOneToOneUserStatus(dispatch)
+    ReduxDataHelper.UpdateOneToOneChatMessages(dispatch)
   }
 
-
-
-  const FetchAllUserAndUnReadMessages = async (showLoader: boolean) => {
-    var branch = await SessionHelper.GetBranch()
-    var tempSenderChatId = await SessionHelper.GetChatId()
-
-    SignalRHubConnection.GetUserList().then((res) => {
-      setIsPageRefreshing(false)
-      dispatch(OneToOneChatOptions.actions.UpdateAllUserListAndMessage(res))
-    })
-
-    setIsPageRefreshing(showLoader)
-    SignalRApi.GetUsersWithMessage(tempSenderChatId!, branch?.lId!).then((cuResponse) => {
-      setIsPageRefreshing(false)
-      
-      if (!cuResponse.data) {
-        console.error("No data inside GetUsersWithMessage ")
-        return
-      }
-      // console.log("UserList: ", JSON.stringify(cuResponse.data.slice(0, 3)));
-
-      dispatch(OneToOneChatOptions.actions.UpdateAllUserListAndMessage(cuResponse.data))
-    })
-
-
+  const HandleScreenRefreshRequest = async (showLoader: boolean) => {
+    setIsPageRefreshing(showLoader && true)
+    ReduxDataHelper.UpdateOneToOneUserStatus(dispatch)
+    await ReduxDataHelper.UpdateOneToOneChatMessages(dispatch)
+    setIsPageRefreshing(false)
   }
 
 
@@ -102,9 +76,10 @@ const AllChatPage = () => {
         <View style={{ marginTop: 10 }}>
           <FlatList
             data={filteredOneToOneUserListData}
+            initialNumToRender={15}
             keyExtractor={e => e.lId + ''}
             refreshing={isPageRefreshing}
-            onRefresh={() => { FetchAllUserAndUnReadMessages(true) }}
+            onRefresh={() => { HandleScreenRefreshRequest(true) }}
             renderItem={((d) => {
               return <ChatUserScreen data={d.item} />
             })}
@@ -125,7 +100,7 @@ const ChatUserScreen = (props: { data: ChatUser }) => {
   const navigate = useNavigation<NavigationProps>()
   var unreadMessageList = user.AllChatOneToOneList?.filter(i => !i.bStatus && i.lReceiverId != user.lId)
   var lastMessage = user.AllChatOneToOneList?.length ? user.AllChatOneToOneList[0] : undefined
-  //console.log("Re render, ChatUserScreen " + new Date())
+  console.log("Re render, ChatUserScreen for user " + user.userFullName + "-->" + new Date())
   return (
 
     <List.Item onPress={() => {

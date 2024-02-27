@@ -161,7 +161,7 @@ const NotificationPage = (
       if (res.data) {
         setCurrentIndex(tempIndexNo);
 
-        console.log("sMessgeList", res.data.length);
+
 
         SecondUser.sMessgeList = res.data.filter((i: Notification) => i.cMsgFlg === 'F' || i.cMsgFlg === 'N');
 

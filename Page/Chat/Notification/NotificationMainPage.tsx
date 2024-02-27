@@ -38,7 +38,7 @@ const NotificationMainPage = () => {
   const allUserNotificationListData = useAppSelector(i => i.NotificationOptions.AllUserNotificationList)
   const filtereUserNotificationListData = useAppSelector(GetFilteredNotificationList)
   // console.log("filtereUserNotificationListData: ",filtereUserNotificationListData);
-  
+
 
   const [isPageRefreshing, setIsPageRefreshing] = useState(false)
 
@@ -70,7 +70,7 @@ const NotificationMainPage = () => {
     FetchMessageInterval = setInterval(() => {
       FetchAllUserNotificationMessages(false)
       // SignalRHubConnection.GetUserList().then(res => { UpdateAllOnlineUser(res) })
-    }, 1000 * 1)
+    }, 1000 * 60 * 1)
 
   }
 
@@ -115,14 +115,14 @@ const NotificationMainPage = () => {
 }
 
 
-const ChatUserScreen = (props: { data: NotificationUser }) => {    
+const ChatUserScreen = (props: { data: NotificationUser }) => {
   const users = useAppSelector(i => i.NotificationOptions.AllUserNotificationList)
   const user = users.find(i => i.lId == props.data.lId)!
 
   const navigate = useNavigation<NavigationProps>()
   var unreadMessageList = user.AllNotificatonOneToOneList?.filter(i => !i.bStatus && i.lReceiverId != user.lId)
   var lastMessage = user.AllNotificatonOneToOneList?.length ? user.AllNotificatonOneToOneList[0] : undefined
-  
+
 
   return (
 

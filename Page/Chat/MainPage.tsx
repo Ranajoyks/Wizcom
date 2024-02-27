@@ -101,7 +101,7 @@ const MainPage = () => {
           }}
         />
 
-        <Tab.Screen
+        {/* <Tab.Screen
           name="Group"
           options={{ tabBarLabel: 'Group' }}
           children={() => {
@@ -114,7 +114,7 @@ const MainPage = () => {
           children={() => {
             return <NotificationMainPage />;
           }}
-        />
+        /> */}
       </Tab.Navigator>
     </SafeAreaView>
   );

@@ -21,20 +21,22 @@ const OneToOneChatOptions = createSlice({
     reducers: {
         UpdateAllUserListAndMessage: (state, action: PayloadAction<ChatUser[]>) => {
 
+            var sortedUserList: ChatUser[] = []
+            var remainingUserList: ChatUser[] = state.AllUserList
+
+
             action.payload.forEach(payloadUser => {
 
-                var oldUserIndex = state.AllUserList.findIndex(i => i.lId == payloadUser.lId)
+                var oldUserIndex = remainingUserList.findIndex(i => i.lId == payloadUser.lId)
                 if (oldUserIndex == -1) {
                     payloadUser.AllChatOneToOneList = []
-                    state.AllUserList.push(payloadUser)
+                    sortedUserList.push(payloadUser)
                     return
                 }
 
-                var oldUser = state.AllUserList[oldUserIndex]
+                var oldUser = remainingUserList[oldUserIndex]
                 var AllChatOneToOneList = oldUser.AllChatOneToOneList
-
                 var newUser = Object.assign(oldUser, payloadUser)
-
                 newUser.AllChatOneToOneList = AllChatOneToOneList
 
                 //below one is required as sMessgeList is readonly here
@@ -42,8 +44,6 @@ const OneToOneChatOptions = createSlice({
                 var sortedIncomingMessageList = nonReadonlyList.sort((a, b) => {
                     return b.lSrId - a.lSrId
                 })
-
-
 
                 var newNoProxySortedMessageList: Chat[] = newUser.AllChatOneToOneList.filter(i => !i.IsKsProxy)
                 var todayGroupName = UIHelper.CreateGroupNameFromdate(new Date())
@@ -86,9 +86,14 @@ const OneToOneChatOptions = createSlice({
 
                 newUser.sMessgeList = []
                 newUser.AllChatOneToOneList = uniqueMessagaeList
+                sortedUserList.push(newUser)
 
-                state.AllUserList[oldUserIndex] = newUser
+                remainingUserList.splice(oldUserIndex, 1)
             })
+
+            sortedUserList = sortedUserList.concat(remainingUserList)
+
+            state.AllUserList = sortedUserList
         },
         AddNewOneToOneChat: (state, action: PayloadAction<Chat>) => {
             var currentUserList = state.AllUserList

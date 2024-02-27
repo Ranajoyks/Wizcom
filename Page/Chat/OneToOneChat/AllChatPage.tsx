@@ -72,6 +72,11 @@ const AllChatPage = () => {
     var branch = await SessionHelper.GetBranch()
     var tempSenderChatId = await SessionHelper.GetChatId()
 
+    SignalRHubConnection.GetUserList().then((res) => {
+      setIsPageRefreshing(false)
+      dispatch(OneToOneChatOptions.actions.UpdateAllUserListAndMessage(res))
+    })
+
     setIsPageRefreshing(showLoader)
     SignalRApi.GetUsersWithMessage(tempSenderChatId!, branch?.lId!).then((cuResponse) => {
       setIsPageRefreshing(false)

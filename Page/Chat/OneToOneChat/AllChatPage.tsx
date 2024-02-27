@@ -80,10 +80,12 @@ const AllChatPage = () => {
     setIsPageRefreshing(showLoader)
     SignalRApi.GetUsersWithMessage(tempSenderChatId!, branch?.lId!).then((cuResponse) => {
       setIsPageRefreshing(false)
+      
       if (!cuResponse.data) {
         console.error("No data inside GetUsersWithMessage ")
         return
       }
+      // console.log("UserList: ", JSON.stringify(cuResponse.data.slice(0, 3)));
 
       dispatch(OneToOneChatOptions.actions.UpdateAllUserListAndMessage(cuResponse.data))
     })
@@ -93,6 +95,7 @@ const AllChatPage = () => {
 
 
   console.log("Re render, all chat page " + filteredOneToOneUserListData.length + new Date())
+  // console.log("Re render, all chat User " + JSON.stringify(filteredOneToOneUserListData.slice(0,3)))
   return (
     <React.Fragment>
       <SafeAreaView>
@@ -129,7 +132,7 @@ const ChatUserScreen = (props: { data: ChatUser }) => {
       navigate.navigate("OneToOneChatPage2", { SecondUser: user })
     }}
       style={{ marginLeft: 5, paddingTop: 0, paddingBottom: 0, }}
-      title={user.userName}
+      title={user.userFullName}
       titleStyle={{ fontFamily: 'OpenSans-SemiBold', fontSize: 15, marginTop: 0 }}
       description={() => {
         return (

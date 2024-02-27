@@ -57,7 +57,7 @@ import {GroupDetails, Member} from '../../../Entity/GroupDetails';
 const GroupChatDetailsPage2 = (
   props: StackScreenProps<RootStackParamList, 'GroupChatDetailsPage2'>,
 ) => {
-  const OnBackRefresRequest = props.route.params.OnBackRefresRequest;
+  // const OnBackRefresRequest = props.route.params.OnBackRefresRequest;
   const SelectedGroup = props.route.params.Group;
   const navigation = useNavigation<NavigationProps>();
   const dispatch = useAppDispatch();
@@ -85,41 +85,39 @@ const GroupChatDetailsPage2 = (
   const FilterGroupDetails = useAppSelector(
     i => i.GroupChatOptions.groupdetails,
   );
-  console.log("FilterGroupDetails: ",FilterGroupDetails);
-  
+  // console.log("FilterGroupDetails: ",FilterGroupDetails);
 
   useEffect(() => {
     Initilize();
-    setInterval(AgainCallGroupdetails, 1000);
   }, []);
-  const AgainCallGroupdetails = async () => {
-    var GroupDetails = await SessionHelper.GetGroupDetailUpdateSession();
-    if (GroupDetails == 1) {
-      setisOpen(false);
-      NewGroupDetails();
-      SessionHelper.SetGroupDetailUpdateSession(0);
-    }
-  };
   const Initilize = async () => {
     var chatId = await SessionHelper.GetChatId();
     var CompanyId = await SessionHelper.GetCompanyID();
     var Branch = await SessionHelper.GetBranch();
-
     var userInfo = await SessionHelper.GetUserDetails();
 
     //console.log('ReceiverChatId', receiverChatId);
 
     setBranchId(Branch?.lId);
     setSenderChatId(chatId);
-
     setCompnanyId(CompanyId);
     setUserInfo(userInfo);
     NewGroupDetails();
+
     var GroupDetailsResponse = await SignalRApi.GetGroupDetails(
       chatId!,
       props.route.params.Group.groupId,
     );
-    console.log('groupDetails', JSON.stringify(GroupDetailsResponse, null, 2));
+    // console.log('groupDetails', JSON.stringify(GroupDetailsResponse, null, 2));
+    var GroupID = GroupDetailsResponse.data?.group.groupId;
+    var GroupName = GroupDetailsResponse.data?.group.groupName;
+
+    console.log('GroupID: ', GroupID);
+    var JoinGroupChatResponse = await SignalRHubConnection.JoinGroupChat(
+      GroupName!,
+      GroupID!,
+    );
+    console.log('JoinGroupChatResponse: ', JoinGroupChatResponse);
 
     if (!GroupDetailsResponse.data) {
       ShowToastMessage('Group not found');
@@ -148,18 +146,18 @@ const GroupChatDetailsPage2 = (
       chatId!,
       props.route.params.Group.groupId,
     );
-    console.log(
-      'NewgroupDetails',
-      JSON.stringify(GroupDetailsResponse.data?.members),
-      GroupDetailsResponse.data?.members.forEach(i => {
-        if (i.memberId == userInfo?.lId.toString() && i.isOwner == true) {
-          setisAdmin(true);
-        }
-      }),
-    );
-    dispatch(
-      GroupChatOptions.actions.UpdateGroupDetails(GroupDetailsResponse.data!),
-    );
+    // console.log(
+    //   'NewgroupDetails',
+    //   JSON.stringify(GroupDetailsResponse.data?.members),
+    // );
+    GroupDetailsResponse.data?.members.forEach(i => {
+      if (i.memberId == userInfo?.lId.toString() && i.isOwner == true) {
+        setisAdmin(true);
+      }
+    }),
+      dispatch(
+        GroupChatOptions.actions.UpdateGroupDetails(GroupDetailsResponse.data!),
+      );
     setGroupMember(GroupDetailsResponse.data!.members);
   };
   const LoadOldMessages = async (
@@ -384,7 +382,6 @@ const GroupChatDetailsPage2 = (
         <View style={styles.GroupChatHeader}>
           <TouchableOpacity
             onPress={() => {
-              OnBackRefresRequest && OnBackRefresRequest();
               dispatch(
                 GroupChatOptions.actions.UpdateGroupDetails({} as GroupDetails),
               );
@@ -556,8 +553,8 @@ const GroupChatDetailsPage2 = (
                           style={{marginLeft: 5}}
                           name="download-circle-outline"
                           onPress={async () => {
-                            console.log("groupItem: ",item);
-                            
+                            console.log('groupItem: ', item);
+
                             var dataReceived = await DownloadFile(item);
                             console.log('dataReceived', dataReceived);
                             if (!dataReceived) {

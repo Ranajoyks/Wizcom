@@ -1,19 +1,19 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, SafeAreaView, FlatList } from 'react-native';
+import React, {useEffect, useState} from 'react';
+import {View, Text, SafeAreaView, FlatList} from 'react-native';
 
-import { ColorCode } from '../../MainStyle';
-import { useNavigation } from '@react-navigation/native';
-import { NavigationProps } from '../../../Core/BaseProps';
-import { Avatar, List } from 'react-native-paper';
-import { useAppDispatch, useAppSelector } from '../../../Redux/Hooks';
+import {ColorCode} from '../../MainStyle';
+import {useNavigation} from '@react-navigation/native';
+import {NavigationProps} from '../../../Core/BaseProps';
+import {Avatar, List} from 'react-native-paper';
+import {useAppDispatch, useAppSelector} from '../../../Redux/Hooks';
 
-import { EmptyListMessage } from '../../../Control/EmptyListMessage';
-import { MDivider } from '../../../Control/MDivider';
-import { Group } from '../../../Entity/Group';
+import {EmptyListMessage} from '../../../Control/EmptyListMessage';
+import {MDivider} from '../../../Control/MDivider';
+import {Group} from '../../../Entity/Group';
 import SignalRApi from '../../../DataAccess/SignalRApi';
 import ChatUserOptions from '../../../Redux/Reducer/NotificationOptions';
-import { ShowToastMessage } from '../../../Redux/Store';
-import { ChatUser } from '../../../Entity/ChatUser';
+import {ShowToastMessage} from '../../../Redux/Store';
+import {ChatUser} from '../../../Entity/ChatUser';
 import GroupChatOptions from '../../../Redux/Reducer/GroupChatOptions';
 import AppDBHelper from '../../../Core/AppDBHelper';
 import SessionHelper from '../../../Core/SessionHelper';
@@ -45,11 +45,11 @@ const GroupMainPage2 = () => {
 
     FetchMessageInterval = setInterval(() => {
       GetAllGroups();
-    }, 1000 * 60);
+    }, 1000 * 5);
   };
   const GetAllGroups = async () => {
     SignalRApi.GetAllGroup().then(groupListRes => {
-      // console.log('GroupResponse: ', groupListRes.data?.length);
+      // console.log('GroupResponse: ', groupListRes.data);
       if (groupListRes.IsKSError) {
         ShowToastMessage(groupListRes.ErrorInfo || 'Some issue happening');
         return;
@@ -72,7 +72,7 @@ const GroupMainPage2 = () => {
   return (
     <React.Fragment>
       <SafeAreaView>
-        <View style={{ marginTop: 10 }}>
+        <View style={{marginTop: 10}}>
           <FlatList
             data={filteredGroupList}
             keyExtractor={e => e.groupId + ''}
@@ -104,16 +104,19 @@ const ChatGroupScreen = (props: {
   var lastMessage = group?.AllGroupMsgList?.length
     ? group.AllGroupMsgList[group.AllGroupMsgList.length - 1]
     : undefined;
-  var txtLastMessage = lastMessage?.sMsg ?? group?.lastMessage;
+  var txtLastMessage = group?.lastMessage;
+  // console.log("lastMessage:--- ",lastMessage);
+  // console.log("txtLastMessage:--- ",txtLastMessage);
+
   const navigate = useNavigation<NavigationProps>();
   return (
     <List.Item
       onPress={() => {
-        navigate.navigate('GroupChatDetailsPage2', { Group: group! });
+        navigate.navigate('GroupChatDetailsPage2', {Group: group!});
       }}
-      style={{ marginLeft: 5, paddingTop: 0, paddingBottom: 0 }}
+      style={{marginLeft: 5, paddingTop: 0, paddingBottom: 0}}
       title={group?.groupName}
-      titleStyle={{ fontFamily: 'OpenSans-SemiBold', fontSize: 15, marginTop: 0 }}
+      titleStyle={{fontFamily: 'OpenSans-SemiBold', fontSize: 15, marginTop: 0}}
       description={() => {
         return (
           <View>
@@ -138,7 +141,7 @@ const ChatGroupScreen = (props: {
       left={props => (
         <View>
           <Avatar.Text
-            style={{ backgroundColor: ColorCode.DimGray, width: 45, height: 45 }}
+            style={{backgroundColor: ColorCode.DimGray, width: 45, height: 45}}
             labelStyle={{
               color: ColorCode.Black,
               fontSize: 22,

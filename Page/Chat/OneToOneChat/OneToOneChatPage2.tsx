@@ -368,6 +368,10 @@ const OneToOneChatPage2 = (
             var isSenderIsSecondUser = data.item.lSenderId == SecondUser.lId;
             var userName = isSenderIsSecondUser ? SecondUser.userName : '';
             var MsgSplit = data.item.sMsg.split('||');
+
+            if (!data.item.bStatus) {
+              ReadMsg()
+            }
             return (
               <View key={data.item.lSrId + data.item.GroupName}>
                 {data.item.GroupName && (

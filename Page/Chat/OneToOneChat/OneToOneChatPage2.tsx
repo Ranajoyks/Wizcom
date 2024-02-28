@@ -164,6 +164,7 @@ const OneToOneChatPage2 = (
       var res = await ERESApi.DownloadAttachment(item.lAttchId);
 
       if (!res.data?.d?.data?.mAttch) {
+        HandleMultiDownloadingLoader(item.lAttchId, false);
         ShowToastMessage("Unable to download attachment")
         return
       }

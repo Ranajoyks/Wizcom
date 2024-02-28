@@ -188,7 +188,7 @@ const GroupChatDetailsPage2 = (
       tempGroupId!,
       tempIndexNo!,
     ).then(res => {
-      // console.log('group chat res', res);
+      console.log('group chat res', res.data?.length?res.data[res.data.length-1]:null);
       if (res.data) {
         setCurrentIndex(tempIndexNo);
         var GroupChat: Group = {
@@ -274,8 +274,7 @@ const GroupChatDetailsPage2 = (
     chat.sConnId = 'connectionId';
 
     setNewSendMessage('');
-    dispatch(GroupChatOptions.actions.AddNewGroupChat(chat));
-
+    // dispatch(GroupChatOptions.actions.AddNewGroupChat(chat));
     console.log('SendMsg: ', chat);
 
     if (SelectedFile) {
@@ -336,15 +335,6 @@ const GroupChatDetailsPage2 = (
         LoadOldMessages(SenderChatId, groupDetail?.groupId, BrnachId, 0, false);
       });
     }
-    //   (chat?: GroupChat) => {
-    //     if (!chat) {
-    //       ShowToastMessage('Message is not sent');
-    //       return;
-    //     }
-
-    //     LoadOldMessages(SenderChatId, groupDetail?.groupId, BrnachId, 0, false);
-    //   },
-    // );
   };
   const HandleMultiDownloadingLoader = (
     AttachmentId: number,
@@ -360,9 +350,6 @@ const GroupChatDetailsPage2 = (
     if (!IsDownloading && itemIndex) {
       setShowDownloading([...ShowDownloading.filter(i => i != AttachmentId)]);
     }
-  };
-  const DropDownOpen = async () => {
-    setisOpen(!isOpen);
   };
   const AllGroupMember = async () => {
     navigation.navigate('AllGroupMember');
@@ -481,7 +468,20 @@ const GroupChatDetailsPage2 = (
           automaticallyAdjustKeyboardInsets
           onEndReachedThreshold={0.8}
           inverted
+          keyExtractor={i => i.lSrId + ''}
           data={MessageList}
+          onEndReached={async () => {
+            console.log("ReachedEnd");
+            
+            var nextIndex = currentIndex + 1;
+            await LoadOldMessages(
+              undefined,
+              undefined,
+              undefined,
+              nextIndex,
+              true,
+            );
+          }}
           renderItem={({item}) => {
             var isSenderIsSecondUser = item.lSenderId != UserInfo?.lId;
 
@@ -542,8 +542,8 @@ const GroupChatDetailsPage2 = (
                       fontFamily: 'OpenSans-Regular',
                     }}
                     right={() => {
-                      if (!item.lAttchId) return <></>;
-                      if (singleFileDownloadId == item.lAttchId)
+                      if (!item.lAttchId || item.lAttchId==0) return <></>;
+                      if ( item.lAttchId!=0 && singleFileDownloadId == item.lAttchId)
                         return (
                           <ActivityIndicator size={30}></ActivityIndicator>
                         );
@@ -568,11 +568,11 @@ const GroupChatDetailsPage2 = (
                             console.log('dataReceived', dataReceived);
 
                             ShowToastMessage('Downloaded');
-                            dispatch(
-                              GroupChatOptions.actions.UpdateGroupChat(
-                                dataReceived,
-                              ),
-                            );
+                            // dispatch(
+                            //   GroupChatOptions.actions.UpdateGroupChat(
+                            //     dataReceived,
+                            //   ),
+                            // );
                           }}
                         />
                       );

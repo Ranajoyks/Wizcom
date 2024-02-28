@@ -101,8 +101,8 @@ export class SignalRHubConnection {
   public static async IsConnected(): Promise<boolean> {
     var connection = await SignalRHubConnection.GetConnection();
     var chatId = await SignalRHubConnection.GetChatId();
-    var res = connection.invoke<boolean>('IsUserConnected', chatId);
-    //console.log("IsConnected res", res)
+    var res = await connection.invoke<boolean>('IsUserConnected', chatId);
+    console.log("IsConnected res", res)
     return res != undefined
   }
   public static async IsDisconnected(): Promise<boolean> {

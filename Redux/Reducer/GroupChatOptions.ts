@@ -102,7 +102,10 @@ const GroupChatOptions = createSlice({
 
         var newNoProxySortedMessageList: GroupChat[] =
           Group?.AllGroupMsgList.filter(i => !i.IsKsProxy);
+          // state.AllGroupList[GroupIndex].AllGroupMsgList=newNoProxySortedMessageList;
         var todayGroupName = UIHelper.CreateGroupNameFromdate(new Date());
+        // console.log("newNoProxySortedMessageList: ",newNoProxySortedMessageList);
+        
 
         sortedIncomingMessageList.forEach(newMwssage => {
           var newMessageIndex = newNoProxySortedMessageList.findIndex(
@@ -151,11 +154,13 @@ const GroupChatOptions = createSlice({
 
         Group.sMessgeList = [];
         Group.AllGroupMsgList = uniqueMessagaeList;
-
         state.AllGroupList[GroupIndex] = Group;
+
+        state.AllGroupList[GroupIndex].lastMessage=Group.AllGroupMsgList[0].sMsg
+        
         // console.log(
-        //   ' Group.AllGroupMsgList: ',
-        //   JSON.stringify(Group.AllGroupMsgList),
+        //   ' state.AllGroupList[GroupIndex]: ',
+        //   JSON.stringify(state.AllGroupList[GroupIndex]),
         // );
       });
 

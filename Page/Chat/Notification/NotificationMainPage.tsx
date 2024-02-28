@@ -119,6 +119,9 @@ const ChatUserScreen = (props: { data: NotificationUser }) => {
   const users = useAppSelector(i => i.NotificationOptions.AllUserNotificationList)
   const user = users.find(i => i.lId == props.data.lId)!
 
+  // const navigate = useNavigation<NavigationProps>()
+  // var unreadMessageList = user.AllNotificatonOneToOneList?.filter(i => !i.bStatus && i.lReceiverId != user.lId)
+  // var lastMessage = user.AllNotificatonOneToOneList?.length ? user.AllNotificatonOneToOneList[0] : undefined
   const navigate = useNavigation<NavigationProps>()
   var unreadMessageList = user.AllNotificatonOneToOneList?.filter(i => !i.bStatus && i.lReceiverId != user.lId)
   var lastMessage = user.AllNotificatonOneToOneList?.length ? user.AllNotificatonOneToOneList[0] : undefined

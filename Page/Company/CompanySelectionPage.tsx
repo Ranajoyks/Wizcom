@@ -90,8 +90,8 @@ export class CompanySelectionPage extends BaseComponent<"CompanySelectionPage", 
       return
     }
     if (companyRes.data.d.bStatus) {
-      await SessionHelper.SetCompanyID(model.Company.CODE);
-      await SessionHelper.SetSessionId(companyRes.data.d.cError);
+      // await SessionHelper.SetCompanyID(model.Company.CODE);
+      // await SessionHelper.SetSessionId(companyRes.data.d.cError);
 
       this.props.navigation.navigate('LoginPage');
     }

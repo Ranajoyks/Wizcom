@@ -166,25 +166,25 @@ const OneToOneChatPage2 = (
       var res = await ERESApi.DownloadAttachment(item.lAttchId);
 
       const { fs } = RNFetchBlob;
-      var cacheDir = fs.dirs.DownloadDir;
-      var binaryData = res.data.d.data.mAttch;
-      var fullLocalFileName = `${cacheDir}/${item.sMsg}`;
+      // var cacheDir = fs.dirs.DownloadDir;
+      // var binaryData = res.data.d.data.mAttch;
+      // var fullLocalFileName = `${cacheDir}/${item.sMsg}`;
 
-      newChatItem.AttahmentLocalPath = fullLocalFileName;
-      newChatItem.AttachmentType =
-        LocalFileHelper.GetFileType(fullLocalFileName);
+      // newChatItem.AttahmentLocalPath = fullLocalFileName;
+      // newChatItem.AttachmentType =
+      //   LocalFileHelper.GetFileType(fullLocalFileName);
       // const filePath = RNFS.ExternalStorageDirectoryPath + FileName;
 
-      RNFS.writeFile(fullLocalFileName, binaryData, 'base64')
-        .then(() => {
-          HandleMultiDownloadingLoader(item.lAttchId, false);
-          FileViewer.open(fullLocalFileName!);
-          console.log('File written successfully!', newChatItem);
-          resolve(newChatItem);
-        })
-        .catch(() => {
-          resolve(undefined);
-        });
+      // RNFS.writeFile(fullLocalFileName, binaryData, 'base64')
+      //   .then(() => {
+      //     HandleMultiDownloadingLoader(item.lAttchId, false);
+      //     FileViewer.open(fullLocalFileName!);
+      //     console.log('File written successfully!', newChatItem);
+      //     resolve(newChatItem);
+        // })
+        // .catch(() => {
+        //   resolve(undefined);
+        // });
     });
   };
   const AttachFileToChat = async () => {
@@ -225,9 +225,9 @@ const OneToOneChatPage2 = (
       }
       console.log('FileUpload1stREsponse: ', uploadResponse.data);
       var FileUploadRaw = {
-        CompanyId: BrnachId,
-        FromUserId: SenderChatId,
-        ToUserId: ReceiverChatId,
+        // CompanyId: BrnachId,
+        // FromUserId: SenderChatId,
+        // ToUserId: ReceiverChatId,
         AttachmentId: uploadResponse.data.lAttchId,
         ConnectionId: 'connectionId',
         FileName: uploadResponse.data.sFileName,

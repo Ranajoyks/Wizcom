@@ -1,16 +1,16 @@
-import {useNavigation} from '@react-navigation/native';
-import {useEffect, useState} from 'react';
-import {NavigationProps} from '../../../Core/BaseProps';
+import { useNavigation } from '@react-navigation/native';
+import { useEffect, useState } from 'react';
+import { NavigationProps } from '../../../Core/BaseProps';
 import RNFile from '../../../Core/RNFile';
 import User from '../../../Entity/User';
-import {useAppDispatch, useAppSelector} from '../../../Redux/Hooks';
+import { useAppDispatch, useAppSelector } from '../../../Redux/Hooks';
 
-import {RootStackParamList} from '../../../Root/AppStack';
-import {StackScreenProps} from '@react-navigation/stack';
+import { RootStackParamList } from '../../../Root/AppStack';
+import { StackScreenProps } from '@react-navigation/stack';
 import SignalRApi from '../../../DataAccess/SignalRApi';
 import SessionHelper from '../../../Core/SessionHelper';
-import {ShowToastMessage} from '../../../Redux/Store';
-import {Group, GroupMember} from '../../../Entity/Group';
+import { ShowToastMessage } from '../../../Redux/Store';
+import { Group, GroupMember } from '../../../Entity/Group';
 import {
   Dimensions,
   FlatList,
@@ -30,8 +30,8 @@ import {
   List,
 } from 'react-native-paper';
 import moment from 'moment';
-import MainStyle, {ColorCode, styles} from '../../MainStyle';
-import {UserProfileScreen} from '../../../Control/MHeader';
+import MainStyle, { ColorCode, styles } from '../../MainStyle';
+import { UserProfileScreen } from '../../../Control/MHeader';
 import ChatAvatar from '../ChatAvatar';
 import MCIcon from 'react-native-vector-icons/MaterialCommunityIcons';
 
@@ -39,10 +39,10 @@ import AppDBHelper from '../../../Core/AppDBHelper';
 import LocalFileHelper from '../../../Core/LocalFileHelper';
 import UIHelper from '../../../Core/UIHelper';
 import ERESApi from '../../../DataAccess/ERESApi';
-import {SignalRHubConnection} from '../../../DataAccess/SignalRHubConnection';
+import { SignalRHubConnection } from '../../../DataAccess/SignalRHubConnection';
 
 import ChatUserOptions from '../../../Redux/Reducer/NotificationOptions';
-import {GroupChat} from '../../../Entity/GroupChat';
+import { GroupChat } from '../../../Entity/GroupChat';
 
 import DocumentPicker, {
   DocumentPickerResponse,
@@ -52,7 +52,7 @@ import RNFetchBlob from 'rn-fetch-blob';
 import FileViewer from 'react-native-file-viewer';
 import axios from 'axios';
 import GroupChatOptions from '../../../Redux/Reducer/GroupChatOptions';
-import {GroupDetails, Member} from '../../../Entity/GroupDetails';
+import { GroupDetails, Member } from '../../../Entity/GroupDetails';
 
 const GroupChatDetailsPage2 = (
   props: StackScreenProps<RootStackParamList, 'GroupChatDetailsPage2'>,
@@ -188,7 +188,7 @@ const GroupChatDetailsPage2 = (
       tempGroupId!,
       tempIndexNo!,
     ).then(res => {
-      console.log('group chat res', res.data?.length?res.data[res.data.length-1]:null);
+      console.log('group chat res', res.data?.length ? res.data[res.data.length - 1] : null);
       if (res.data) {
         setCurrentIndex(tempIndexNo);
         var GroupChat: Group = {
@@ -222,7 +222,7 @@ const GroupChatDetailsPage2 = (
       HandleMultiDownloadingLoader(item.lAttchId, true);
       var res = await ERESApi.DownloadAttachment(item.lAttchId);
 
-      const {config, fs} = RNFetchBlob;
+      const { config, fs } = RNFetchBlob;
       var cacheDir = fs.dirs.DownloadDir;
       var binaryData = res.data.d.data.mAttch;
       var fullLocalFileName = `${cacheDir}/${item.sMsg}`;
@@ -269,6 +269,7 @@ const GroupChatDetailsPage2 = (
       0,
       tempMessage,
       lastMessage?.lSrId ?? 0,
+      true
     );
     chat.lCompId = BrnachId!;
     chat.sConnId = 'connectionId';
@@ -376,10 +377,10 @@ const GroupChatDetailsPage2 = (
             }}>
             <Image
               source={require('../../../assets/backimg.png')}
-              style={{height: 30, width: 30, marginLeft: 10}}
+              style={{ height: 30, width: 30, marginLeft: 10 }}
             />
           </TouchableOpacity>
-          <View style={{flex: 1}}>
+          <View style={{ flex: 1 }}>
             <Text style={styles.Grouptitle}>Group Chat</Text>
           </View>
           <UserProfileScreen
@@ -392,7 +393,7 @@ const GroupChatDetailsPage2 = (
           <View>
             <View>
               {FilterGroupDetails.group?.groupName &&
-              FilterGroupDetails.group?.groupName.length <= 15 ? (
+                FilterGroupDetails.group?.groupName.length <= 15 ? (
                 <Text style={styles.headerText}>
                   {FilterGroupDetails.group?.groupName}
                 </Text>
@@ -414,7 +415,7 @@ const GroupChatDetailsPage2 = (
           <View style={styles.avatarContainer}>
             <TouchableOpacity onPress={AllGroupMember}>
               {FilterGroupDetails.members?.length > 0 &&
-              FilterGroupDetails.members[0] ? (
+                FilterGroupDetails.members[0] ? (
                 <View style={styles.topLayer}>
                   <Avatar.Text
                     style={styles.GroupMemberBadge}
@@ -427,7 +428,7 @@ const GroupChatDetailsPage2 = (
               ) : null}
 
               {FilterGroupDetails.members?.length > 1 &&
-              FilterGroupDetails.members[1] ? (
+                FilterGroupDetails.members[1] ? (
                 <View style={styles.bottomLayer}>
                   <Avatar.Text
                     style={styles.GroupMemberBadge}
@@ -439,7 +440,7 @@ const GroupChatDetailsPage2 = (
                 </View>
               ) : null}
               {FilterGroupDetails.members?.length > 2 &&
-              FilterGroupDetails.members[2] ? (
+                FilterGroupDetails.members[2] ? (
                 <View style={styles.bottomLayer2}>
                   <Avatar.Text
                     style={styles.GroupMemberBadge}
@@ -472,7 +473,7 @@ const GroupChatDetailsPage2 = (
           data={MessageList}
           onEndReached={async () => {
             console.log("ReachedEnd");
-            
+
             var nextIndex = currentIndex + 1;
             await LoadOldMessages(
               undefined,
@@ -482,7 +483,7 @@ const GroupChatDetailsPage2 = (
               true,
             );
           }}
-          renderItem={({item}) => {
+          renderItem={({ item }) => {
             var isSenderIsSecondUser = item.lSenderId != UserInfo?.lId;
 
             return (
@@ -542,15 +543,15 @@ const GroupChatDetailsPage2 = (
                       fontFamily: 'OpenSans-Regular',
                     }}
                     right={() => {
-                      if (!item.lAttchId || item.lAttchId==0) return <></>;
-                      if ( item.lAttchId!=0 && singleFileDownloadId == item.lAttchId)
+                      if (!item.lAttchId || item.lAttchId == 0) return <></>;
+                      if (item.lAttchId != 0 && singleFileDownloadId == item.lAttchId)
                         return (
                           <ActivityIndicator size={30}></ActivityIndicator>
                         );
                       return (
                         <MCIcon
                           size={30}
-                          style={{marginLeft: 5}}
+                          style={{ marginLeft: 5 }}
                           name="download-circle-outline"
                           onPress={async () => {
                             console.log('groupItem: ', item);
@@ -562,7 +563,7 @@ const GroupChatDetailsPage2 = (
                             }
 
                             dataReceived = Object.assign(
-                              {...item},
+                              { ...item },
                               dataReceived,
                             );
                             console.log('dataReceived', dataReceived);
@@ -585,7 +586,7 @@ const GroupChatDetailsPage2 = (
                     marginLeft: isSenderIsSecondUser ? '16%' : 11,
                     marginRight: 10,
                   }}>
-                  <Text style={{fontSize: 12}}>
+                  <Text style={{ fontSize: 12 }}>
                     {UIHelper.GetTimeStamp(item.dtMsg)}
                   </Text>
                 </View>
@@ -593,7 +594,7 @@ const GroupChatDetailsPage2 = (
             );
           }}
         />
-        <View style={{padding: 10}}>
+        <View style={{ padding: 10 }}>
           <View
             style={{
               backgroundColor: '#e9e9e9',
@@ -604,7 +605,7 @@ const GroupChatDetailsPage2 = (
             <TextInput
               style={
                 (localStyle.input,
-                {width: Dimensions.get('window').width - 100})
+                  { width: Dimensions.get('window').width - 100 })
               }
               value={newSendMessage}
               onChangeText={e => {
@@ -620,7 +621,7 @@ const GroupChatDetailsPage2 = (
               <TouchableOpacity onPress={AttachFileToChat}>
                 <Image
                   source={require('../../../assets/attachment.png')}
-                  style={{height: 25, width: 13, marginHorizontal: 10}}
+                  style={{ height: 25, width: 13, marginHorizontal: 10 }}
                 />
               </TouchableOpacity>
               <TouchableOpacity
@@ -630,7 +631,7 @@ const GroupChatDetailsPage2 = (
                 }}>
                 <Image
                   source={require('../../../assets/send.png')}
-                  style={{height: 25, width: 25}}
+                  style={{ height: 25, width: 25 }}
                 />
               </TouchableOpacity>
             </View>
@@ -672,10 +673,10 @@ const localStyle = StyleSheet.create({
     fontFamily: 'Poppins-bold',
     // color: '#2196f3', // Darker blue title
   },
-  online: {color: '#0383FA'},
-  offline: {color: '#E4B27E'},
-  today: {color: '#A6A6A6', textAlign: 'center', fontSize: 16, padding: 20},
-  unread: {color: '#0383FA', textAlign: 'center', fontSize: 16, padding: 20},
+  online: { color: '#0383FA' },
+  offline: { color: '#E4B27E' },
+  today: { color: '#A6A6A6', textAlign: 'center', fontSize: 16, padding: 20 },
+  unread: { color: '#0383FA', textAlign: 'center', fontSize: 16, padding: 20 },
   body: {
     flex: 1,
     flexDirection: 'column',
@@ -700,7 +701,7 @@ const localStyle = StyleSheet.create({
     paddingVertical: 10,
     flexWrap: 'wrap',
   },
-  messagefrommessage: {flexDirection: 'row'},
+  messagefrommessage: { flexDirection: 'row' },
   messagefromicon: {
     backgroundColor: '#E9E9E9',
     width: 30,
@@ -711,7 +712,7 @@ const localStyle = StyleSheet.create({
     flexDirection: 'row',
     marginTop: 15,
   },
-  messagefromtext: {paddingLeft: 10, paddingRight: 30, paddingVertical: 0},
+  messagefromtext: { paddingLeft: 10, paddingRight: 30, paddingVertical: 0 },
   messagefromtextcontent: {
     paddingVertical: 5,
     paddingHorizontal: 10,
@@ -749,8 +750,8 @@ const localStyle = StyleSheet.create({
     paddingHorizontal: 15,
     paddingVertical: 10,
   },
-  messagetomessage: {flexDirection: 'row-reverse'},
-  messagetotext: {paddingLeft: 10, paddingRight: 0, zIndex: 1},
+  messagetomessage: { flexDirection: 'row-reverse' },
+  messagetotext: { paddingLeft: 10, paddingRight: 0, zIndex: 1 },
   messagetotextcontent: {
     paddingVertical: 5,
     paddingHorizontal: 10,
@@ -768,7 +769,7 @@ const localStyle = StyleSheet.create({
     paddingRight: 0,
     // paddingVertical: 5,
   },
-  messagetotimetext: {flexShrink: 1, textAlign: 'right'},
+  messagetotimetext: { flexShrink: 1, textAlign: 'right' },
   input: {
     alignSelf: 'center',
     backgroundColor: '#F1F1F1',

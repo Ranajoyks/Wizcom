@@ -1,14 +1,14 @@
-import {useEffect, useState} from 'react';
+import { useEffect, useState } from 'react';
 import SignalRApi from '../../../DataAccess/SignalRApi';
 import SessionHelper from '../../../Core/SessionHelper';
-import {SignalRHubConnection} from '../../../DataAccess/SignalRHubConnection';
-import {ShowPageLoader, ShowToastMessage} from '../../../Redux/Store';
+import { SignalRHubConnection } from '../../../DataAccess/SignalRHubConnection';
+import { ShowPageLoader, ShowToastMessage } from '../../../Redux/Store';
 
-import {StackScreenProps} from '@react-navigation/stack';
-import {RootStackParamList} from '../../../Root/AppStack';
-import {View} from 'react-native-animatable';
-import {SafeAreaView} from 'react-native-safe-area-context';
-import {ActivityIndicator, List, ProgressBar, Text} from 'react-native-paper';
+import { StackScreenProps } from '@react-navigation/stack';
+import { RootStackParamList } from '../../../Root/AppStack';
+import { View } from 'react-native-animatable';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { ActivityIndicator, List, ProgressBar, Text } from 'react-native-paper';
 import {
   Dimensions,
   FlatList,
@@ -18,15 +18,15 @@ import {
   TextInput,
   Alert,
 } from 'react-native';
-import {ColorCode} from '../../MainStyle';
+import { ColorCode } from '../../MainStyle';
 import MCIcon from 'react-native-vector-icons/MaterialCommunityIcons';
-import {useNavigation} from '@react-navigation/native';
-import {NavigationProps} from '../../../Core/BaseProps';
+import { useNavigation } from '@react-navigation/native';
+import { NavigationProps } from '../../../Core/BaseProps';
 import User from '../../../Entity/User';
-import {useAppDispatch, useAppSelector} from '../../../Redux/Hooks';
+import { useAppDispatch, useAppSelector } from '../../../Redux/Hooks';
 import React from 'react';
 import DocumentPicker from 'react-native-document-picker';
-import {UserProfileScreen} from '../../../Control/MHeader';
+import { UserProfileScreen } from '../../../Control/MHeader';
 import RNFile from '../../../Core/RNFile';
 import ERESApi from '../../../DataAccess/ERESApi';
 import * as RNFS from 'react-native-fs';
@@ -35,9 +35,9 @@ import FileViewer from 'react-native-file-viewer';
 import LocalFileHelper from '../../../Core/LocalFileHelper';
 
 import UIHelper from '../../../Core/UIHelper';
-import {ChatUser} from '../../../Entity/ChatUser';
+import { ChatUser } from '../../../Entity/ChatUser';
 import AppDBHelper from '../../../Core/AppDBHelper';
-import {Chat} from '../../../Entity/Chat';
+import { Chat } from '../../../Entity/Chat';
 import OneToOneChatOptions from '../../../Redux/Reducer/OneToOneChatOptions';
 import ReduxDataHelper from '../../../Redux/ReduxDataHelper';
 import NotificationOptions from '../../../Redux/Reducer/NotificationOptions';
@@ -165,7 +165,7 @@ const NotificationPage = (
       HandleMultiDownloadingLoader(item.lAttchId, true);
       var res = await ERESApi.DownloadAttachment(item.lAttchId);
 
-      const {fs} = RNFetchBlob;
+      const { fs } = RNFetchBlob;
       var cacheDir = fs.dirs.DownloadDir;
       var binaryData = res.data.d.data.mAttch;
       var fullLocalFileName = `${cacheDir}/${item.sMsg}`;
@@ -208,6 +208,7 @@ const NotificationPage = (
       ReceiverChatId!,
       tempMessage,
       UIHelper.GetProxySrId(lastMessage?.lSrId),
+      true
     );
     setNewSendMessage('');
     dispatch(NotificationOptions.actions.AddNewOneToOneNotificationChat(chat));
@@ -332,7 +333,7 @@ const NotificationPage = (
 
   return (
     <SafeAreaView
-      style={{flexDirection: 'column', flex: 1, flexWrap: 'nowrap'}}>
+      style={{ flexDirection: 'column', flex: 1, flexWrap: 'nowrap' }}>
       <View style={localStyle.header}>
         <TouchableOpacity
           onPress={() => {
@@ -341,10 +342,10 @@ const NotificationPage = (
           }}>
           <Image
             source={require('../../../assets/backimg.png')}
-            style={{height: 20, width: 20, marginLeft: 10}}
+            style={{ height: 20, width: 20, marginLeft: 10 }}
           />
         </TouchableOpacity>
-        <View style={{width: '55%'}}>
+        <View style={{ width: '55%' }}>
           <Text style={localStyle.title}>{SecondUser?.userName}</Text>
           <Text
             style={{
@@ -365,13 +366,13 @@ const NotificationPage = (
               navigation.reset({
                 index: 0,
                 routes: [
-                  {name: 'MapPage', params: {ReceiverId: ReceiverChatId}},
+                  { name: 'MapPage', params: { ReceiverId: ReceiverChatId } },
                 ],
               });
             }}>
             <Image
               source={require('../../../assets/location.png')}
-              style={{height: 30, width: 23.5, marginRight: 10, marginTop: 3}}
+              style={{ height: 30, width: 23.5, marginRight: 10, marginTop: 3 }}
             />
           </TouchableOpacity>
           <UserProfileScreen
@@ -381,7 +382,7 @@ const NotificationPage = (
           />
         </View>
       </View>
-      <View style={{height: '89%', backgroundColor: '#FFFFFF'}}>
+      <View style={{ height: '89%', backgroundColor: '#FFFFFF' }}>
         <ProgressBar visible={isPageRefreshing} indeterminate />
         <FlatList
           automaticallyAdjustKeyboardInsets
@@ -447,20 +448,20 @@ const NotificationPage = (
                     style={
                       MsgSplit.length == 2
                         ? {
-                            paddingRight: 0,
-                            paddingVertical: 0,
-                            marginVertical: 8,
-                          }
+                          paddingRight: 0,
+                          paddingVertical: 0,
+                          marginVertical: 8,
+                        }
                         : {
-                            paddingVertical: 6,
-                            borderRadius: 6,
-                            backgroundColor: isSenderIsSecondUser
-                              ? ColorCode.DimGray
-                              : ColorCode.LightOrange,
-                            marginLeft: 10,
-                            maxWidth: '80%',
-                            marginVertical: 8,
-                          }
+                          paddingVertical: 6,
+                          borderRadius: 6,
+                          backgroundColor: isSenderIsSecondUser
+                            ? ColorCode.DimGray
+                            : ColorCode.LightOrange,
+                          marginLeft: 10,
+                          maxWidth: '80%',
+                          marginVertical: 8,
+                        }
                     }
                     title={
                       MsgSplit.length == 2 ? (
@@ -507,7 +508,7 @@ const NotificationPage = (
                       return (
                         <MCIcon
                           size={30}
-                          style={{marginLeft: 5}}
+                          style={{ marginLeft: 5 }}
                           name="download-circle-outline"
                           onPress={async () => {
                             var dataReceived = await DownloadFile(data.item);
@@ -517,7 +518,7 @@ const NotificationPage = (
                             }
 
                             dataReceived = Object.assign(
-                              {...data.item},
+                              { ...data.item },
                               dataReceived,
                             );
                             console.log('dataReceived', dataReceived);
@@ -554,14 +555,14 @@ const NotificationPage = (
                     marginRight: 10,
                     marginTop: MsgSplit.length == 2 ? -5 : null,
                   }}>
-                  <Text style={{fontSize: 12, color: '#a6a6a6'}}>
+                  <Text style={{ fontSize: 12, color: '#a6a6a6' }}>
                     {UIHelper.GetTimeStamp(data.item.dtMsg)}
                   </Text>
                 </View>
               </View>
             );
           }}></FlatList>
-        <View style={{padding: 10}}>
+        <View style={{ padding: 10 }}>
           <View
             style={{
               backgroundColor: '#e9e9e9',
@@ -572,7 +573,7 @@ const NotificationPage = (
             <TextInput
               style={
                 (localStyle.input,
-                {width: Dimensions.get('window').width - 100})
+                  { width: Dimensions.get('window').width - 100 })
               }
               value={newSendMessage}
               onChangeText={setNewSendMessage}
@@ -586,7 +587,7 @@ const NotificationPage = (
               <TouchableOpacity onPress={AttachFileToChat}>
                 <Image
                   source={require('../../../assets/attachment.png')}
-                  style={{height: 25, width: 13, marginHorizontal: 10}}
+                  style={{ height: 25, width: 13, marginHorizontal: 10 }}
                 />
               </TouchableOpacity>
               <TouchableOpacity
@@ -596,7 +597,7 @@ const NotificationPage = (
                 }}>
                 <Image
                   source={require('../../../assets/send.png')}
-                  style={{height: 25, width: 25}}
+                  style={{ height: 25, width: 25 }}
                 />
               </TouchableOpacity>
             </View>

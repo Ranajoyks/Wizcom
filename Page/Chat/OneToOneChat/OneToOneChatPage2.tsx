@@ -205,6 +205,7 @@ const OneToOneChatPage2 = (
       ReceiverChatId!,
       tempMessage,
       UIHelper.GetProxySrId(lastMessage?.lSrId),
+      true
     );
     setNewSendMessage('');
     dispatch(OneToOneChatOptions.actions.AddNewOneToOneChat(chat));
@@ -283,7 +284,10 @@ const OneToOneChatPage2 = (
       tempBranchId = branch?.lId + '';
     }
 
-    console.warn("tempBranchId", tempBranchId)
+    if (!tempBranchId || !tempReceiverId || !tempSenderChatId) {
+      console.error("tempBranchId tempReceiverId tempSenderChatId", tempBranchId, tempReceiverId, tempSenderChatId)
+    }
+
     var ReadMsgOption = {
       companyid: tempBranchId,
       senderId: tempSenderChatId,

@@ -69,7 +69,7 @@ const AllChatPage = () => {
 
 
   console.log("Re render, all chat page " + filteredOneToOneUserListData.length + new Date())
-  // console.log("Re render, all chat User " + JSON.stringify(filteredOneToOneUserListData.slice(0,3)))
+
   return (
     <React.Fragment>
       <SafeAreaView>
@@ -100,7 +100,7 @@ const ChatUserScreen = (props: { data: ChatUser }) => {
   const navigate = useNavigation<NavigationProps>()
   var unreadMessageList = user.AllChatOneToOneList?.filter(i => !i.bStatus && i.lReceiverId != user.lId)
   var lastMessage = user.AllChatOneToOneList?.length ? user.AllChatOneToOneList[0] : undefined
-  // console.log("Re render, ChatUserScreen for user " + user.userFullName + "-->" + new Date())
+  //console.log("Re render, ChatUserScreen for user " + user.userFullName + "-->" + new Date())
   return (
 
     <List.Item onPress={() => {

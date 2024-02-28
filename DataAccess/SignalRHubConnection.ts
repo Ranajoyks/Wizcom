@@ -92,7 +92,8 @@ export class SignalRHubConnection {
     //console.log("GetAllUser chatId-->", chatId);
 
     var res = await connection.invoke<ChatUser[]>('GetAllUser', chatId, 0);
-    //console.log("GetAllUser", res);
+    var onlineUsers = res.filter(i => i.isUserLive)
+    console.log("live users", onlineUsers);
     return res
 
   }
@@ -122,12 +123,13 @@ export class SignalRHubConnection {
   public static async OnReceiveMessege(callback: (newMessage: Chat) => void) {
     var connection = await SignalRHubConnection.GetConnection()
     connection.on("ReceiveMessage", (senderId: string, Receiverid: string, message: string, proxySrId: number) => {
-      var newChat = SignalRHubConnection.GetProxyChatMessage(senderId, Receiverid, message, proxySrId)
+      var newChat = SignalRHubConnection.GetProxyChatMessage(senderId, Receiverid, message, proxySrId, false)
       callback(newChat)
     })
   }
 
-  public static GetProxyChatMessage(senderId: string, Receiverid: string, message: string, proxySrId?: number): Chat {
+  public static GetProxyChatMessage(senderId: string, Receiverid: string, message: string, proxySrId: number
+    , MarkAsRead: boolean): Chat {
     var newChat: Chat = {} as Chat;
     var utcDate = UIHelper.ISTToUTCDate(new Date()).toISOString()
 
@@ -136,11 +138,12 @@ export class SignalRHubConnection {
     newChat.lReceiverId = parseInt(Receiverid.split('_')[1])
     newChat.sMsg = message
     newChat.lSrId = proxySrId ?? UIHelper.GetProxySrId();
-    newChat.bStatus = true
+    newChat.bStatus = MarkAsRead
     newChat.IsKsProxy = true
     return newChat
   }
-  public static GetProxyNotificationChatMessage(senderId: string, Receiverid: string, message: string, proxySrId?: number): Notification {
+  public static GetProxyNotificationChatMessage(senderId: string, Receiverid: string, message: string, proxySrId: number,
+    MarkAsRead: boolean): Notification {
     var newChat: Notification = {} as Notification;
     var utcDate = UIHelper.ISTToUTCDate(new Date()).toISOString()
 
@@ -149,7 +152,7 @@ export class SignalRHubConnection {
     newChat.lReceiverId = parseInt(Receiverid.split('_')[1])
     newChat.sMsg = message
     newChat.lSrId = proxySrId ?? UIHelper.GetProxySrId();
-    newChat.bStatus = true
+    newChat.bStatus = MarkAsRead
     newChat.IsKsProxy = true
     return newChat
   }
@@ -159,7 +162,8 @@ export class SignalRHubConnection {
     groupName: string,
     AttachmentID: number,
     message: string,
-    proxySrId: number): GroupChat {
+    proxySrId: number,
+    MarkAsRead: boolean): GroupChat {
     var newChat: GroupChat = {} as GroupChat;
     var utcDate = UIHelper.ISTToUTCDate(new Date()).toISOString()
 
@@ -203,7 +207,7 @@ export class SignalRHubConnection {
         ).
         then(res => {
           console.log("SendMessageResponse", res)
-          var chat = SignalRHubConnection.GetProxyChatMessage(SenderId, receiverId, Message, res?.data)
+          var chat = SignalRHubConnection.GetProxyChatMessage(SenderId, receiverId, Message, res?.data, false)
           resolve(chat)
         }
         )
@@ -259,7 +263,7 @@ export class SignalRHubConnection {
       groupName: string,
       AttachmentID: number,
       message: string, proxySrId: number) => {
-      var newChat = SignalRHubConnection.GetProxyGroupChatMessage(senderId, userName, groupName, AttachmentID, message, proxySrId)
+      var newChat = SignalRHubConnection.GetProxyGroupChatMessage(senderId, userName, groupName, AttachmentID, message, proxySrId, false)
       callback(newChat)
     })
   }

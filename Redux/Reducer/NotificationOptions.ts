@@ -24,23 +24,22 @@ const NotificationOptions = createSlice({
     ) => {
       // console.log("UpdateAllUserNotificationListAndMessage: ",JSON.stringify(action.payload));
 
-      var sortedUserList: NotificationUser[] = [];
-      var remainingUserList: NotificationUser[] = state.AllUserNotificationList;
-
       action.payload.forEach(payloadUser => {
-        var oldUserIndex = remainingUserList.findIndex(
+        var oldUserIndex = state.AllUserNotificationList.findIndex(
           i => i.lId == payloadUser.lId,
         );
         if (oldUserIndex == -1) {
           payloadUser.AllNotificatonOneToOneList = [];
-          sortedUserList.push(payloadUser);
+          state.AllUserNotificationList.push(payloadUser);
           return;
         }
 
-        var oldUser = remainingUserList[oldUserIndex];
-        var AllChatOneToOneList = oldUser.AllNotificatonOneToOneList;
+        var oldUser = state.AllUserNotificationList[oldUserIndex];
+        var AllNotificatonOneToOneList = oldUser.AllNotificatonOneToOneList;
+
         var newUser = Object.assign(oldUser, payloadUser);
-        newUser.AllNotificatonOneToOneList = AllChatOneToOneList;
+
+        newUser.AllNotificatonOneToOneList = AllNotificatonOneToOneList;
 
         //below one is required as sMessgeList is readonly here
         var nonReadonlyList = [...(payloadUser.sMessgeList ?? [])];
@@ -99,16 +98,10 @@ const NotificationOptions = createSlice({
 
         newUser.sMessgeList = [];
         newUser.AllNotificatonOneToOneList = uniqueMessagaeList;
-        sortedUserList.push(newUser);
 
-        remainingUserList.splice(oldUserIndex, 1);
+        state.AllUserNotificationList[oldUserIndex] = newUser;
       });
-
-      sortedUserList = sortedUserList.concat(remainingUserList);
-
-      state.AllUserNotificationList = sortedUserList;
     },
-
     LoadUserOneToOneNotificationChatList: (
       state,
       action: PayloadAction<NotificationUser[]>,
@@ -195,12 +188,14 @@ const NotificationOptions = createSlice({
       state,
       action: PayloadAction<Notification>,
     ) => {
-      var userIndex = state.AllUserNotificationList.findIndex(
+      var currentUserList = state.AllUserNotificationList;
+
+      var userIndex = currentUserList.findIndex(
         i =>
           i.lId == action.payload.lReceiverId ||
           i.lId == action.payload.lSenderId,
       );
-      var user = state.AllUserNotificationList[userIndex];
+      var user = currentUserList[userIndex];
 
       if (!user.AllNotificatonOneToOneList?.length) {
         user.AllNotificatonOneToOneList = [];

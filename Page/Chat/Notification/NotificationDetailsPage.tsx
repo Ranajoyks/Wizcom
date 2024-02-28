@@ -1,64 +1,54 @@
-import { useEffect, useState } from 'react';
-import { View } from 'react-native-animatable';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import {
-  ActivityIndicator,
-  Card,
-  FAB,
-  IconButton,
-  List,
-  ProgressBar,
-  Text,
-} from 'react-native-paper';
+import {useEffect, useState} from 'react';
+import SignalRApi from '../../../DataAccess/SignalRApi';
+import SessionHelper from '../../../Core/SessionHelper';
+import {SignalRHubConnection} from '../../../DataAccess/SignalRHubConnection';
+import {ShowPageLoader, ShowToastMessage} from '../../../Redux/Store';
+
+import {StackScreenProps} from '@react-navigation/stack';
+import {RootStackParamList} from '../../../Root/AppStack';
+import {View} from 'react-native-animatable';
+import {SafeAreaView} from 'react-native-safe-area-context';
+import {ActivityIndicator, List, ProgressBar, Text} from 'react-native-paper';
 import {
   Dimensions,
   FlatList,
   Image,
-  ImageBackground,
-  RefreshControl,
   StyleSheet,
   TouchableOpacity,
   TextInput,
-  Button,
   Alert,
 } from 'react-native';
-import IonIcon from 'react-native-vector-icons/Ionicons';
+import {ColorCode} from '../../MainStyle';
 import MCIcon from 'react-native-vector-icons/MaterialCommunityIcons';
-import { useNavigation } from '@react-navigation/native';
+import {useNavigation} from '@react-navigation/native';
+import {NavigationProps} from '../../../Core/BaseProps';
+import User from '../../../Entity/User';
+import {useAppDispatch, useAppSelector} from '../../../Redux/Hooks';
 import React from 'react';
-import DocumentPicker, {
-  DocumentPickerResponse,
-} from 'react-native-document-picker';
-import axios from 'axios';
+import DocumentPicker from 'react-native-document-picker';
+import {UserProfileScreen} from '../../../Control/MHeader';
+import RNFile from '../../../Core/RNFile';
+import ERESApi from '../../../DataAccess/ERESApi';
 import * as RNFS from 'react-native-fs';
 import RNFetchBlob from 'rn-fetch-blob';
 import FileViewer from 'react-native-file-viewer';
-import { UserProfileScreen } from '../../../Control/MHeader';
-import AppDBHelper from '../../../Core/AppDBHelper';
-import { NavigationProps } from '../../../Core/BaseProps';
 import LocalFileHelper from '../../../Core/LocalFileHelper';
-import RNFile from '../../../Core/RNFile';
+
 import UIHelper from '../../../Core/UIHelper';
-import ERESApi from '../../../DataAccess/ERESApi';
-import { Chat } from '../../../Entity/Chat';
-import User from '../../../Entity/User';
-import { useAppDispatch, useAppSelector } from '../../../Redux/Hooks';
-import NotificationUserOptions from '../../../Redux/Reducer/NotificationOptions';
-import { ColorCode } from '../../MainStyle';
-import { RootStackParamList } from '../../../Root/AppStack';
-import { StackScreenProps } from '@react-navigation/stack';
-import SessionHelper from '../../../Core/SessionHelper';
-import SignalRApi from '../../../DataAccess/SignalRApi';
-import { SignalRHubConnection } from '../../../DataAccess/SignalRHubConnection';
-import { ShowPageLoader, ShowToastMessage } from '../../../Redux/Store';
-import { NotificationUser } from '../../../Entity/NotificationUser';
+import {ChatUser} from '../../../Entity/ChatUser';
+import AppDBHelper from '../../../Core/AppDBHelper';
+import {Chat} from '../../../Entity/Chat';
+import OneToOneChatOptions from '../../../Redux/Reducer/OneToOneChatOptions';
+import ReduxDataHelper from '../../../Redux/ReduxDataHelper';
 import NotificationOptions from '../../../Redux/Reducer/NotificationOptions';
+import { NotificationUser } from '../../../Entity/NotificationUser';
 import { Notification } from '../../../Entity/Notification';
 
 const NotificationPage = (
   props: StackScreenProps<RootStackParamList, 'NotificationPage'>,
 ) => {
   const SecondUser = props.route.params.SecondUser;
+
   const navigation = useNavigation<NavigationProps>();
   const dispatch = useAppDispatch();
 
@@ -68,16 +58,16 @@ const NotificationPage = (
 
   const [newSendMessage, setNewSendMessage] = useState('');
   const [UserInfo, setUserInfo] = useState<User>();
-  const [CompnanyId, setCompnanyId] = useState<string>();
+
   const [BrnachId, setBranchId] = useState<number>();
-  const [ShowSilentLoader, setShowSilentLoader] = useState<boolean>(false);
 
   const [ShowDownloading, setShowDownloading] = useState<number[]>([]);
   const [singleFileDownloadId, setSingleFileDownloadId] = useState<number>(0);
-  const NotificationUserOptions = useAppSelector(i => i.NotificationOptions);
+  const NotificationUserOption = useAppSelector(i => i.NotificationOptions);
 
   const [SelectedFile, setSelectedFile] = useState<RNFile>();
-
+  const [isPageRefreshing, setIsPageRefreshing] = useState(false);
+  var ReadMessageCalledOnce = false;
   useEffect(() => {
     (async function () {
       Initilize();
@@ -91,21 +81,15 @@ const NotificationPage = (
 
   const Initilize = async () => {
     var chatId = await SessionHelper.GetChatId();
-    var CompanyId = await SessionHelper.GetCompanyID();
     var Branch = await SessionHelper.GetBranch();
     var receiverChatId = await UIHelper.GetChatId(SecondUser.lId);
     var userInfo = await SessionHelper.GetUserDetails();
 
-    console.log('ReceiverChatId', receiverChatId);
-    console.log('ChatId', chatId);
-    console.log('Branch?.lId', Branch?.lId);
-
     setBranchId(Branch?.lId);
     setSenderChatId(chatId);
     setReceiverChatId(receiverChatId);
-    setCompnanyId(CompanyId);
-    setUserInfo(userInfo);
 
+    setUserInfo(userInfo);
     //UIHelper.LogTime("MarkTalkingTrue", "Start")
 
     await SignalRApi.MarkTalkingTrue({
@@ -113,25 +97,13 @@ const NotificationPage = (
       ToUserId: receiverChatId,
       IsTaking: true,
     });
-    //UIHelper.LogTime("MarkTalkingTrue", "End")
-    //UIHelper.LogTime("JoinChat", "Start")
+
     await SignalRHubConnection.JoinChat();
-    //UIHelper.LogTime("JoinChat", "End")
-    //UIHelper.LogTime("LoadOldMessages", "Start")
-    LoadOldMessages(chatId, receiverChatId, Branch?.lId, undefined, false);
-    await ReadMsg(chatId, receiverChatId, Branch?.lId.toString());
-    //UIHelper.LogTime("LoadOldMessages", "End")
+
+    LoadOldMessages(chatId, receiverChatId, Branch?.lId, 0, true);
+    ReadMsg(chatId, receiverChatId, Branch?.lId.toString());
+
     ShowPageLoader(false);
-
-    var JoinedChat = await SignalRHubConnection.JoinChat();
-
-    if (!JoinedChat) {
-      //console.log(JoinedChat);
-      ShowPageLoader(false);
-      ShowToastMessage(SignalRHubConnection.connectionErrorMessage);
-      return;
-    }
-    await LoadOldMessages(chatId, receiverChatId, Branch?.lId);
   };
   const LoadOldMessages = async (
     FromSenderId?: string,
@@ -140,7 +112,7 @@ const NotificationPage = (
     FromIndexNo?: number,
     ShowSilentLoader?: boolean,
   ) => {
-    setShowSilentLoader(ShowSilentLoader == true && true);
+    setIsPageRefreshing(ShowSilentLoader == true && true);
 
     var tempSenderChatId = FromSenderId ?? SenderChatId;
     var tempReceiverId = FromReceiverId ?? ReceiverChatId;
@@ -161,39 +133,39 @@ const NotificationPage = (
       if (res.data) {
         setCurrentIndex(tempIndexNo);
 
+        console.log('sMessgeList', res.data.filter(i => i.cMsgFlg == 'F' || i.cMsgFlg == 'N'));
 
-
-        SecondUser.sMessgeList = res.data.filter((i: Notification) => i.cMsgFlg === 'F' || i.cMsgFlg === 'N');
+        SecondUser.sMessgeList = res.data.filter(i => i.cMsgFlg == 'F' || i.cMsgFlg == 'N');
 
         var proxyChatUser: NotificationUser = {
           lId: SecondUser.lId,
-          sMessgeList: res.data.filter((i: Notification) => i.cMsgFlg === 'F' || i.cMsgFlg === 'N')
-        } as unknown as NotificationUser
+          sMessgeList: res.data.filter(i => i.cMsgFlg == 'F' || i.cMsgFlg == 'N'),
+        } as unknown as NotificationUser;
 
-        dispatch(NotificationOptions.actions.UpdateAllUserNotificationListAndMessage([proxyChatUser]));
-
-        AppDBHelper.SetNotificationUsers(
-          NotificationUserOptions.AllUserNotificationList,
-          tempSenderChatId!,
+        dispatch(
+          NotificationOptions.actions.UpdateAllUserNotificationListAndMessage([
+            proxyChatUser,
+          ]),
         );
       }
-      setShowSilentLoader(false);
+      setIsPageRefreshing(false);
     });
   };
   const DownloadFile = async (item: Notification): Promise<Notification | undefined> => {
     var newChatItem = {} as Notification;
 
-    return new Promise(async (resolve, reject) => {
+    return new Promise(async resolve => {
       if (item.AttahmentLocalPath) {
         console.log('item.AttahmentLocalPath', item.AttahmentLocalPath);
 
         FileViewer.open(item.AttahmentLocalPath);
         resolve(undefined);
+        return;
       }
       HandleMultiDownloadingLoader(item.lAttchId, true);
       var res = await ERESApi.DownloadAttachment(item.lAttchId);
 
-      const { config, fs } = RNFetchBlob;
+      const {fs} = RNFetchBlob;
       var cacheDir = fs.dirs.DownloadDir;
       var binaryData = res.data.d.data.mAttch;
       var fullLocalFileName = `${cacheDir}/${item.sMsg}`;
@@ -210,7 +182,7 @@ const NotificationPage = (
           console.log('File written successfully!', newChatItem);
           resolve(newChatItem);
         })
-        .catch((err: any) => {
+        .catch(() => {
           resolve(undefined);
         });
     });
@@ -274,7 +246,7 @@ const NotificationPage = (
         ReceiverChatId!,
         newSendMessage,
         'N',
-        1
+        1,
       ).then((chat?: Chat) => {
         if (!chat) {
           ShowToastMessage('Message is not sent');
@@ -289,10 +261,33 @@ const NotificationPage = (
     FromReceiverId?: string,
     FromBranchId?: string,
   ) => {
+    if (ReadMessageCalledOnce) {
+      return;
+    }
+
+    console.log('ReadMsg called ' + new Date());
+
+    ReadMessageCalledOnce = true;
+
+    var tempSenderChatId = FromSenderId ?? SenderChatId;
+    var tempReceiverId = FromReceiverId ?? ReceiverChatId;
+    var tempBranchId = FromBranchId ?? BrnachId + '';
+
+    if (!tempSenderChatId) {
+      tempSenderChatId = await SessionHelper.GetChatId();
+    }
+    if (!tempReceiverId) {
+      tempReceiverId = await UIHelper.GetChatId(SecondUser.lId);
+    }
+    if (!tempBranchId) {
+      var branch = await SessionHelper.GetBranch();
+      tempBranchId = branch?.lId + '';
+    }
+
     var ReadMsgOption = {
-      companyid: FromBranchId,
-      senderId: FromSenderId,
-      receiverId: FromReceiverId,
+      companyid: tempBranchId,
+      senderId: tempSenderChatId,
+      receiverId: tempReceiverId,
     };
     var ReadMsgResponse = await SignalRApi.ReadMsg(ReadMsgOption);
     //console.log('ReadMsgResponse: ', ReadMsgResponse);
@@ -314,16 +309,15 @@ const NotificationPage = (
   };
   const Approve = async (msg: string) => {
     console.log('SplitMsg', msg);
-    var AcceptRejectResponse = await ERESApi.JAcceptReject(msg)
-    console.log("AcceptRejectResponse: ", AcceptRejectResponse);
-    Alert.alert(AcceptRejectResponse.data)
+    var AcceptRejectResponse = await ERESApi.JAcceptReject(msg);
+    console.log('AcceptRejectResponse: ', AcceptRejectResponse);
+
+    Alert.alert(AcceptRejectResponse.data);
   };
 
-  var MessageList = NotificationUserOptions.AllUserNotificationList.find(
+  var MessageList = NotificationUserOption.AllUserNotificationList.find(
     i => i.lId == SecondUser.lId,
-  )?.AllNotificatonOneToOneList;
-  var NotificationMessageList = MessageList?.filter((i: any) => i.cMsgFlg === 'F' || i.cMsgFlg === 'N');
-
+  )?.AllNotificatonOneToOneList.filter(i => i.cMsgFlg == 'F' || i.cMsgFlg == 'N');
 
   // useEffect(() => {
   //   console.log("Current data lenth changed", MessageList.length)
@@ -331,22 +325,26 @@ const NotificationPage = (
 
   var lastMessage = MessageList?.length ? MessageList[0] : undefined;
 
-  // console.log("NotificationMessageList", MessageList)
+  console.log(
+    're-render one to one chat page of ' + SecondUser?.userName,
+    MessageList?.length,
+  );
 
   return (
     <SafeAreaView
-      style={{ flexDirection: 'column', flex: 1, flexWrap: 'nowrap' }}>
+      style={{flexDirection: 'column', flex: 1, flexWrap: 'nowrap'}}>
       <View style={localStyle.header}>
         <TouchableOpacity
           onPress={() => {
+            ReduxDataHelper.UpdateOneToOneUserStatus(dispatch);
             navigation.pop();
           }}>
           <Image
             source={require('../../../assets/backimg.png')}
-            style={{ height: 20, width: 20, marginLeft: 10 }}
+            style={{height: 20, width: 20, marginLeft: 10}}
           />
         </TouchableOpacity>
-        <View style={{ width: '55%' }}>
+        <View style={{width: '55%'}}>
           <Text style={localStyle.title}>{SecondUser?.userName}</Text>
           <Text
             style={{
@@ -367,23 +365,27 @@ const NotificationPage = (
               navigation.reset({
                 index: 0,
                 routes: [
-                  { name: 'MapPage', params: { ReceiverId: ReceiverChatId } },
+                  {name: 'MapPage', params: {ReceiverId: ReceiverChatId}},
                 ],
               });
             }}>
             <Image
               source={require('../../../assets/location.png')}
-              style={{ height: 30, width: 23.5, marginRight: 10, marginTop: 3 }}
+              style={{height: 30, width: 23.5, marginRight: 10, marginTop: 3}}
             />
           </TouchableOpacity>
-          <UserProfileScreen userName={UserInfo?.userName ?? ''} Admin={false} GroupId={0} />
+          <UserProfileScreen
+            userName={UserInfo?.userName ?? ''}
+            Admin={false}
+            GroupId={0}
+          />
         </View>
       </View>
-      <View style={{ height: '89%', backgroundColor: '#FFFFFF' }}>
-        <ProgressBar visible={ShowSilentLoader} indeterminate />
+      <View style={{height: '89%', backgroundColor: '#FFFFFF'}}>
+        <ProgressBar visible={isPageRefreshing} indeterminate />
         <FlatList
           automaticallyAdjustKeyboardInsets
-          data={NotificationMessageList}
+          data={MessageList}
           keyExtractor={i => i.lSrId + ''}
           onEndReachedThreshold={0.8}
           inverted
@@ -401,6 +403,10 @@ const NotificationPage = (
             var isSenderIsSecondUser = data.item.lSenderId == SecondUser.lId;
             var userName = isSenderIsSecondUser ? SecondUser.userName : '';
             var MsgSplit = data.item.sMsg.split('||');
+
+            if (!data.item.bStatus) {
+              ReadMsg();
+            }
             return (
               <View key={data.item.lSrId + data.item.GroupName}>
                 {data.item.GroupName && (
@@ -441,20 +447,20 @@ const NotificationPage = (
                     style={
                       MsgSplit.length == 2
                         ? {
-                          paddingRight: 0,
-                          paddingVertical: 0,
-                          marginVertical: 8,
-                        }
+                            paddingRight: 0,
+                            paddingVertical: 0,
+                            marginVertical: 8,
+                          }
                         : {
-                          paddingVertical: 6,
-                          borderRadius: 6,
-                          backgroundColor: isSenderIsSecondUser
-                            ? ColorCode.DimGray
-                            : ColorCode.LightOrange,
-                          marginLeft: 10,
-                          maxWidth: '80%',
-                          marginVertical: 8,
-                        }
+                            paddingVertical: 6,
+                            borderRadius: 6,
+                            backgroundColor: isSenderIsSecondUser
+                              ? ColorCode.DimGray
+                              : ColorCode.LightOrange,
+                            marginLeft: 10,
+                            maxWidth: '80%',
+                            marginVertical: 8,
+                          }
                     }
                     title={
                       MsgSplit.length == 2 ? (
@@ -490,7 +496,7 @@ const NotificationPage = (
                         ? ColorCode.Black
                         : ColorCode.DrakOrange,
                       fontSize: 15,
-                      fontFamily: 'OpenSans-Regular'
+                      fontFamily: 'OpenSans-Regular',
                     }}
                     right={() => {
                       if (!data.item.lAttchId) return <></>;
@@ -501,7 +507,7 @@ const NotificationPage = (
                       return (
                         <MCIcon
                           size={30}
-                          style={{ marginLeft: 5 }}
+                          style={{marginLeft: 5}}
                           name="download-circle-outline"
                           onPress={async () => {
                             var dataReceived = await DownloadFile(data.item);
@@ -511,7 +517,7 @@ const NotificationPage = (
                             }
 
                             dataReceived = Object.assign(
-                              { ...data.item },
+                              {...data.item},
                               dataReceived,
                             );
                             console.log('dataReceived', dataReceived);
@@ -548,14 +554,14 @@ const NotificationPage = (
                     marginRight: 10,
                     marginTop: MsgSplit.length == 2 ? -5 : null,
                   }}>
-                  <Text style={{ fontSize: 12, color: '#a6a6a6' }}>
+                  <Text style={{fontSize: 12, color: '#a6a6a6'}}>
                     {UIHelper.GetTimeStamp(data.item.dtMsg)}
                   </Text>
                 </View>
               </View>
             );
           }}></FlatList>
-        <View style={{ padding: 10 }}>
+        <View style={{padding: 10}}>
           <View
             style={{
               backgroundColor: '#e9e9e9',
@@ -566,12 +572,10 @@ const NotificationPage = (
             <TextInput
               style={
                 (localStyle.input,
-                  { width: Dimensions.get('window').width - 100 })
+                {width: Dimensions.get('window').width - 100})
               }
               value={newSendMessage}
-              onChangeText={e => {
-                setNewSendMessage(e);
-              }}
+              onChangeText={setNewSendMessage}
               placeholder="Write your message here"></TextInput>
             <View
               style={{
@@ -582,7 +586,7 @@ const NotificationPage = (
               <TouchableOpacity onPress={AttachFileToChat}>
                 <Image
                   source={require('../../../assets/attachment.png')}
-                  style={{ height: 25, width: 13, marginHorizontal: 10 }}
+                  style={{height: 25, width: 13, marginHorizontal: 10}}
                 />
               </TouchableOpacity>
               <TouchableOpacity
@@ -592,7 +596,7 @@ const NotificationPage = (
                 }}>
                 <Image
                   source={require('../../../assets/send.png')}
-                  style={{ height: 25, width: 25 }}
+                  style={{height: 25, width: 25}}
                 />
               </TouchableOpacity>
             </View>
@@ -676,6 +680,6 @@ const localStyle = StyleSheet.create({
     padding: 5,
     alignItems: 'center',
     flexDirection: 'row',
-    marginTop: 15
+    marginTop: 15,
   },
 });

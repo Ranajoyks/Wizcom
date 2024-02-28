@@ -89,10 +89,10 @@ export class SignalRHubConnection {
   public static async GetUserList(): Promise<ChatUser[]> {
     var connection = await SignalRHubConnection.GetConnection();
     var chatId = await SignalRHubConnection.GetChatId();
-    console.log("GetAllUser chatId-->", chatId);
+    //console.log("GetAllUser chatId-->", chatId);
 
-    var res = connection.invoke<ChatUser[]>('GetAllUser', chatId, 0);
-    console.log("GetAllUser", res);
+    var res = await connection.invoke<ChatUser[]>('GetAllUser', chatId, 0);
+    //console.log("GetAllUser", res);
     return res
 
   }
@@ -186,7 +186,7 @@ export class SignalRHubConnection {
     itype: number
   ): Promise<Chat | undefined> {
 
-    console.log(BrnachId, SenderId, receiverId, Message,cMsgFlag,itype)
+    console.log(BrnachId, SenderId, receiverId, Message, cMsgFlag, itype)
 
     var connection = await SignalRHubConnection.GetConnection();
 

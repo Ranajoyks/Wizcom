@@ -279,9 +279,11 @@ const OneToOneChatPage2 = (
     }
     if (!tempBranchId) {
       var branch = await SessionHelper.GetBranch();
+      console.log("tempBranchId", branch)
       tempBranchId = branch?.lId + '';
     }
 
+    console.warn("tempBranchId", tempBranchId)
     var ReadMsgOption = {
       companyid: tempBranchId,
       senderId: tempSenderChatId,

@@ -6,6 +6,7 @@ import { Chat } from '../../Entity/Chat'
 import { RootState } from '../Store'
 import AppDBHelper from '../../Core/AppDBHelper'
 import AuthenticationOptions from './AuthenticationOptions'
+import KSUtility from '../../Core/KSUtility'
 
 export interface OneToOneChatOptionsState {
     AllUserList: ChatUser[]
@@ -21,7 +22,7 @@ const OneToOneChatOptions = createSlice({
     reducers: {
         UpdateAllUserListAndMessage: (state, action: PayloadAction<ChatUser[]>) => {
 
-            action.payload.forEach(payloadUser => {
+            action.payload.forEach((payloadUser, newIndex) => {
 
                 var oldUserIndex = state.AllUserList.findIndex(i => i.lId == payloadUser.lId)
                 if (oldUserIndex == -1) {
@@ -88,6 +89,9 @@ const OneToOneChatOptions = createSlice({
                 newUser.AllChatOneToOneList = uniqueMessagaeList
 
                 state.AllUserList[oldUserIndex] = newUser
+                if (newIndex != oldUserIndex) {
+                    KSUtility.ArrayMoveItem(state.AllUserList, oldUserIndex, newIndex)
+                }
             })
         },
         AddNewOneToOneChat: (state, action: PayloadAction<Chat>) => {

@@ -338,7 +338,9 @@ const NotificationPage = (
         <TouchableOpacity
           onPress={() => {
             ReduxDataHelper.UpdateOneToOneUserStatus(dispatch);
-            navigation.pop();
+            if (navigation.canGoBack()) {
+              navigation.goBack();
+            }
           }}>
           <Image
             source={require('../../../assets/backimg.png')}

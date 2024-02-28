@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -10,23 +10,23 @@ import {
   Dimensions,
 } from 'react-native';
 
-import {ColorCode, styles} from '../../MainStyle';
-import {useNavigation} from '@react-navigation/native';
-import {NavigationProps} from '../../../Core/BaseProps';
-import {Avatar, Checkbox, List} from 'react-native-paper';
-import {useAppDispatch, useAppSelector} from '../../../Redux/Hooks';
+import { ColorCode, styles } from '../../MainStyle';
+import { useNavigation } from '@react-navigation/native';
+import { NavigationProps } from '../../../Core/BaseProps';
+import { Avatar, Checkbox, List } from 'react-native-paper';
+import { useAppDispatch, useAppSelector } from '../../../Redux/Hooks';
 
-import {EmptyListMessage} from '../../../Control/EmptyListMessage';
-import {MDivider} from '../../../Control/MDivider';
-import {Group, GroupMember} from '../../../Entity/Group';
+import { EmptyListMessage } from '../../../Control/EmptyListMessage';
+import { MDivider } from '../../../Control/MDivider';
+import { Group, GroupMember } from '../../../Entity/Group';
 import SignalRApi from '../../../DataAccess/SignalRApi';
 import ChatUserOptions from '../../../Redux/Reducer/NotificationOptions';
-import {ShowPageLoader, ShowToastMessage} from '../../../Redux/Store';
-import {ChatUser} from '../../../Entity/ChatUser';
+import { ShowPageLoader, ShowToastMessage } from '../../../Redux/Store';
+import { ChatUser } from '../../../Entity/ChatUser';
 import GroupChatOptions from '../../../Redux/Reducer/GroupChatOptions';
 import AppDBHelper from '../../../Core/AppDBHelper';
 import SessionHelper from '../../../Core/SessionHelper';
-import {CreateGroupMember} from '../../../Entity/CreateGroupMember';
+import { CreateGroupMember } from '../../../Entity/CreateGroupMember';
 import OneToOneChatOptions from '../../../Redux/Reducer/OneToOneChatOptions';
 import UIHelper from '../../../Core/UIHelper';
 import { Member } from '../../../Entity/GroupDetails';
@@ -39,16 +39,16 @@ const DeleteGroupMemberPage = (props: any) => {
   const FilterGroupDetails = useAppSelector(
     i => i.GroupChatOptions.groupdetails,
   );
-  
- 
-  
+
+
+
 
   const [selectedUserList, setSelectedUserList] = useState<GroupMember[]>([]);
   const [CompanyID, setCompanyID] = useState<string>();
   const [groupName, setGroupName] = useState<string>('');
   const [isPageRefreshing, setIsPageRefreshing] = useState(false);
   const navigation = useNavigation<NavigationProps>();
-  
+
   const DeleteGroupMember = async () => {
     if (!selectedUserList.length) {
       ShowToastMessage('Please choose atleast 1 user!!');
@@ -67,9 +67,9 @@ const DeleteGroupMemberPage = (props: any) => {
       return;
     }
     ShowToastMessage(
-      `${FilterGroupDetails.group.groupName}'s-new member removed`,      
+      `${FilterGroupDetails.group.groupName}'s-new member removed`,
     );
-    var AddMember:Member[] = [];
+    var AddMember: Member[] = [];
     selectedUserList.forEach(i => {
       var AddMemberDetails = {
         memberId: i.memberId.toString(),
@@ -79,7 +79,9 @@ const DeleteGroupMemberPage = (props: any) => {
       AddMember.push(AddMemberDetails)
     });
     dispatch(GroupChatOptions.actions.DeleteGroupMember(AddMember))
-    navigation.pop();
+    if (navigation.canGoBack()) {
+      navigation.goBack();
+    }
   };
 
   console.log(
@@ -91,14 +93,16 @@ const DeleteGroupMemberPage = (props: any) => {
         <View style={styles.GroupChatHeader}>
           <TouchableOpacity
             onPress={() => {
-              navigation.pop();
+              if (navigation.canGoBack()) {
+                navigation.goBack();
+              }
             }}>
             <Image
               source={require('../../../assets/backimg.png')}
-              style={{height: 30, width: 30, marginLeft: 5}}
+              style={{ height: 30, width: 30, marginLeft: 5 }}
             />
           </TouchableOpacity>
-          <View style={{flex: 1}}>
+          <View style={{ flex: 1 }}>
             <Text style={styles.Grouptitle}>Remove Member</Text>
           </View>
         </View>
@@ -138,7 +142,7 @@ const DeleteGroupMemberPage = (props: any) => {
         </View>
 
         <SafeAreaView>
-          <View style={{marginTop: 10}}>
+          <View style={{ marginTop: 10 }}>
             <FlatList
               data={FilterGroupDetails.members}
               keyExtractor={e => e.memberId + ''}

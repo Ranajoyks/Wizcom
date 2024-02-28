@@ -10,6 +10,8 @@ export interface KSResponse<T> {
 export interface JResponse<T> extends KSResponse<{ d: ApiDataResponseBase<T> }> {
 }
 
+export interface JResponseCore<T> extends KSResponse<{ d: ApiDataResponseCore<T> }> {
+}
 
 export interface JInitializeResponse extends JResponse<Company[]> {
 
@@ -22,7 +24,9 @@ export interface JValidateResponse extends JResponse<Branch[]> {
 
 }
 
+export interface JAttachmentResponse extends JResponseCore<{ mAttch: any }> {
 
+}
 
 export interface JOpnCmpnyResponse extends KSResponse<{
     d: ApiDataResponseBase<string> & {
@@ -42,6 +46,13 @@ export interface JCheckSession extends KSResponse<{
     }
 }> {
 
+}
+
+export interface ApiDataResponseCore<T> {
+    __type: string
+    bStatus: boolean
+    cError: string
+    data: T
 }
 
 export interface ApiDataResponseBase<T> {
@@ -75,16 +86,17 @@ export interface JAutoLoginResponse {
     ErrorInfo: string
     IsKSError: boolean
     data: JAutoLoginResponseData
-  }
-  
-  export interface JAutoLoginResponseData {
+}
+
+export interface JAutoLoginResponseData {
     d: D
-  }
-  
-  export interface D {
+}
+
+
+export interface D {
     __type: string
     bStatus: boolean
     cError: string
     data: any
     obj: any
-  }
+}

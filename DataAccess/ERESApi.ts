@@ -1,6 +1,7 @@
 import axios from 'axios';
 import BaseApi from './BaseApi';
 import {
+  JAttachmentResponse,
   JAutoLoginResponse,
   JCheckSession,
   JConnectResponse,
@@ -32,7 +33,7 @@ export default class ERESApi extends BaseApi {
     return await this.Post('ERES', `Sys/Sys.aspx/JOpnCmpny`, model);
   }
   public static async JValidate(model: {
-    objUsr: {sName?: string; sCode?: string};
+    objUsr: { sName?: string; sCode?: string };
   }): Promise<JValidateResponse> {
     return await this.Post('ERES', `Sys/Sys.aspx/JValidate`, model);
   }
@@ -41,7 +42,7 @@ export default class ERESApi extends BaseApi {
   ): Promise<UploadAttachmentResposne> {
     return await this.PostFile('ERES', `Sys/Handler2.ashx`, model);
   }
-  public static async DownloadAttachment(AttachmentId: number): Promise<any> {
+  public static async DownloadAttachment(AttachmentId: number): Promise<JAttachmentResponse> {
     return await this.Post('ERES', 'SYS/Sys.aspx/JGetAttch', {
       lId: AttachmentId,
     });
@@ -53,9 +54,9 @@ export default class ERESApi extends BaseApi {
     lUsrId: number;
     lCompId: number;
   }): Promise<any> {
-    return await this.Post('ERES', `Sys/Sys.aspx/JAutoLogin`,AutologinData);
+    return await this.Post('ERES', `Sys/Sys.aspx/JAutoLogin`, AutologinData);
   }
-  public static async JAcceptReject(ApproveRejectText:string): Promise<any> {
-    return await this.Get('ERES',`${ApproveRejectText}`);
+  public static async JAcceptReject(ApproveRejectText: string): Promise<any> {
+    return await this.Get('ERES', `${ApproveRejectText}`);
   }
 }

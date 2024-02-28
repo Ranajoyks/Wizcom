@@ -1,4 +1,4 @@
-import {useNavigation} from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import {
   Appbar,
   AppbarHeaderProps,
@@ -18,20 +18,20 @@ import {
   View,
 } from 'react-native';
 
-import React, {useEffect, useState} from 'react';
-import {ColorCode} from '../Page/MainStyle';
-import {NavigationProps} from '../Core/BaseProps';
+import React, { useEffect, useState } from 'react';
+import { ColorCode } from '../Page/MainStyle';
+import { NavigationProps } from '../Core/BaseProps';
 import SessionHelper from '../Core/SessionHelper';
 import User from '../Entity/User';
-import {useAppDispatch, useAppSelector} from '../Redux/Hooks';
+import { useAppDispatch, useAppSelector } from '../Redux/Hooks';
 import IonIcon from 'react-native-vector-icons/Ionicons';
 import ChatAvatar from '../Page/Chat/ChatAvatar';
 import AuthenticationHelper from '../Core/AuthenticationHelper';
-import MHeaderOptions, {UserShowMode} from '../Redux/Reducer/MHeaderOptions';
+import MHeaderOptions, { UserShowMode } from '../Redux/Reducer/MHeaderOptions';
 import SignalRApi from '../DataAccess/SignalRApi';
-import {ShowPageLoader, ShowToastMessage} from '../Redux/Store';
+import { ShowPageLoader, ShowToastMessage } from '../Redux/Store';
 import GroupChatOptions from '../Redux/Reducer/GroupChatOptions';
-import {GetFilteredUserList} from '../Redux/Reducer/OneToOneChatOptions';
+import { GetFilteredUserList } from '../Redux/Reducer/OneToOneChatOptions';
 import AuthenticationOptions from '../Redux/Reducer/AuthenticationOptions';
 
 export interface MHeaderProps {
@@ -72,8 +72,8 @@ export const MHeader = (props: MHeaderProps) => {
             zIndex: 1000,
             flexDirection: 'row',
           }}>
-          <View style={{width: '30%'}}>
-            <AppIconImage style={{width: 35, height: 35}}></AppIconImage>
+          <View style={{ width: '30%' }}>
+            <AppIconImage style={{ width: 35, height: 35 }}></AppIconImage>
           </View>
 
           <Text
@@ -88,7 +88,7 @@ export const MHeader = (props: MHeaderProps) => {
             {props.Title}
           </Text>
           {props.ShowSearchIcon && (
-            <View style={{width: '15%', alignSelf: 'center'}}>
+            <View style={{ width: '15%', alignSelf: 'center' }}>
               <TouchableOpacity onPress={() => setShowSearch(!ShowSearch)}>
                 <Appbar.Action
                   icon="magnify"
@@ -177,7 +177,7 @@ export const MSerachBar = (props: MSearchBarProps) => {
           setSearchQuery('');
           props.onIconPress && props.onIconPress();
         }}
-        inputStyle={{paddingLeft: 2, paddingRight: 2}}
+        inputStyle={{ paddingLeft: 2, paddingRight: 2 }}
       />
     </View>
   );
@@ -243,7 +243,7 @@ export const UserProfileScreen = (props: {
       'Exit!!',
       'Do you want to logout?',
       [
-        {text: 'No'},
+        { text: 'No' },
         {
           text: 'Yes',
           onPress: () => {
@@ -252,7 +252,7 @@ export const UserProfileScreen = (props: {
           },
         },
       ],
-      {cancelable: false},
+      { cancelable: false },
     );
   };
   const CreateGroup = async () => {
@@ -291,7 +291,10 @@ export const UserProfileScreen = (props: {
     var DeleteGroup = FilterGroupList.filter(i => i.groupId != props.GroupId);
     console.log('DeleteGroup:-----', DeleteGroup);
     dispatch(GroupChatOptions.actions.DeleteGroupUpdateList(DeleteGroup));
-    navigation.pop();
+    if (navigation.canGoBack()) {
+      navigation.goBack();
+    }
+
   };
 
   const HandleUserlabelClicked = () => {
@@ -304,7 +307,7 @@ export const UserProfileScreen = (props: {
       <Menu
         visible={visible}
         elevation={5}
-        contentStyle={{backgroundColor: ColorCode.White, marginTop: 50}}
+        contentStyle={{ backgroundColor: ColorCode.White, marginTop: 50 }}
         onDismiss={() => setVisible(false)}
         anchor={
           <ChatAvatar
@@ -313,7 +316,7 @@ export const UserProfileScreen = (props: {
             onPress={() => setVisible(true)}
           />
         }>
-        <View style={{...localStyles.dropdownContainer}}>
+        <View style={{ ...localStyles.dropdownContainer }}>
           <MenuItem2 HearderText="User:" ItemText={info?.userName} />
           <View style={localStyles.divider}></View>
           <MenuItem2 HearderText="Designation:" ItemText={''} />
@@ -362,7 +365,7 @@ export const UserProfileScreen = (props: {
           )}
           <View style={localStyles.dividerView}>
             <TouchableOpacity onPress={Logout}>
-              <Text style={{...localStyles.InfoItemHeader}}>Logout</Text>
+              <Text style={{ ...localStyles.InfoItemHeader }}>Logout</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -400,7 +403,7 @@ const localStyles = StyleSheet.create({
   },
 });
 
-const MenuItem2 = (props: {HearderText?: string; ItemText?: string}) => {
+const MenuItem2 = (props: { HearderText?: string; ItemText?: string }) => {
   return (
     <View style={localStyles.dividerView}>
       <Text style={localStyles.InfoItemHeader}>{props.HearderText}</Text>

@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -10,23 +10,23 @@ import {
   Dimensions,
 } from 'react-native';
 
-import {ColorCode, styles} from '../../MainStyle';
-import {useNavigation} from '@react-navigation/native';
-import {NavigationProps} from '../../../Core/BaseProps';
-import {Avatar, Checkbox, List} from 'react-native-paper';
-import {useAppDispatch, useAppSelector} from '../../../Redux/Hooks';
+import { ColorCode, styles } from '../../MainStyle';
+import { useNavigation } from '@react-navigation/native';
+import { NavigationProps } from '../../../Core/BaseProps';
+import { Avatar, Checkbox, List } from 'react-native-paper';
+import { useAppDispatch, useAppSelector } from '../../../Redux/Hooks';
 
-import {EmptyListMessage} from '../../../Control/EmptyListMessage';
-import {MDivider} from '../../../Control/MDivider';
-import {Group, GroupMember} from '../../../Entity/Group';
+import { EmptyListMessage } from '../../../Control/EmptyListMessage';
+import { MDivider } from '../../../Control/MDivider';
+import { Group, GroupMember } from '../../../Entity/Group';
 import SignalRApi from '../../../DataAccess/SignalRApi';
 import ChatUserOptions from '../../../Redux/Reducer/NotificationOptions';
-import {ShowPageLoader, ShowToastMessage} from '../../../Redux/Store';
-import {ChatUser} from '../../../Entity/ChatUser';
+import { ShowPageLoader, ShowToastMessage } from '../../../Redux/Store';
+import { ChatUser } from '../../../Entity/ChatUser';
 import GroupChatOptions from '../../../Redux/Reducer/GroupChatOptions';
 import AppDBHelper from '../../../Core/AppDBHelper';
 import SessionHelper from '../../../Core/SessionHelper';
-import {CreateGroupMember} from '../../../Entity/CreateGroupMember';
+import { CreateGroupMember } from '../../../Entity/CreateGroupMember';
 import OneToOneChatOptions, { GetFilteredUserList } from '../../../Redux/Reducer/OneToOneChatOptions';
 import UIHelper from '../../../Core/UIHelper';
 import { Member } from '../../../Entity/GroupDetails';
@@ -66,7 +66,7 @@ const AddGroupMember = (props: any) => {
     ShowToastMessage(
       `${FilterGroupDetails.group.groupName}'s-new member add successfully`,
     );
-    var AddMember:Member[] = [];
+    var AddMember: Member[] = [];
     selectedUserList.forEach(i => {
       var AddMemberDetails = {
         memberId: i.lId.toString(),
@@ -76,7 +76,9 @@ const AddGroupMember = (props: any) => {
       AddMember.push(AddMemberDetails)
     });
     dispatch(GroupChatOptions.actions.AddGroupMember(AddMember))
-    navigation.pop();
+    if (navigation.canGoBack()) {
+      navigation.goBack();
+    }
   };
 
   console.log(
@@ -88,14 +90,16 @@ const AddGroupMember = (props: any) => {
         <View style={styles.GroupChatHeader}>
           <TouchableOpacity
             onPress={() => {
-              navigation.pop();
+              if (navigation.canGoBack()) {
+                navigation.goBack();
+              }
             }}>
             <Image
               source={require('../../../assets/backimg.png')}
-              style={{height: 30, width: 30, marginLeft: 5}}
+              style={{ height: 30, width: 30, marginLeft: 5 }}
             />
           </TouchableOpacity>
-          <View style={{flex: 1}}>
+          <View style={{ flex: 1 }}>
             <Text style={styles.Grouptitle}>Add Member</Text>
           </View>
         </View>
@@ -143,7 +147,7 @@ const AddGroupMember = (props: any) => {
           }}
         />
         <SafeAreaView>
-          <View style={{marginTop: 10}}>
+          <View style={{ marginTop: 10 }}>
             <FlatList
               data={filteredOneToOneUserListData}
               keyExtractor={e => e.lId + ''}

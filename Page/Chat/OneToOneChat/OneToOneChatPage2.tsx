@@ -160,7 +160,15 @@ const OneToOneChatPage2 = (
         return;
       }
       HandleMultiDownloadingLoader(item.lAttchId, true);
+
       var res = await ERESApi.DownloadAttachment(item.lAttchId);
+
+      if (!res.data?.d?.data?.mAttch) {
+        ShowToastMessage("Unable to download attachment")
+        return
+      }
+
+      console.log("res", res)
 
       const { fs } = RNFetchBlob;
       var cacheDir = fs.dirs.DownloadDir;
@@ -341,7 +349,9 @@ const OneToOneChatPage2 = (
         <TouchableOpacity
           onPress={() => {
             ReduxDataHelper.UpdateOneToOneUserStatus(dispatch)
-            navigation.pop();
+            if (navigation.canGoBack()) {
+              navigation.goBack();
+            }
           }}>
           <Image
             source={require('../../../assets/backimg.png')}

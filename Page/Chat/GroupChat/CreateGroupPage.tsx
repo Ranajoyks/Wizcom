@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -10,28 +10,28 @@ import {
   Dimensions,
 } from 'react-native';
 
-import {ColorCode, styles} from '../../MainStyle';
-import {useNavigation} from '@react-navigation/native';
-import {NavigationProps} from '../../../Core/BaseProps';
-import {Avatar, Checkbox, List, Searchbar} from 'react-native-paper';
-import {useAppDispatch, useAppSelector} from '../../../Redux/Hooks';
+import { ColorCode, styles } from '../../MainStyle';
+import { useNavigation } from '@react-navigation/native';
+import { NavigationProps } from '../../../Core/BaseProps';
+import { Avatar, Checkbox, List, Searchbar } from 'react-native-paper';
+import { useAppDispatch, useAppSelector } from '../../../Redux/Hooks';
 
-import {EmptyListMessage} from '../../../Control/EmptyListMessage';
-import {MDivider} from '../../../Control/MDivider';
-import {Group, GroupMember} from '../../../Entity/Group';
+import { EmptyListMessage } from '../../../Control/EmptyListMessage';
+import { MDivider } from '../../../Control/MDivider';
+import { Group, GroupMember } from '../../../Entity/Group';
 import SignalRApi from '../../../DataAccess/SignalRApi';
 import ChatUserOptions from '../../../Redux/Reducer/NotificationOptions';
-import {ShowPageLoader, ShowToastMessage} from '../../../Redux/Store';
-import {ChatUser} from '../../../Entity/ChatUser';
+import { ShowPageLoader, ShowToastMessage } from '../../../Redux/Store';
+import { ChatUser } from '../../../Entity/ChatUser';
 import GroupChatOptions from '../../../Redux/Reducer/GroupChatOptions';
 import AppDBHelper from '../../../Core/AppDBHelper';
 import SessionHelper from '../../../Core/SessionHelper';
-import {CreateGroupMember} from '../../../Entity/CreateGroupMember';
+import { CreateGroupMember } from '../../../Entity/CreateGroupMember';
 import OneToOneChatOptions, {
   GetFilteredUserList,
 } from '../../../Redux/Reducer/OneToOneChatOptions';
 import UIHelper from '../../../Core/UIHelper';
-import {GroupChat} from '../../../Entity/GroupChat';
+import { GroupChat } from '../../../Entity/GroupChat';
 import MHeaderOptions from '../../../Redux/Reducer/MHeaderOptions';
 import { MSerachBar } from '../../../Control/MHeader';
 
@@ -93,12 +93,14 @@ const CreateGroupPage = (props: any) => {
     console.log('GRoupProxy: ', groupProxy);
 
     dispatch(GroupChatOptions.actions.UpdateAllGroupList([groupProxy]));
-    navigation.pop();
+    if (navigation.canGoBack()) {
+      navigation.goBack();
+    }
   };
   console.log(
     'Re render, all CreateGroup page ' +
-      filteredOneToOneUserListData.length +
-      new Date(),
+    filteredOneToOneUserListData.length +
+    new Date(),
   );
   return (
     <React.Fragment>
@@ -106,18 +108,20 @@ const CreateGroupPage = (props: any) => {
         <View style={styles.GroupChatHeader}>
           <TouchableOpacity
             onPress={() => {
-              navigation.pop();
+              if (navigation.canGoBack()) {
+                navigation.goBack();
+              }
             }}>
             <Image
               source={require('../../../assets/backimg.png')}
-              style={{height: 30, width: 30, marginLeft: 10}}
+              style={{ height: 30, width: 30, marginLeft: 10 }}
             />
           </TouchableOpacity>
-          <View style={{flex: 1}}>
+          <View style={{ flex: 1 }}>
             <Text style={styles.Grouptitle}>Create Group</Text>
           </View>
         </View>
-        <View style={{padding: 10}}>
+        <View style={{ padding: 10 }}>
           <View
             style={{
               backgroundColor: '#F1F1F1',
@@ -145,7 +149,7 @@ const CreateGroupPage = (props: any) => {
                 //paddingRight: 5,
               }}>
               <TouchableOpacity onPress={HandleCreateGroup}>
-                <Text style={{fontSize: 16, fontWeight: 'bold'}}>Create</Text>
+                <Text style={{ fontSize: 16, fontWeight: 'bold' }}>Create</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -160,7 +164,7 @@ const CreateGroupPage = (props: any) => {
           }}
         />
         <SafeAreaView>
-          <View style={{marginTop: 10}}>
+          <View style={{ marginTop: 10 }}>
             <FlatList
               data={filteredOneToOneUserListData}
               keyExtractor={e => e.lId + ''}

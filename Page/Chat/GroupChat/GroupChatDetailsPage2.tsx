@@ -373,7 +373,9 @@ const GroupChatDetailsPage2 = (
               dispatch(
                 GroupChatOptions.actions.UpdateGroupDetails({} as GroupDetails),
               );
-              navigation.pop();
+              if (navigation.canGoBack()) {
+                navigation.goBack();
+              }
             }}>
             <Image
               source={require('../../../assets/backimg.png')}

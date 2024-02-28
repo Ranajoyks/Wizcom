@@ -135,11 +135,36 @@ export default class SignalRApi extends BaseApi {
   }): Promise<KSResponse<boolean>> {
     return await this.Post('SignalR', `user/sendgroupmessage`, SendMSgOption);
   }
-  public static async ReadMsg(ReadMsgOption: {
-    companyid?: string;
-    senderId?: string;
-    receiverId?: string;
-  }): Promise<KSResponse<boolean>> {
+  public static async ReadMsg(
+    lId: number,
+    FromSenderId?: string,
+    FromBranchId?: string,
+  ): Promise<KSResponse<boolean>> {
+    var tempSenderChatId = FromSenderId
+    var tempReceiverId = await UIHelper.GetChatId(lId);
+    var tempBranchId = FromBranchId;
+
+    if (!tempSenderChatId) {
+      tempSenderChatId = await SessionHelper.GetChatId();
+    }
+
+    if (!tempBranchId) {
+      var branch = await SessionHelper.GetBranch();
+      console.log("tempBranchId", branch)
+      tempBranchId = branch?.lId + '';
+    }
+
+    if (!tempBranchId || !tempReceiverId || !tempSenderChatId) {
+      console.error("tempBranchId tempReceiverId tempSenderChatId", tempBranchId, tempReceiverId, tempSenderChatId)
+    }
+
+    var ReadMsgOption = {
+      companyid: tempBranchId,
+      senderId: tempSenderChatId,
+      receiverId: tempReceiverId,
+    };
+
+
     return await this.Put('SignalR', `user`, ReadMsgOption);
   }
   public static async GetNewGroupDetails(

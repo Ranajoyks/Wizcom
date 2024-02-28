@@ -101,7 +101,7 @@ const NotificationPage = (
     await SignalRHubConnection.JoinChat();
 
     LoadOldMessages(chatId, receiverChatId, Branch?.lId, 0, true);
-    ReadMsg(chatId, receiverChatId, Branch?.lId.toString());
+    SignalRApi.ReadMsg(SecondUser.lId);
 
     ShowPageLoader(false);
   };
@@ -164,7 +164,11 @@ const NotificationPage = (
       }
       HandleMultiDownloadingLoader(item.lAttchId, true);
       var res = await ERESApi.DownloadAttachment(item.lAttchId);
-
+      if (!res.data?.d?.data?.mAttch) {
+        HandleMultiDownloadingLoader(item.lAttchId, false);
+        ShowToastMessage("Unable to download attachment")
+        return
+      }
       const { fs } = RNFetchBlob;
       var cacheDir = fs.dirs.DownloadDir;
       var binaryData = res.data.d.data.mAttch;
@@ -257,42 +261,9 @@ const NotificationPage = (
       });
     }
   };
-  const ReadMsg = async (
-    FromSenderId?: string,
-    FromReceiverId?: string,
-    FromBranchId?: string,
-  ) => {
-    if (ReadMessageCalledOnce) {
-      return;
-    }
 
-    console.log('ReadMsg called ' + new Date());
 
-    ReadMessageCalledOnce = true;
 
-    var tempSenderChatId = FromSenderId ?? SenderChatId;
-    var tempReceiverId = FromReceiverId ?? ReceiverChatId;
-    var tempBranchId = FromBranchId ?? BrnachId + '';
-
-    if (!tempSenderChatId) {
-      tempSenderChatId = await SessionHelper.GetChatId();
-    }
-    if (!tempReceiverId) {
-      tempReceiverId = await UIHelper.GetChatId(SecondUser.lId);
-    }
-    if (!tempBranchId) {
-      var branch = await SessionHelper.GetBranch();
-      tempBranchId = branch?.lId + '';
-    }
-
-    var ReadMsgOption = {
-      companyid: tempBranchId,
-      senderId: tempSenderChatId,
-      receiverId: tempReceiverId,
-    };
-    var ReadMsgResponse = await SignalRApi.ReadMsg(ReadMsgOption);
-    //console.log('ReadMsgResponse: ', ReadMsgResponse);
-  };
   const HandleMultiDownloadingLoader = (
     AttachmentId: number,
     IsDownloading: boolean,
@@ -408,7 +379,7 @@ const NotificationPage = (
             var MsgSplit = data.item.sMsg.split('||');
 
             if (!data.item.bStatus) {
-              ReadMsg();
+              SignalRApi.ReadMsg(SecondUser.lId)
             }
             return (
               <View key={data.item.lSrId + data.item.GroupName}>

@@ -69,11 +69,6 @@ const OneToOneChatPage2 = (
     (async function () {
       Initilize();
     })();
-
-    // IniTilizeOnce();
-    // CheckAppStatus();
-    // IsTalking();
-    // MarkRead();
   }, []);
 
   const Initilize = async () => {
@@ -98,7 +93,7 @@ const OneToOneChatPage2 = (
     await SignalRHubConnection.JoinChat();
 
     LoadOldMessages(chatId, receiverChatId, Branch?.lId, 0, true);
-    ReadMsg(chatId, receiverChatId, Branch?.lId.toString());
+    SignalRApi.ReadMsg(SecondUser.lId);
 
     ShowPageLoader(false);
   };
@@ -169,7 +164,7 @@ const OneToOneChatPage2 = (
         return
       }
 
-      console.log("res", res)
+
 
       const { fs } = RNFetchBlob;
       var cacheDir = fs.dirs.DownloadDir;
@@ -263,48 +258,7 @@ const OneToOneChatPage2 = (
       });
     }
   };
-  const ReadMsg = async (
-    FromSenderId?: string,
-    FromReceiverId?: string,
-    FromBranchId?: string,
-  ) => {
 
-    if (ReadMessageCalledOnce) {
-      return
-    }
-
-    console.log("ReadMsg called " + new Date())
-
-    ReadMessageCalledOnce = true
-
-    var tempSenderChatId = FromSenderId ?? SenderChatId;
-    var tempReceiverId = FromReceiverId ?? ReceiverChatId;
-    var tempBranchId = FromBranchId ?? BrnachId + '';
-
-    if (!tempSenderChatId) {
-      tempSenderChatId = await SessionHelper.GetChatId();
-    }
-    if (!tempReceiverId) {
-      tempReceiverId = await UIHelper.GetChatId(SecondUser.lId);
-    }
-    if (!tempBranchId) {
-      var branch = await SessionHelper.GetBranch();
-      console.log("tempBranchId", branch)
-      tempBranchId = branch?.lId + '';
-    }
-
-    if (!tempBranchId || !tempReceiverId || !tempSenderChatId) {
-      console.error("tempBranchId tempReceiverId tempSenderChatId", tempBranchId, tempReceiverId, tempSenderChatId)
-    }
-
-    var ReadMsgOption = {
-      companyid: tempBranchId,
-      senderId: tempSenderChatId,
-      receiverId: tempReceiverId,
-    };
-    var ReadMsgResponse = await SignalRApi.ReadMsg(ReadMsgOption);
-    //console.log('ReadMsgResponse: ', ReadMsgResponse);
-  };
   const HandleMultiDownloadingLoader = (
     AttachmentId: number,
     IsDownloading: boolean,
@@ -415,16 +369,19 @@ const OneToOneChatPage2 = (
             );
           }}
           renderItem={data => {
-            var isSenderIsSecondUser = data.item.lSenderId == SecondUser.lId;
+            var tempChat = data.item
+            var isSenderIsSecondUser = tempChat.lSenderId == SecondUser.lId;
             var userName = isSenderIsSecondUser ? SecondUser.userName : '';
-            var MsgSplit = data.item.sMsg.split('||');
+            var MsgSplit = tempChat.sMsg.split('||');
 
-            if (!data.item.bStatus) {
-              ReadMsg();
+            if (!tempChat.bStatus) {
+              tempChat.bStatus = true
+              dispatch(OneToOneChatOptions.actions.UpdateOneToOneChat(tempChat))
+              SignalRApi.ReadMsg(SecondUser.lId)
             }
             return (
-              <View key={data.item.lSrId + data.item.GroupName}>
-                {data.item.GroupName && (
+              <View key={tempChat.lSrId + tempChat.GroupName}>
+                {tempChat.GroupName && (
                   <View>
                     <Text
                       style={{
@@ -432,7 +389,7 @@ const OneToOneChatPage2 = (
                         alignSelf: 'center',
                         alignItems: 'center',
                       }}>
-                      {data.item.GroupName}
+                      {tempChat.GroupName}
                     </Text>
                   </View>
                 )}
@@ -445,7 +402,7 @@ const OneToOneChatPage2 = (
                     marginRight: 10,
                     marginBottom: MsgSplit.length == 2 ? 0 : null,
                   }}>
-                  {data.item.lSenderId == SecondUser.lId ? (
+                  {tempChat.lSenderId == SecondUser.lId ? (
                     <View style={localStyle.messagefromicon}>
                       <Text
                         style={{
@@ -502,7 +459,7 @@ const OneToOneChatPage2 = (
                           </TouchableOpacity>
                         </View>
                       ) : (
-                        data.item.sMsg
+                        tempChat.sMsg
                       )
                     }
                     titleNumberOfLines={0}
@@ -514,8 +471,8 @@ const OneToOneChatPage2 = (
                       fontFamily: 'OpenSans-Regular',
                     }}
                     right={() => {
-                      if (!data.item.lAttchId) return <></>;
-                      if (singleFileDownloadId == data.item.lAttchId)
+                      if (!tempChat.lAttchId) return <></>;
+                      if (singleFileDownloadId == tempChat.lAttchId)
                         return (
                           <ActivityIndicator size={30}></ActivityIndicator>
                         );
@@ -525,14 +482,14 @@ const OneToOneChatPage2 = (
                           style={{ marginLeft: 5 }}
                           name="download-circle-outline"
                           onPress={async () => {
-                            var dataReceived = await DownloadFile(data.item);
+                            var dataReceived = await DownloadFile(tempChat);
                             console.log('dataReceived', dataReceived);
                             if (!dataReceived) {
                               return;
                             }
 
                             dataReceived = Object.assign(
-                              { ...data.item },
+                              { ...tempChat },
                               dataReceived,
                             );
                             console.log('dataReceived', dataReceived);
@@ -549,10 +506,10 @@ const OneToOneChatPage2 = (
                     }}
                   />
                 </View>
-                {/* {data.item.AttachmentType == 'Image' && (
+                {/* {tempChat.AttachmentType == 'Image' && (
                   <View  >
                     <Image
-                      source={{ uri: "file:///" + data.item.AttahmentLocalPath! }}
+                      source={{ uri: "file:///" + tempChat.AttahmentLocalPath! }}
                       style={{
                         height: 90,
                         width: 200,
@@ -570,7 +527,7 @@ const OneToOneChatPage2 = (
                     marginTop: MsgSplit.length == 2 ? -5 : null,
                   }}>
                   <Text style={{ fontSize: 12, color: '#a6a6a6' }}>
-                    {UIHelper.GetTimeStamp(data.item.dtMsg)}
+                    {UIHelper.GetTimeStamp(tempChat.dtMsg)}
                   </Text>
                 </View>
               </View>

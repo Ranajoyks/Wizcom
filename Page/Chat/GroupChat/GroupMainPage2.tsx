@@ -100,11 +100,14 @@ const ChatGroupScreen = (props: {
 }) => {
   const groups = useAppSelector(i => i.GroupChatOptions.AllGroupList);
   const group = groups.find(i => i.groupId == props.data.groupId);
+  // console.log("group?.lastMessage: ",group?.lastMessage);
+  
 
   var lastMessage = group?.AllGroupMsgList?.length
     ? group.AllGroupMsgList[group.AllGroupMsgList.length - 1]
     : undefined;
-  var txtLastMessage = group?.lastMessage;
+    // console.log("lastMessage?.sMsg: ",lastMessage?.sMsg);
+  var txtLastMessage = group?.lastMessage
   // console.log("lastMessage:--- ",lastMessage);
   // console.log("txtLastMessage:--- ",txtLastMessage);
 

@@ -91,7 +91,7 @@ export class SignalRHubConnection {
     var chatId = await SignalRHubConnection.GetChatId();
     console.log("GetAllUser chatId-->", chatId);
 
-    var res = connection.invoke<ChatUser[]>('GetAllUser', chatId, 0);
+    var res = await connection.invoke<ChatUser[]>('GetAllUser', chatId, 0);
     console.log("GetAllUser", res);
     return res
 
@@ -101,8 +101,8 @@ export class SignalRHubConnection {
   public static async IsConnected(): Promise<boolean> {
     var connection = await SignalRHubConnection.GetConnection();
     var chatId = await SignalRHubConnection.GetChatId();
-    var res = connection.invoke<boolean>('IsUserConnected', chatId);
-    //console.log("IsConnected res", res)
+    var res = await connection.invoke<boolean>('IsUserConnected', chatId);
+    console.log("IsConnected res", res)
     return res != undefined
   }
   public static async IsDisconnected(): Promise<boolean> {

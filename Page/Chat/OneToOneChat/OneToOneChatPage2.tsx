@@ -1,14 +1,14 @@
-import { useEffect, useState } from 'react';
+import {useEffect, useState} from 'react';
 import SignalRApi from '../../../DataAccess/SignalRApi';
 import SessionHelper from '../../../Core/SessionHelper';
-import { SignalRHubConnection } from '../../../DataAccess/SignalRHubConnection';
-import { ShowPageLoader, ShowToastMessage } from '../../../Redux/Store';
+import {SignalRHubConnection} from '../../../DataAccess/SignalRHubConnection';
+import {ShowPageLoader, ShowToastMessage} from '../../../Redux/Store';
 
-import { StackScreenProps } from '@react-navigation/stack';
-import { RootStackParamList } from '../../../Root/AppStack';
-import { View } from 'react-native-animatable';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { ActivityIndicator, List, ProgressBar, Text } from 'react-native-paper';
+import {StackScreenProps} from '@react-navigation/stack';
+import {RootStackParamList} from '../../../Root/AppStack';
+import {View} from 'react-native-animatable';
+import {SafeAreaView} from 'react-native-safe-area-context';
+import {ActivityIndicator, List, ProgressBar, Text} from 'react-native-paper';
 import {
   Dimensions,
   FlatList,
@@ -18,15 +18,15 @@ import {
   TextInput,
   Alert,
 } from 'react-native';
-import { ColorCode } from '../../MainStyle';
+import {ColorCode} from '../../MainStyle';
 import MCIcon from 'react-native-vector-icons/MaterialCommunityIcons';
-import { useNavigation } from '@react-navigation/native';
-import { NavigationProps } from '../../../Core/BaseProps';
+import {useNavigation} from '@react-navigation/native';
+import {NavigationProps} from '../../../Core/BaseProps';
 import User from '../../../Entity/User';
-import { useAppDispatch, useAppSelector } from '../../../Redux/Hooks';
+import {useAppDispatch, useAppSelector} from '../../../Redux/Hooks';
 import React from 'react';
 import DocumentPicker from 'react-native-document-picker';
-import { UserProfileScreen } from '../../../Control/MHeader';
+import {UserProfileScreen} from '../../../Control/MHeader';
 import RNFile from '../../../Core/RNFile';
 import ERESApi from '../../../DataAccess/ERESApi';
 import * as RNFS from 'react-native-fs';
@@ -35,9 +35,9 @@ import FileViewer from 'react-native-file-viewer';
 import LocalFileHelper from '../../../Core/LocalFileHelper';
 
 import UIHelper from '../../../Core/UIHelper';
-import { ChatUser } from '../../../Entity/ChatUser';
+import {ChatUser} from '../../../Entity/ChatUser';
 import AppDBHelper from '../../../Core/AppDBHelper';
-import { Chat } from '../../../Entity/Chat';
+import {Chat} from '../../../Entity/Chat';
 import OneToOneChatOptions from '../../../Redux/Reducer/OneToOneChatOptions';
 import ReduxDataHelper from '../../../Redux/ReduxDataHelper';
 
@@ -45,6 +45,7 @@ const OneToOneChatPage2 = (
   props: StackScreenProps<RootStackParamList, 'OneToOneChatPage2'>,
 ) => {
   const SecondUser = props.route.params.SecondUser;
+  console.log('SecondUser:---', SecondUser.lId);
 
   const navigation = useNavigation<NavigationProps>();
   const dispatch = useAppDispatch();
@@ -64,7 +65,7 @@ const OneToOneChatPage2 = (
 
   const [SelectedFile, setSelectedFile] = useState<RNFile>();
   const [isPageRefreshing, setIsPageRefreshing] = useState(false);
-  var ReadMessageCalledOnce = false
+  var ReadMessageCalledOnce = false;
   useEffect(() => {
     (async function () {
       Initilize();
@@ -94,6 +95,10 @@ const OneToOneChatPage2 = (
 
     LoadOldMessages(chatId, receiverChatId, Branch?.lId, 0, true);
     SignalRApi.ReadMsg(SecondUser.lId);
+    // var IsConnected = await SignalRHubConnection.IsSecoendUserConnected(
+    //   SecondUser.lId,
+    // );
+    // console.log('SecondUserIsConnected: ', IsConnected);
 
     ShowPageLoader(false);
   };
@@ -104,7 +109,8 @@ const OneToOneChatPage2 = (
     FromIndexNo?: number,
     ShowSilentLoader?: boolean,
   ) => {
-    setIsPageRefreshing(ShowSilentLoader == true && true);
+    console.log('FromIndexNo: ', FromIndexNo);
+    FromIndexNo != 0 && setIsPageRefreshing(ShowSilentLoader == true && true);
 
     var tempSenderChatId = FromSenderId ?? SenderChatId;
     var tempReceiverId = FromReceiverId ?? ReceiverChatId;
@@ -160,13 +166,11 @@ const OneToOneChatPage2 = (
 
       if (!res.data?.d?.data?.mAttch) {
         HandleMultiDownloadingLoader(item.lAttchId, false);
-        ShowToastMessage("Unable to download attachment")
-        return
+        ShowToastMessage('Unable to download attachment');
+        return;
       }
 
-
-
-      const { fs } = RNFetchBlob;
+      const {fs} = RNFetchBlob;
       var cacheDir = fs.dirs.DownloadDir;
       var binaryData = res.data.d.data.mAttch;
       var fullLocalFileName = `${cacheDir}/${item.sMsg}`;
@@ -209,7 +213,7 @@ const OneToOneChatPage2 = (
       ReceiverChatId!,
       tempMessage,
       UIHelper.GetProxySrId(lastMessage?.lSrId),
-      true
+      true,
     );
     setNewSendMessage('');
     dispatch(OneToOneChatOptions.actions.AddNewOneToOneChat(chat));
@@ -276,10 +280,10 @@ const OneToOneChatPage2 = (
   };
   const Approve = async (msg: string) => {
     console.log('SplitMsg', msg);
-    var AcceptRejectResponse = await ERESApi.JAcceptReject(msg)
-    console.log("AcceptRejectResponse: ", AcceptRejectResponse);
+    var AcceptRejectResponse = await ERESApi.JAcceptReject(msg);
+    console.log('AcceptRejectResponse: ', AcceptRejectResponse);
 
-    Alert.alert(AcceptRejectResponse.data)
+    Alert.alert(AcceptRejectResponse.data);
   };
 
   var MessageList = chatUserOptions.AllUserList.find(
@@ -299,22 +303,22 @@ const OneToOneChatPage2 = (
 
   return (
     <SafeAreaView
-      style={{ flexDirection: 'column', flex: 1, flexWrap: 'nowrap' }}>
+      style={{flexDirection: 'column', flex: 1, flexWrap: 'nowrap'}}>
       <View style={localStyle.header}>
         <TouchableOpacity
           onPress={() => {
-            ReduxDataHelper.UpdateOneToOneUserStatus(dispatch)
+            ReduxDataHelper.UpdateOneToOneUserStatus(dispatch);
             if (navigation.canGoBack()) {
               navigation.goBack();
             }
           }}>
           <Image
             source={require('../../../assets/backimg.png')}
-            style={{ height: 20, width: 20, marginLeft: 10 }}
+            style={{height: 20, width: 20, marginLeft: 10}}
           />
         </TouchableOpacity>
-        <View style={{ width: '55%' }}>
-          <Text style={localStyle.title}>{SecondUser?.userName}</Text>
+        <View style={{width: '55%'}}>
+          <Text style={localStyle.title}>{SecondUser?.userFullName}</Text>
           <Text
             style={{
               ...localStyle.subtitle1,
@@ -334,13 +338,13 @@ const OneToOneChatPage2 = (
               navigation.reset({
                 index: 0,
                 routes: [
-                  { name: 'MapPage', params: { ReceiverId: ReceiverChatId } },
+                  {name: 'MapPage', params: {ReceiverId: ReceiverChatId}},
                 ],
               });
             }}>
             <Image
               source={require('../../../assets/location.png')}
-              style={{ height: 30, width: 23.5, marginRight: 10, marginTop: 3 }}
+              style={{height: 30, width: 23.5, marginRight: 10, marginTop: 3}}
             />
           </TouchableOpacity>
           <UserProfileScreen
@@ -350,7 +354,7 @@ const OneToOneChatPage2 = (
           />
         </View>
       </View>
-      <View style={{ height: '89%', backgroundColor: '#FFFFFF' }}>
+      <View style={{height: '89%', backgroundColor: '#FFFFFF'}}>
         <ProgressBar visible={isPageRefreshing} indeterminate />
         <FlatList
           automaticallyAdjustKeyboardInsets
@@ -369,15 +373,17 @@ const OneToOneChatPage2 = (
             );
           }}
           renderItem={data => {
-            var tempChat = data.item
+            var tempChat = data.item;
             var isSenderIsSecondUser = tempChat.lSenderId == SecondUser.lId;
             var userName = isSenderIsSecondUser ? SecondUser.userName : '';
             var MsgSplit = tempChat.sMsg.split('||');
 
             if (!tempChat.bStatus) {
-              tempChat.bStatus = true
-              dispatch(OneToOneChatOptions.actions.UpdateOneToOneChat(tempChat))
-              SignalRApi.ReadMsg(SecondUser.lId)
+              tempChat.bStatus = true;
+              dispatch(
+                OneToOneChatOptions.actions.UpdateOneToOneChat(tempChat),
+              );
+              SignalRApi.ReadMsg(SecondUser.lId);
             }
             return (
               <View key={tempChat.lSrId + tempChat.GroupName}>
@@ -419,20 +425,20 @@ const OneToOneChatPage2 = (
                     style={
                       MsgSplit.length == 2
                         ? {
-                          paddingRight: 0,
-                          paddingVertical: 0,
-                          marginVertical: 8,
-                        }
+                            paddingRight: 0,
+                            paddingVertical: 0,
+                            marginVertical: 8,
+                          }
                         : {
-                          paddingVertical: 6,
-                          borderRadius: 6,
-                          backgroundColor: isSenderIsSecondUser
-                            ? ColorCode.DimGray
-                            : ColorCode.LightOrange,
-                          marginLeft: 10,
-                          maxWidth: '80%',
-                          marginVertical: 8,
-                        }
+                            paddingVertical: 6,
+                            borderRadius: 6,
+                            backgroundColor: isSenderIsSecondUser
+                              ? ColorCode.DimGray
+                              : ColorCode.LightOrange,
+                            marginLeft: 10,
+                            maxWidth: '80%',
+                            marginVertical: 8,
+                          }
                     }
                     title={
                       MsgSplit.length == 2 ? (
@@ -479,7 +485,7 @@ const OneToOneChatPage2 = (
                       return (
                         <MCIcon
                           size={30}
-                          style={{ marginLeft: 5 }}
+                          style={{marginLeft: 5}}
                           name="download-circle-outline"
                           onPress={async () => {
                             var dataReceived = await DownloadFile(tempChat);
@@ -489,7 +495,7 @@ const OneToOneChatPage2 = (
                             }
 
                             dataReceived = Object.assign(
-                              { ...tempChat },
+                              {...tempChat},
                               dataReceived,
                             );
                             console.log('dataReceived', dataReceived);
@@ -526,14 +532,14 @@ const OneToOneChatPage2 = (
                     marginRight: 10,
                     marginTop: MsgSplit.length == 2 ? -5 : null,
                   }}>
-                  <Text style={{ fontSize: 12, color: '#a6a6a6' }}>
+                  <Text style={{fontSize: 12, color: '#a6a6a6'}}>
                     {UIHelper.GetTimeStamp(tempChat.dtMsg)}
                   </Text>
                 </View>
               </View>
             );
           }}></FlatList>
-        <View style={{ padding: 10 }}>
+        <View style={{padding: 10}}>
           <View
             style={{
               backgroundColor: '#e9e9e9',
@@ -544,7 +550,7 @@ const OneToOneChatPage2 = (
             <TextInput
               style={
                 (localStyle.input,
-                  { width: Dimensions.get('window').width - 100 })
+                {width: Dimensions.get('window').width - 100})
               }
               value={newSendMessage}
               onChangeText={setNewSendMessage}
@@ -558,7 +564,7 @@ const OneToOneChatPage2 = (
               <TouchableOpacity onPress={AttachFileToChat}>
                 <Image
                   source={require('../../../assets/attachment.png')}
-                  style={{ height: 25, width: 13, marginHorizontal: 10 }}
+                  style={{height: 25, width: 13, marginHorizontal: 10}}
                 />
               </TouchableOpacity>
               <TouchableOpacity
@@ -568,7 +574,7 @@ const OneToOneChatPage2 = (
                 }}>
                 <Image
                   source={require('../../../assets/send.png')}
-                  style={{ height: 25, width: 25 }}
+                  style={{height: 25, width: 25}}
                 />
               </TouchableOpacity>
             </View>

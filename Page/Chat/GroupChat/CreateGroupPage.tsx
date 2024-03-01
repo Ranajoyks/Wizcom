@@ -261,7 +261,7 @@ export default class CreateGroup extends BaseComponent<
         console.log('Groupresponse: ', res.data);
         if (res.data) {
           this.props.navigation.pop();
-          SessionHelper.SetGroupDetailUpdateSession(1)
+          SessionHelper.SetGroupDetailUpdateSession(1);
           // this.props.navigation.reset({
           //   routes: [
           //     {
@@ -321,193 +321,193 @@ export default class CreateGroup extends BaseComponent<
     var model = this.state.Model;
     return (
       <View style={styles.container}>
-      <View style={styles.header}>
-        {model.GroupId ? (
-          <View style={{flexDirection:'row'}}>
-            <TouchableOpacity
-              onPress={() => {
-                this.props.navigation.pop();
-              }}>
-              <Image
-                source={require('../../../assets/backimg.png')}
-                style={{height: 20, width: 20, marginLeft: 10}}
-              />
-            </TouchableOpacity>
-            <View style={{flex: 1}}>
-              <Text style={styles.title}>Add Member</Text>
+        <View style={styles.header}>
+          {model.GroupId ? (
+            <View style={{flexDirection: 'row'}}>
+              <TouchableOpacity
+                onPress={() => {
+                  this.props.navigation.pop();
+                }}>
+                <Image
+                  source={require('../../../assets/backimg.png')}
+                  style={{height: 20, width: 20, marginLeft: 10}}
+                />
+              </TouchableOpacity>
+              <View style={{flex: 1}}>
+                <Text style={styles.title}>Add Member</Text>
+              </View>
             </View>
-          </View>
-        ) : (
-          <View style={{flexDirection:'row'}}>
-            <TouchableOpacity
-              onPress={() => {
-                this.props.navigation.navigate('MainPage');
-              }}>
-              <Image
-                source={require('../../../assets/backimg.png')}
-                style={{height: 20, width: 20, marginLeft: 10}}
-              />
-            </TouchableOpacity>
-            <Text style={styles.title}>Create Group</Text>
-          </View>
-        )}
-      </View>
-      <View style={{padding: 10}}>
-        {model.GroupId ? (
-          model.FilterUser.length > 0 && (
+          ) : (
+            <View style={{flexDirection: 'row'}}>
+              <TouchableOpacity
+                onPress={() => {
+                  this.props.navigation.navigate('MainPage');
+                }}>
+                <Image
+                  source={require('../../../assets/backimg.png')}
+                  style={{height: 20, width: 20, marginLeft: 10}}
+                />
+              </TouchableOpacity>
+              <Text style={styles.title}>Create Group</Text>
+            </View>
+          )}
+        </View>
+        <View style={{padding: 10}}>
+          {model.GroupId ? (
+            model.FilterUser.length > 0 && (
+              <View
+                style={{
+                  flexDirection: 'row',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                }}>
+                {model.GroupName?.length <= 15 ? (
+                  <Text
+                    style={{
+                      fontSize: 16,
+                      fontWeight: 'bold',
+                      color: '#0383FA',
+                      marginLeft: 20,
+                    }}>
+                    {model.GroupName}
+                  </Text>
+                ) : (
+                  <Text
+                    style={{
+                      fontSize: 16,
+                      fontWeight: 'bold',
+                      color: '#0383FA',
+                      marginLeft: 20,
+                    }}>
+                    {model.GroupName?.slice(0, 15)}...
+                  </Text>
+                )}
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    //paddingRight: 5,
+                  }}>
+                  <TouchableOpacity onPress={this.AddGroupMember}>
+                    <Text
+                      style={{
+                        fontSize: 16,
+                        fontWeight: 'bold',
+                        alignSelf: 'flex-end',
+                      }}>
+                      Update
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            )
+          ) : (
             <View
               style={{
+                backgroundColor: '#F1F1F1',
+                // paddingHorizontal: 10,
+                paddingVertical: 5,
+                borderRadius: 6,
                 flexDirection: 'row',
-                display: 'flex',
-                justifyContent: 'space-between',
               }}>
-              {model.GroupName?.length <= 15 ? (
-                <Text
-                  style={{
-                    fontSize: 16,
-                    fontWeight: 'bold',
-                    color: '#0383FA',
-                    marginLeft: 20,
-                  }}>
-                  {model.GroupName}
-                </Text>
-              ) : (
-                <Text
-                  style={{
-                    fontSize: 16,
-                    fontWeight: 'bold',
-                    color: '#0383FA',
-                    marginLeft: 20,
-                  }}>
-                  {model.GroupName?.slice(0, 15)}...
-                </Text>
-              )}
+              <TextInput
+                value={model.GroupName}
+                onChangeText={text => {
+                  model.GroupName = text;
+                  this.UpdateViewModel();
+                }}
+                style={
+                  (styles.input,
+                  {
+                    width: Dimensions.get('window').width - 100,
+                    fontFamily: 'OpenSans-Regular',
+                  })
+                }
+                placeholder="Enter group name"></TextInput>
               <View
                 style={{
                   flexDirection: 'row',
                   alignItems: 'center',
                   //paddingRight: 5,
                 }}>
-                <TouchableOpacity onPress={this.AddGroupMember}>
-                  <Text
-                    style={{
-                      fontSize: 16,
-                      fontWeight: 'bold',
-                      alignSelf: 'flex-end',
-                    }}>
-                    Update
-                  </Text>
+                <TouchableOpacity onPress={this.CreateGroup}>
+                  <Text style={{fontSize: 16, fontWeight: 'bold'}}>Create</Text>
                 </TouchableOpacity>
               </View>
             </View>
-          )
-        ) : (
-          <View
-            style={{
-              backgroundColor: '#F1F1F1',
-              // paddingHorizontal: 10,
-              paddingVertical: 5,
-              borderRadius: 6,
-              flexDirection: 'row',
-            }}>
-            <TextInput
-              value={model.GroupName}
-              onChangeText={text => {
-                model.GroupName = text;
-                this.UpdateViewModel();
-              }}
-              style={
-                (styles.input,
-                {
-                  width: Dimensions.get('window').width - 100,
-                  fontFamily: 'OpenSans-Regular',
-                })
-              }
-              placeholder="Enter group name"></TextInput>
-            <View
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                //paddingRight: 5,
-              }}>
-              <TouchableOpacity onPress={this.CreateGroup}>
-                <Text style={{fontSize: 16, fontWeight: 'bold'}}>Create</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        )}
-      </View>
-      <Content>
-        <List>
-          {model.FilterUser.length <= 0 && (
-            <ActivityIndicator size="large" color="#0000ff" />
           )}
+        </View>
+        <Content>
+          <List>
+            {model.FilterUser.length <= 0 && (
+              <ActivityIndicator size="large" color="#0000ff" />
+            )}
 
-          {model.FilterUser.length > 0 &&
-            model.FilterUser.map((i: User, index) => (
-              //   <TouchableOpacity onPress={() => this.NextPage(i)}>
-              <ListItem avatar key={index}>
-                <Left>
-                  <View>
-                    <Badge
+            {model.FilterUser.length > 0 &&
+              model.FilterUser.map((i: User, index) => (
+                //   <TouchableOpacity onPress={() => this.NextPage(i)}>
+                <ListItem avatar key={index}>
+                  <Left>
+                    <View>
+                      <Badge
+                        style={{
+                          backgroundColor: '#E9E9E9',
+                          width: 50,
+                          height: 50,
+                          borderRadius: 25,
+                          justifyContent: 'center',
+                          alignItems: 'center',
+                        }}>
+                        <Text
+                          style={{
+                            color: 'black',
+                            fontSize: 22,
+                            fontWeight: '400',
+                            fontFamily: 'OpenSans-Regular',
+                          }}>
+                          {i.userFullName.toLocaleUpperCase().charAt(0)}
+                        </Text>
+                      </Badge>
+                    </View>
+                  </Left>
+                  <Body>
+                    <View
                       style={{
-                        backgroundColor: '#E9E9E9',
-                        width: 50,
-                        height: 50,
-                        borderRadius: 25,
-                        justifyContent: 'center',
-                        alignItems: 'center',
+                        flexDirection: 'row',
+                        justifyContent: 'space-between',
                       }}>
                       <Text
                         style={{
                           color: 'black',
-                          fontSize: 22,
-                          fontWeight: '400',
-                          fontFamily: 'OpenSans-Regular',
+                          fontWeight: '600',
+                          fontFamily: 'OpenSans-SemiBold',
+                          marginBottom: 5,
+                          fontSize: 14.5,
+                          // letterSpacing:0.5
                         }}>
-                        {i.userFullName.toLocaleUpperCase().charAt(0)}
+                        {i.userFullName}
                       </Text>
-                    </Badge>
-                  </View>
-                </Left>
-                <Body>
-                  <View
-                    style={{
-                      flexDirection: 'row',
-                      justifyContent: 'space-between',
-                    }}>
-                    <Text
-                      style={{
-                        color: 'black',
-                        fontWeight: '600',
-                        fontFamily: 'OpenSans-SemiBold',
-                        marginBottom: 5,
-                        fontSize: 14.5,
-                        // letterSpacing:0.5
-                      }}>
-                      {i.userFullName}
-                    </Text>
-                    <CheckBox
-                      checked={i?.IsSelected}
-                      color="green"
-                      onPress={() =>
-                        this.ChangeCheckboxValue(i, i.lId.toString())
-                      }
-                      style={{
-                        height: 15,
-                        width: 15,
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                        marginRight: 20,
-                      }}
-                    />
-                  </View>
-                </Body>
-              </ListItem>
-            ))}
-        </List>
-      </Content>
-    </View>
+                      <CheckBox
+                        checked={i?.IsSelected}
+                        color="green"
+                        onPress={() =>
+                          this.ChangeCheckboxValue(i, i.lId.toString())
+                        }
+                        style={{
+                          height: 15,
+                          width: 15,
+                          justifyContent: 'center',
+                          alignItems: 'center',
+                          marginRight: 20,
+                        }}
+                      />
+                    </View>
+                  </Body>
+                </ListItem>
+              ))}
+          </List>
+        </Content>
+      </View>
     );
   }
 }

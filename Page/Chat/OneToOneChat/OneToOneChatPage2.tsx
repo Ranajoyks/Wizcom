@@ -481,7 +481,7 @@ const OneToOneChatPage2 = (
                         ? ColorCode.Black
                         : ColorCode.DrakOrange,
                       fontSize: 15,
-                      fontFamily:'OpenSans-Regular'
+                      fontFamily: 'OpenSans-Regular',
                     }}
                     right={() => {
                       if (!data.item.lAttchId) return <></>;
@@ -667,6 +667,6 @@ const localStyle = StyleSheet.create({
     padding: 5,
     alignItems: 'center',
     flexDirection: 'row',
-    marginTop:15
+    marginTop: 15,
   },
 });

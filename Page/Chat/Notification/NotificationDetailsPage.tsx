@@ -33,24 +33,24 @@ import axios from 'axios';
 import * as RNFS from 'react-native-fs';
 import RNFetchBlob from 'rn-fetch-blob';
 import FileViewer from 'react-native-file-viewer';
-import { UserProfileScreen } from '../../../Control/MHeader';
+import {UserProfileScreen} from '../../../Control/MHeader';
 import AppDBHelper from '../../../Core/AppDBHelper';
-import { NavigationProps } from '../../../Core/BaseProps';
+import {NavigationProps} from '../../../Core/BaseProps';
 import LocalFileHelper from '../../../Core/LocalFileHelper';
 import RNFile from '../../../Core/RNFile';
 import UIHelper from '../../../Core/UIHelper';
 import ERESApi from '../../../DataAccess/ERESApi';
-import { Chat } from '../../../Entity/Chat';
+import {Chat} from '../../../Entity/Chat';
 import User from '../../../Entity/User';
-import { useAppDispatch, useAppSelector } from '../../../Redux/Hooks';
+import {useAppDispatch, useAppSelector} from '../../../Redux/Hooks';
 import ChatUserOptions from '../../../Redux/Reducer/ChatUserOptions';
-import { ColorCode } from '../../MainStyle';
-import { RootStackParamList } from '../../../Root/AppStack';
-import { StackScreenProps } from '@react-navigation/stack';
+import {ColorCode} from '../../MainStyle';
+import {RootStackParamList} from '../../../Root/AppStack';
+import {StackScreenProps} from '@react-navigation/stack';
 import SessionHelper from '../../../Core/SessionHelper';
 import SignalRApi from '../../../DataAccess/SignalRApi';
-import { SignalRHubConnection } from '../../../DataAccess/SignalRHubConnection';
-import { ShowPageLoader, ShowToastMessage } from '../../../Redux/Store';
+import {SignalRHubConnection} from '../../../DataAccess/SignalRHubConnection';
+import {ShowPageLoader, ShowToastMessage} from '../../../Redux/Store';
 
 const NotificationPage = (
   props: StackScreenProps<RootStackParamList, 'NotificationPage'>,
@@ -306,17 +306,18 @@ const NotificationPage = (
   };
   const Approve = async (msg: string) => {
     console.log('SplitMsg', msg);
-    var AcceptRejectResponse = await ERESApi.JAcceptReject(msg)
-    console.log("AcceptRejectResponse: ",AcceptRejectResponse);
-    
-    Alert.alert(AcceptRejectResponse.data)
+    var AcceptRejectResponse = await ERESApi.JAcceptReject(msg);
+    console.log('AcceptRejectResponse: ', AcceptRejectResponse);
+
+    Alert.alert(AcceptRejectResponse.data);
   };
 
   var MessageList = chatUserOptions.AllUserList.find(
     i => i.lId == SecondUser.lId,
   )?.AllChatOneToOneList;
-  var NotificationMessageList = MessageList?.filter((i: any) => i.cMsgFlg === 'F'|| i.cMsgFlg === 'N');
-  
+  var NotificationMessageList = MessageList?.filter(
+    (i: any) => i.cMsgFlg === 'F' || i.cMsgFlg === 'N',
+  );
 
   // useEffect(() => {
   //   console.log("Current data lenth changed", MessageList.length)
@@ -484,7 +485,7 @@ const NotificationPage = (
                         ? ColorCode.Black
                         : ColorCode.DrakOrange,
                       fontSize: 15,
-                      fontFamily:'OpenSans-Regular'
+                      fontFamily: 'OpenSans-Regular',
                     }}
                     right={() => {
                       if (!data.item.lAttchId) return <></>;
@@ -670,6 +671,6 @@ const localStyle = StyleSheet.create({
     padding: 5,
     alignItems: 'center',
     flexDirection: 'row',
-    marginTop:15
+    marginTop: 15,
   },
 });

@@ -1,65 +1,59 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, SafeAreaView, FlatList } from 'react-native';
+import React, {useEffect, useState} from 'react';
+import {View, Text, SafeAreaView, FlatList} from 'react-native';
 
-import { ColorCode } from '../../MainStyle';
-import { useNavigation } from '@react-navigation/native';
-import { NavigationProps } from '../../../Core/BaseProps';
-import { Avatar, List } from 'react-native-paper';
-import { useAppDispatch, useAppSelector } from '../../../Redux/Hooks';
+import {ColorCode} from '../../MainStyle';
+import {useNavigation} from '@react-navigation/native';
+import {NavigationProps} from '../../../Core/BaseProps';
+import {Avatar, List} from 'react-native-paper';
+import {useAppDispatch, useAppSelector} from '../../../Redux/Hooks';
 
-import { EmptyListMessage } from '../../../Control/EmptyListMessage';
-import { MDivider } from '../../../Control/MDivider';
-import { Group } from '../../../Entity/Group';
+import {EmptyListMessage} from '../../../Control/EmptyListMessage';
+import {MDivider} from '../../../Control/MDivider';
+import {Group} from '../../../Entity/Group';
 import SignalRApi from '../../../DataAccess/SignalRApi';
 import ChatUserOptions from '../../../Redux/Reducer/ChatUserOptions';
-import { ShowToastMessage } from '../../../Redux/Store';
+import {ShowToastMessage} from '../../../Redux/Store';
 
-const GroupMainPage2 = (props: { OnGroupListRefresRequest: () => void }) => {
-
-  const dispatch = useAppDispatch()
-  const chatUserOptions = useAppSelector(i => i.ChatUserOptions)
+const GroupMainPage2 = (props: {OnGroupListRefresRequest: () => void}) => {
+  const dispatch = useAppDispatch();
+  const chatUserOptions = useAppSelector(i => i.ChatUserOptions);
   var FetchMessageInterval: NodeJS.Timeout;
   const [filterIsCalled, setFilterIsCalled] = useState(false);
   useEffect(() => {
-    InitilizeOnce()
+    InitilizeOnce();
     return () => {
       clearInterval(FetchMessageInterval);
-    }
-  }, [])
+    };
+  }, []);
 
   const GetAllGroups = async () => {
-
-    SignalRApi.GetAllGroup().then((groupListRes) => {
+    SignalRApi.GetAllGroup().then(groupListRes => {
       console.log('GroupResponse: ', groupListRes);
       if (groupListRes.IsKSError) {
-        ShowToastMessage(groupListRes.ErrorInfo || "Some issue happening")
-        return
+        ShowToastMessage(groupListRes.ErrorInfo || 'Some issue happening');
+        return;
       }
 
-      dispatch(ChatUserOptions.actions.UpdateAllGroupList(groupListRes.data || []));
+      dispatch(
+        ChatUserOptions.actions.UpdateAllGroupList(groupListRes.data || []),
+      );
     });
-
   };
 
   const InitilizeOnce = async () => {
+    setFilterIsCalled(false);
 
-    setFilterIsCalled(false)
-
-    GetAllGroups()
+    GetAllGroups();
 
     FetchMessageInterval = setInterval(() => {
-      GetAllGroups()
-    }, 1000 * 60)
-
-  }
-
-
-
+      GetAllGroups();
+    }, 1000 * 60);
+  };
 
   return (
     <React.Fragment>
       <SafeAreaView>
-        <View style={{ marginTop: 10 }}>
+        <View style={{marginTop: 10}}>
           <FlatList
             data={chatUserOptions.AllGroupList}
             keyExtractor={e => e.groupId + ''}
@@ -87,21 +81,22 @@ const ChatGroupScreen = (props: {
   data: Group;
   OnUserListRefresRequest: () => void;
 }) => {
-  const groups = useAppSelector(i => i.ChatUserOptions.AllGroupList)
-  const group = groups.find(i => i.groupId == props.data.groupId)
+  const groups = useAppSelector(i => i.ChatUserOptions.AllGroupList);
+  const group = groups.find(i => i.groupId == props.data.groupId);
 
-
-  var lastMessage = group?.AllGroupMsgList?.length ? group.AllGroupMsgList[group.AllGroupMsgList.length - 1] : undefined
-  var txtLastMessage = lastMessage?.sMsg ?? group?.lastMessage
+  var lastMessage = group?.AllGroupMsgList?.length
+    ? group.AllGroupMsgList[group.AllGroupMsgList.length - 1]
+    : undefined;
+  var txtLastMessage = lastMessage?.sMsg ?? group?.lastMessage;
   const navigate = useNavigation<NavigationProps>();
   return (
     <List.Item
       onPress={() => {
-        navigate.navigate('GroupChatDetailsPage2', { Group: group! });
+        navigate.navigate('GroupChatDetailsPage2', {Group: group!});
       }}
-      style={{ marginLeft: 5,paddingTop:0,paddingBottom:0, }}
+      style={{marginLeft: 5, paddingTop: 0, paddingBottom: 0}}
       title={group?.groupName}
-      titleStyle={{ fontFamily: 'OpenSans-Regular', fontSize: 15,marginTop:0 }}
+      titleStyle={{fontFamily: 'OpenSans-Regular', fontSize: 15, marginTop: 0}}
       description={() => {
         return (
           <View>
@@ -113,8 +108,7 @@ const ChatGroupScreen = (props: {
                 letterSpacing: 0.2,
                 fontSize: 12,
                 marginTop: 5,
-                marginBottom:9,
-
+                marginBottom: 9,
               }}>
               {txtLastMessage || 'No message'}
             </Text>
@@ -127,14 +121,14 @@ const ChatGroupScreen = (props: {
       left={props => (
         <View>
           <Avatar.Text
-            style={{ backgroundColor: ColorCode.DimGray, width: 45, height: 45 }}
+            style={{backgroundColor: ColorCode.DimGray, width: 45, height: 45}}
             labelStyle={{
               color: ColorCode.Black,
               fontSize: 22,
               fontFamily: 'OpenSans-Regular',
               marginTop: -8,
             }}
-            label={group?.groupName?.charAt(0).toUpperCase() ?? ""}
+            label={group?.groupName?.charAt(0).toUpperCase() ?? ''}
           />
         </View>
       )}

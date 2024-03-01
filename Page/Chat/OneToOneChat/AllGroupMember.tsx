@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, {Component} from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -9,19 +9,18 @@ import {
   View,
 } from 'react-native';
 
-
-import { TouchableOpacity } from 'react-native-gesture-handler';
-import { Image } from 'react-native';
+import {TouchableOpacity} from 'react-native-gesture-handler';
+import {Image} from 'react-native';
 import DeviceInfo from 'react-native-device-info';
 import * as signalR from '@microsoft/signalr';
 import axios from 'axios';
 import User from '../../../Entity/User';
-import { GroupDetails } from '../../../Entity/GroupDetails';
+import {GroupDetails} from '../../../Entity/GroupDetails';
 import BaseComponent from '../../../Core/BaseComponent';
 import BaseState from '../../../Core/BaseState';
 import SessionHelper from '../../../Core/SessionHelper';
-import { Branch } from '../../../Entity/Branch';
-import { Badge } from 'react-native-paper';
+import {Branch} from '../../../Entity/Branch';
+import {Badge} from 'react-native-paper';
 
 // const navigation = useNavigation();
 export class AllGroupMemberViewModel {
@@ -84,7 +83,8 @@ export default class AllGroupMember extends BaseComponent<
 
     model.SingleRConnection = new signalR.HubConnectionBuilder()
       .withUrl(
-        `https://wemessanger.azurewebsites.net/chatHub?UserId=${model.ConnectionCode
+        `https://wemessanger.azurewebsites.net/chatHub?UserId=${
+          model.ConnectionCode
         }_${UserDetails?.lId.toString()}`,
       )
       .build();
@@ -196,19 +196,18 @@ export default class AllGroupMember extends BaseComponent<
         <View style={styles.header}>
           <TouchableOpacity
             onPress={() => {
-
               this.props.navigation.pop();
             }}>
             <Image
               source={require('../../../assets/backimg.png')}
-              style={{ height: 20, width: 20, marginLeft: 10 }}
+              style={{height: 20, width: 20, marginLeft: 10}}
             />
           </TouchableOpacity>
-          <View style={{ flex: 1 }}>
+          <View style={{flex: 1}}>
             <Text style={styles.title}>All Member</Text>
           </View>
         </View>
-        <View style={{ padding: 10 }}>
+        <View style={{padding: 10}}>
           <View
             style={{
               flexDirection: 'row',
@@ -233,7 +232,6 @@ export default class AllGroupMember extends BaseComponent<
           </View>
         </View>
         <View>
-
           {model.SelectedUser.length <= 0 && (
             <ActivityIndicator size="large" color="#0000ff" />
           )}
@@ -242,7 +240,6 @@ export default class AllGroupMember extends BaseComponent<
             model.SelectedUser.map((i: User, index) => (
               //   <TouchableOpacity onPress={() => this.NextPage(i)}>
               <View key={i.lId}>
-
                 <View>
                   <Badge
                     style={{
@@ -254,10 +251,8 @@ export default class AllGroupMember extends BaseComponent<
                       alignItems: 'center',
                     }}>
                     {i.userFullName.toLocaleUpperCase().charAt(0)}
-
                   </Badge>
                 </View>
-
 
                 <View
                   style={{
@@ -276,10 +271,8 @@ export default class AllGroupMember extends BaseComponent<
                     {i.userFullName}
                   </Text>
                 </View>
-
               </View>
             ))}
-
         </View>
       </View>
     );

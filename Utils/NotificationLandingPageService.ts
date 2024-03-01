@@ -7,6 +7,8 @@ import {NavigationProps} from '../Core/BaseProps';
 import User from '../Entity/User';
 import {ChatUser} from '../Entity/ChatUser';
 import {navigationRef} from '../App';
+import {NotificationUser} from '../Entity/NotificationUser';
+import {useAppSelector} from '../Redux/Hooks';
 
 export async function requestUserPermission() {
   const authStatus = await messaging().requestPermission();
@@ -57,7 +59,7 @@ async function onDisplayNotification(data: any) {
 export async function notificationListeners() {
   const unsubscribe = messaging().onMessage(async remoteMessage => {
     console.log('A new FCM message arrived!', remoteMessage);
-    // onDisplayNotification(remoteMessage)
+    onDisplayNotification(remoteMessage);
   });
 
   messaging().onNotificationOpenedApp(remoteMessage => {
@@ -65,16 +67,46 @@ export async function notificationListeners() {
       'Notification caused app to open from background state:',
       remoteMessage,
     );
+    console.log(remoteMessage.data);
 
-    if (remoteMessage?.data) {
-      navigationRef.current?.navigate('MainPage');
+    if (
+      remoteMessage.data &&
+      remoteMessage?.data.PageName == 'OneToOneChatPage2'
+    ) {
+      var ReceiverID = remoteMessage.data.Id;
+      const inputString = ReceiverID as string;
+      const extractedNumber = parseInt(inputString.split('_')[1], 10);
+
+      console.log(extractedNumber);
+      navigationRef.current?.navigate('OneToOneChatPage2', {
+        SecondUser: extractedNumber,
+      });
     }
+    if (
+      remoteMessage.data &&
+      remoteMessage?.data.PageName == 'GroupChatDetailsPage2'
+    ) {
+      var GroupID = remoteMessage.data.Id;
+      const inputString = GroupID as string;
+      const extractedNumber = parseInt(inputString);
+      console.log(extractedNumber);
+      navigationRef.current?.navigate('GroupChatDetailsPage2', {
+        Group: GroupID,
+      });
+    }
+    if (
+      remoteMessage.data &&
+      remoteMessage?.data.PageName == 'NotificationDetailsPage'
+    ) {
+      var ReceiverID = remoteMessage.data.Id;
+      const inputString = ReceiverID as string;
+      const extractedNumber = parseInt(inputString.split('_')[1], 10);
 
-    //     if (!!remoteMessage?.data && remoteMessage?.data?.redirect_to == "Profile") {
-    //         setTimeout(() => {
-    //             NavigationService.navigate("Profile", { data: remoteMessage?.data })
-    //         }, 1200);
-    //     }
+      console.log(extractedNumber);
+      navigationRef.current?.navigate('NotificationDetailsPage', {
+        SecondUser: extractedNumber,
+      });
+    }
   });
 
   // // Check whether an initial notification is available
@@ -84,8 +116,46 @@ export async function notificationListeners() {
       if (remoteMessage) {
         console.log(
           'Notification caused app to open from quit state:',
-          remoteMessage.notification,
+          remoteMessage,
         );
+        if (
+          remoteMessage.data &&
+          remoteMessage?.data.PageName == 'OneToOneChatPage2'
+        ) {
+          var ReceiverID = remoteMessage.data.Id;
+          const inputString = ReceiverID as string;
+          const extractedNumber = parseInt(inputString.split('_')[1], 10);
+
+          console.log(extractedNumber);
+          navigationRef.current?.navigate('OneToOneChatPage2', {
+            SecondUser: extractedNumber,
+          });
+        }
+        if (
+          remoteMessage.data &&
+          remoteMessage?.data.PageName == 'GroupChatDetailsPage2'
+        ) {
+          var GroupID = remoteMessage.data.Id;
+          const inputString = GroupID as string;
+          const extractedNumber = parseInt(inputString);
+          console.log(extractedNumber);
+          navigationRef.current?.navigate('GroupChatDetailsPage2', {
+            Group: GroupID,
+          });
+        }
+        if (
+          remoteMessage.data &&
+          remoteMessage?.data.PageName == 'NotificationDetailsPage'
+        ) {
+          var ReceiverID = remoteMessage.data.Id;
+          const inputString = ReceiverID as string;
+          const extractedNumber = parseInt(inputString.split('_')[1], 10);
+
+          console.log(extractedNumber);
+          navigationRef.current?.navigate('NotificationDetailsPage', {
+            SecondUser: extractedNumber,
+          });
+        }
       }
     });
 

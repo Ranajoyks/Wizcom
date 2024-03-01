@@ -44,11 +44,14 @@ import NotificationOptions from '../../../Redux/Reducer/NotificationOptions';
 import { NotificationUser } from '../../../Entity/NotificationUser';
 import { Notification } from '../../../Entity/Notification';
 
-const NotificationPage = (
-  props: StackScreenProps<RootStackParamList, 'NotificationPage'>,
+const NotificationDetailsPage = (
+  props: StackScreenProps<RootStackParamList, 'NotificationDetailsPage'>,
 ) => {
-  const SecondUser = props.route.params.SecondUser;
-
+  const users = useAppSelector(i => i.OneToOneChatOptions.AllUserList);
+  
+  const user = users.find(i => i.lId == props.route.params.SecondUser)!;
+  console.log('User: ', props.route.params.SecondUser);
+  const SecondUser = user;
   const navigation = useNavigation<NavigationProps>();
   const dispatch = useAppDispatch();
 
@@ -546,7 +549,7 @@ const NotificationPage = (
             <TextInput
               style={
                 (localStyle.input,
-                  { width: Dimensions.get('window').width - 100 })
+                  { width: Dimensions.get('window').width - 70 })
               }
               value={newSendMessage}
               onChangeText={setNewSendMessage}
@@ -557,12 +560,12 @@ const NotificationPage = (
                 alignItems: 'center',
                 paddingRight: 10,
               }}>
-              <TouchableOpacity onPress={AttachFileToChat}>
+              {/* <TouchableOpacity onPress={AttachFileToChat}>
                 <Image
                   source={require('../../../assets/attachment.png')}
                   style={{ height: 25, width: 13, marginHorizontal: 10 }}
                 />
-              </TouchableOpacity>
+              </TouchableOpacity> */}
               <TouchableOpacity
                 disabled={!newSendMessage}
                 onPress={() => {
@@ -580,7 +583,7 @@ const NotificationPage = (
     </SafeAreaView>
   );
 };
-export default NotificationPage;
+export default NotificationDetailsPage;
 
 const localStyle = StyleSheet.create({
   header: {

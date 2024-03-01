@@ -127,7 +127,7 @@ const ChatUserScreen = (props: { data: NotificationUser }) => {
   return (
 
     <List.Item onPress={() => {
-      navigate.navigate("NotificationPage", { SecondUser: user })
+      navigate.navigate("NotificationDetailsPage", { SecondUser: user.lId })
     }}
       style={{ marginLeft: 5, paddingTop: 0, paddingBottom: 0, }}
       title={user.userFullName}

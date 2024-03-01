@@ -45,8 +45,7 @@ export class LoginPage extends BaseComponent<'LoginPage', LoginViewModel> {
         PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS,
       )
         .then(res => {
-          console.log('res+++++', res);
-          notificationListeners();
+          console.log('res+++++', res);         
           if (!!res && res == 'granted') {
             requestUserPermission();
           }

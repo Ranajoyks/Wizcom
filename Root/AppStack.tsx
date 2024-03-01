@@ -43,20 +43,19 @@ export type RootStackParamList = {
   CompanySelectionPage: undefined,
   SettingsPage: undefined,
   BranchPage: { BranchList: Branch[] },
-  NotificationDetailsPage: { User: [] },
   MainPage: undefined,
   MapPage: undefined,
 
-  OneToOneChatPage2: { SecondUser: ChatUser }
+  OneToOneChatPage2: { SecondUser: number }
   AllChatPage: undefined,
 
   GroupMainPage: undefined,
-  GroupChatDetailsPage2: { Group: Group },
+  GroupChatDetailsPage2: { Group: number },
   CreateGroup: { GroupID: string }
   AddGroupMember: { GroupID: string }
   DeleteGroupMember: { GroupID: string }
   AllGroupMember: undefined
-  NotificationPage: { SecondUser: NotificationUser }
+  NotificationDetailsPage: { SecondUser: number }
   // OneToOneChatDetailsPage: { OnReturn: (isSuccess: boolean) => void };
   // AnalysisPage: { licenseNo: string },
 
@@ -108,7 +107,7 @@ function AppStack() {
 
 
         <Stack.Screen
-          name="NotificationPage"
+          name="NotificationDetailsPage"
           component={NotificationPage}
           options={{ headerShown: false, gestureEnabled: false }}
         />

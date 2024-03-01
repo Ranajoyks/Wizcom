@@ -44,8 +44,11 @@ import ReduxDataHelper from '../../../Redux/ReduxDataHelper';
 const OneToOneChatPage2 = (
   props: StackScreenProps<RootStackParamList, 'OneToOneChatPage2'>,
 ) => {
-  const SecondUser = props.route.params.SecondUser;
-  console.log('SecondUser:---', SecondUser.lId);
+  const users = useAppSelector(i => i.OneToOneChatOptions.AllUserList);  
+  const user = users.find(i => i.lId == props.route.params.SecondUser)!;
+  console.log('User: ', props.route.params.SecondUser);
+
+  const SecondUser = user;
 
   const navigation = useNavigation<NavigationProps>();
   const dispatch = useAppDispatch();
@@ -238,6 +241,7 @@ const OneToOneChatPage2 = (
         ConnectionId: 'connectionId',
         FileName: uploadResponse.data.sFileName,
         Message: '',
+        PageName: 'OneToOneChatPage2',
       };
       console.log('FileUploadRaw: ', FileUploadRaw);
 
@@ -322,9 +326,9 @@ const OneToOneChatPage2 = (
           <Text
             style={{
               ...localStyle.subtitle1,
-              color: SecondUser.isUserLive ? '#0383FA' : '#E4B27E',
+              color: SecondUser?.isUserLive ? '#0383FA' : '#E4B27E',
             }}>
-            {SecondUser.isUserLive ? 'Online' : 'Offline'}
+            {SecondUser?.isUserLive ? 'Online' : 'Offline'}
           </Text>
         </View>
         <View

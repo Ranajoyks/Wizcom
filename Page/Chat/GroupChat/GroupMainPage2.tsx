@@ -115,7 +115,7 @@ const ChatGroupScreen = (props: {
   return (
     <List.Item
       onPress={() => {
-        navigate.navigate('GroupChatDetailsPage2', { Group: group! });
+        navigate.navigate('GroupChatDetailsPage2', { Group: group!.groupId });
       }}
       style={{ marginLeft: 5, paddingTop: 0, paddingBottom: 0 }}
       title={group?.groupName}

@@ -104,7 +104,7 @@ const ChatUserScreen = (props: { data: ChatUser }) => {
   return (
 
     <List.Item onPress={() => {
-      navigate.navigate("OneToOneChatPage2", { SecondUser: user })
+      navigate.navigate("OneToOneChatPage2", { SecondUser: user.lId })
     }}
       style={{ marginLeft: 5, paddingTop: 0, paddingBottom: 0, }}
       title={user.userFullName}
